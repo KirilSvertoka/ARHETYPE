@@ -37,6 +37,8 @@ function ScrollToTop() {
 }
 
 export default function App() {
+  const adminPath = (import.meta as any).env.VITE_ADMIN_PATH?.replace(/^\//, '') || 'admin';
+
   return (
     <HelmetProvider>
       <ThemeProvider>
@@ -53,7 +55,7 @@ export default function App() {
                     <Route path="contacts" element={<Contacts />} />
                     <Route path="about" element={<About />} />
                     <Route path="wishlist" element={<Wishlist />} />
-                    <Route path="admin" element={<AdminPanel />} />
+                    <Route path={adminPath} element={<AdminPanel />} />
                     <Route path="forbidden" element={<Forbidden />} />
                     <Route path="*" element={<NotFound />} />
                   </Route>

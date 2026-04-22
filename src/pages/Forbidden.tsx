@@ -33,12 +33,6 @@ export default function Forbidden() {
         
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link 
-            to="/admin"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-brand-accent text-white rounded-full hover:bg-brand-accent-hover transition-colors font-medium w-full sm:w-auto"
-          >
-            <span>{t('presentCredentials')}</span>
-          </Link>
-          <Link 
             to="/"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-brand-border text-brand-light rounded-full hover:bg-white/5 transition-colors font-medium w-full sm:w-auto"
           >
