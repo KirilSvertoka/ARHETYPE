@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Moon, Sun, Instagram, Send, Mail, ShoppingBag, Heart, Menu, X, ChevronDown, Search } from 'lucide-react';
+import { Moon, Sun, Instagram, Send, Mail, ShoppingBag, Heart, Menu, X, ChevronDown, Search, Phone, MessageSquare, PhoneCall, MessageCircle, MapPin } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useState, useEffect, useRef } from 'react';
 import { HomeConfig, GeneralSettings } from '../types';
@@ -10,6 +10,7 @@ import CartDrawer from './CartDrawer';
 import Newsletter from './Newsletter';
 import Loader from './Loader';
 import { motion, AnimatePresence } from 'motion/react';
+import { trackGoal } from '../utils/analytics';
 
 export default function Layout() {
   const { theme, toggleTheme } = useTheme();
@@ -97,10 +98,12 @@ export default function Layout() {
         <div className="min-h-screen bg-brand-bg text-brand-light font-sans selection:bg-brand-accent/50 transition-colors duration-300">
           <div className="sticky top-0 z-50 flex flex-col">
             {config?.announcement?.active && (
-              <div className="bg-brand-accent text-white text-center py-2 px-4 text-xs font-medium uppercase tracking-widest">
+              <div className="bg-brand-accent text-white text-center py-2 px-4 text-[10px] sm:text-xs font-medium uppercase tracking-widest">
                 {language === 'be' && config.announcement.text_be ? config.announcement.text_be : config.announcement.text}
               </div>
             )}
+            
+            {/* RELOCATED Language Toggle and Icons if needed, but primarily following "Remove this block" */}
             <header className="bg-brand-bg border-b border-brand-border transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -173,24 +176,47 @@ export default function Layout() {
                     <Search className="w-4 h-4" />
                   </Link>
                   {settings?.instagram && (
-                    <a href={settings.instagram} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent transition-colors">
+                    <a 
+                      href={settings.instagram} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="text-brand-muted hover:text-brand-accent transition-colors"
+                      onClick={() => trackGoal('instagram_click', 'header')}
+                    >
                       <Instagram className="w-4 h-4" />
                     </a>
                   )}
                   {settings?.telegram && (
-                    <a href={settings.telegram} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent transition-colors">
+                    <a 
+                      href={settings.telegram} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="text-brand-muted hover:text-brand-accent transition-colors"
+                      onClick={() => trackGoal('messenger_click', 'telegram_header')}
+                    >
                       <Send className="w-4 h-4" />
                     </a>
                   )}
                   {settings?.email && (
-                    <a href={`mailto:${settings.email}`} className="text-brand-muted hover:text-brand-accent transition-colors">
+                    <a 
+                      href={`mailto:${settings.email}`} 
+                      className="text-brand-muted hover:text-brand-accent transition-colors"
+                      onClick={() => trackGoal('email_click', 'header')}
+                    >
                       <Mail className="w-4 h-4" />
                     </a>
                   )}
                 </div>
 
-                <Link
-                  to="/wishlist"
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setLanguage(language === 'ru' ? 'be' : 'ru')}
+                    className="p-2 text-[10px] font-bold text-brand-muted hover:text-brand-accent transition-colors uppercase tracking-widest border border-brand-border rounded-lg"
+                  >
+                    {language}
+                  </button>
+                  <Link
+                    to="/wishlist"
                   className="relative p-2 text-brand-muted hover:text-brand-accent hover:bg-brand-hover rounded-lg transition-colors"
                   title={t('wishlist')}
                 >
@@ -207,30 +233,28 @@ export default function Layout() {
                   onClick={() => setIsCartOpen(true)}
                   animate={items.length > 0 ? { scale: [1, 1.2, 1] } : {}}
                   key={items.length}
-                  className="relative p-2 text-brand-muted hover:text-brand-accent hover:bg-brand-hover rounded-lg transition-colors"
+                  className="group relative flex items-center gap-2 p-2 text-brand-muted hover:text-brand-accent hover:bg-brand-hover rounded-lg transition-colors border border-transparent hover:border-brand-accent/20"
                   title={t('cart')}
                 >
                   <ShoppingBag className="w-5 h-5" />
                   {items.length > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-brand-accent text-white text-[10px] font-bold flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1">
-                      {items.reduce((sum, item) => sum + item.quantity, 0)}
-                    </span>
+                    <div className="flex flex-col items-start leading-none pr-1">
+                      <span className="text-[10px] font-bold text-brand-accent uppercase tracking-tighter mb-0.5">
+                        {items.reduce((sum, item) => sum + item.quantity, 0)} {t('items')}
+                      </span>
+                      <span className="text-[10px] font-bold text-brand-light whitespace-nowrap">
+                        {items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)} BYN
+                      </span>
+                    </div>
                   )}
                 </motion.button>
-
-                <button
-                  onClick={() => setLanguage(language === 'ru' ? 'be' : 'ru')}
-                  className="hidden sm:block text-[10px] font-medium text-brand-muted hover:text-brand-accent transition-colors uppercase tracking-widest"
-                  title={t('toggleLanguage')}
-                >
-                  {language}
-                </button>
               </div>
             </div>
           </div>
         </div>
-      </header>
       </div>
+    </header>
+  </div>
 
       {/* Mobile Menu Drawer */}
       <AnimatePresence>
@@ -251,7 +275,7 @@ export default function Layout() {
               className="fixed top-0 left-0 bottom-0 w-[80%] max-w-sm bg-brand-bg z-50 shadow-2xl md:hidden flex flex-col"
             >
               <div className="p-6 flex justify-between items-center border-b border-brand-border">
-                <span className="font-serif text-xl font-medium tracking-tight text-brand-light">Menu</span>
+                <span className="font-serif text-xl font-medium tracking-tight text-brand-light">{t('menu')}</span>
                 <button 
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="p-2 text-brand-muted hover:text-brand-accent"
@@ -337,10 +361,107 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-brand-border mt-24 transition-colors duration-300">
+      <footer className="bg-brand-hover border-t border-brand-border mt-24">
         <Newsletter />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center text-brand-muted text-sm">
-          <p>&copy; {new Date().getFullYear()} АРХЕТИП. {t('allRightsReserved')}</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 sm:gap-8 border-b border-brand-border pb-12">
+            <div className="space-y-6">
+              <Link to="/" className="inline-block">
+                <span className="font-serif text-2xl font-medium tracking-tight uppercase">АРХЕТИП</span>
+              </Link>
+              <p className="text-sm text-brand-muted leading-relaxed font-light">
+                {language === 'be' 
+                  ? 'Ваш праваднік у свеце нішавай парфумерыі. Мы прапануем толькі арыгінальную прадукцыю і высокі ўзровень сэрвісу.' 
+                  : 'Ваш проводник в мире нишевой парфюмерии. Мы предлагаем только оригинальную продукцию и высокий уровень сервиса.'}
+              </p>
+              <div className="flex gap-4">
+                {settings?.instagram && (
+                  <a href={settings.instagram} target="_blank" rel="noreferrer" className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-bg text-brand-muted hover:text-brand-accent transition-colors">
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                )}
+                {settings?.telegram && (
+                  <a href={settings.telegram} target="_blank" rel="noreferrer" className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-bg text-brand-muted hover:text-brand-accent transition-colors">
+                    <Send className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-widest text-brand-light mb-6">
+                {language === 'be' ? 'Крама' : 'Магазин'}
+              </h4>
+              <ul className="space-y-4">
+                <li><Link to="/catalog" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('catalog')}</Link></li>
+                <li><Link to="/about" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('about')}</Link></li>
+                <li><Link to="/contacts" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('contacts')}</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-widest text-brand-light mb-6">
+                {language === 'be' ? 'Пакупнікам' : 'Покупателям'}
+              </h4>
+              <ul className="space-y-4">
+                <li><Link to="/p/delivery" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Дастаўка і аплата' : 'Доставка и оплата'}</Link></li>
+                <li><Link to="/p/returns" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Гарантыя і вяртанне' : 'Гарантия и возврат'}</Link></li>
+                <li><Link to="/contacts" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('contacts')}</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-widest text-brand-light mb-6">
+                {language === 'be' ? 'Кантакты' : 'Контакты'}
+              </h4>
+              <ul className="space-y-4 text-sm text-brand-muted">
+                {settings?.phone && (
+                  <li className="flex items-start gap-2">
+                    <Phone className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
+                    <a 
+                      href={`tel:${settings.phone.replace(/\D/g, '')}`} 
+                      className="hover:text-brand-accent transition-colors"
+                      onClick={() => trackGoal('phone_click', 'footer')}
+                    >
+                      {settings.phone}
+                    </a>
+                  </li>
+                )}
+                {settings?.email && (
+                  <li className="flex items-start gap-2">
+                    <Mail className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
+                    <a 
+                      href={`mailto:${settings.email}`} 
+                      className="hover:text-brand-accent transition-colors"
+                      onClick={() => trackGoal('email_click', 'footer')}
+                    >
+                      {settings.email}
+                    </a>
+                  </li>
+                )}
+                {settings?.address && (
+                  <li className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
+                    <span>{language === 'be' ? (settings.address_be || settings.address) : settings.address}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+          
+          <div className="pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="text-[10px] text-brand-muted uppercase tracking-widest text-center md:text-left space-y-2">
+              <p>&copy; {new Date().getFullYear()} АРХЕТИП. {t('allRightsReserved')}</p>
+              {settings?.unp && <p>УНП {settings.unp}</p>}
+              {settings?.bankDetails && <p>{settings.bankDetails}</p>}
+            </div>
+            
+            <div className="flex gap-4 opacity-50 grayscale hover:grayscale-0 transition-all">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Belkart_logo.svg" alt="Belkart" className="h-4" />
+            </div>
+          </div>
         </div>
       </footer>
         </div>

@@ -10,6 +10,8 @@ import fs from 'fs';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import Fuse from 'fuse.js';
+import compression from 'compression';
 
 dotenv.config();
 
@@ -40,6 +42,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 app.use(cors());
+app.use(compression());
 app.disable('x-powered-by');
 
 // Rate Limiting
@@ -248,10 +251,16 @@ const defaultGeneralSettings = {
   aboutPhoto: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2000&auto=format&fit=crop",
   instagram: "https://instagram.com",
   telegram: "https://t.me/username",
+  viber: "viber://chat?number=+375291234567",
+  whatsapp: "https://wa.me/375291234567",
   email: "hello@arhetip.com",
   phone: "+375 (29) 123-45-67",
+  workingHours: "Пн-Пт: 10:00 - 20:00, Сб-Вс: 11:00 - 18:00",
+  workingHours_be: "Пн-Пт: 10:00 - 20:00, Сб-Нд: 11:00 - 18:00",
   address: "ул. Парфюмерная 123, Минск, Беларусь",
   address_be: "вул. Парфумерная 123, Мінск, Беларусь",
+  unp: "123456789",
+  bankDetails: "IBAN: BY00 ABCD 0000 0000 0000 0000, BIC: ABCDBY2X",
   aboutTitle: "Наша история",
   aboutTitle_be: "Наша гісторыя",
   aboutDescription: "Путешествие в мир высокой парфюмерии, где мы собираем самые изысканные ароматы для современных людей.",
@@ -274,6 +283,16 @@ const defaultGeneralSettings = {
 };
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('home_config', JSON.stringify(defaultHomeConfig));
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('general_settings', JSON.stringify(defaultGeneralSettings));
+
+// Seed CMS pages
+const seedCMS = [
+  { id: 'delivery', title: 'Доставка и оплата', title_be: 'Дастаўка і аплата', content: 'Информация о способах доставки по Минску и Беларуси. Оплата наличными, картой, ЕРИП.' },
+  { id: 'returns', title: 'Гарантия и возврат', title_be: 'Гарантыя і вяртанне', content: 'Согласно постановлению Совета Министров РБ №778 парфюмерно-косметические товары надлежащего качества обмену и возврату не подлежат.' },
+];
+seedCMS.forEach(page => {
+  db.prepare('INSERT OR IGNORE INTO cms_pages (id, title, title_be, content, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)')
+    .run(page.id, page.title, page.title_be, page.content);
+});
 
 // Migration for new columns
 const migrations = [
@@ -612,7 +631,9 @@ app.get('/robots.txt', (req, res) => {
 Disallow: /admin
 Allow: /
 
-Sitemap: ${domain}/sitemap.xml`);
+Sitemap: ${domain}/sitemap.xml
+Sitemap: ${domain}/api/feeds/yandex.xml
+Sitemap: ${domain}/api/feeds/google.xml`);
 });
 
 app.get('/sitemap.xml', (req, res) => {
@@ -665,6 +686,112 @@ app.get('/sitemap.xml', (req, res) => {
     res.send(xml);
   } catch (error) {
     res.status(500).send('Error generating sitemap');
+  }
+});
+
+app.get('/api/feeds/yandex.xml', (req, res) => {
+  try {
+    const domain = `${req.protocol}://${req.get('host')}`;
+    const products = db.prepare('SELECT p.*, (SELECT MIN(price) FROM product_variants WHERE product_id = p.id) as min_price FROM products p').all() as any[];
+    const variants = db.prepare('SELECT * FROM product_variants').all() as any[];
+    const settings = JSON.parse(db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value || '{}');
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<yml_catalog date="${new Date().toISOString()}">
+  <shop>
+    <name>Arhetip</name>
+    <company>Arhetip - Нишевая парфюмерия</company>
+    <url>${domain}</url>
+    <currencies>
+      <currency id="BYN" rate="1"/>
+    </currencies>
+    <categories>
+      <category id="1">Парфюмерия</category>
+    </categories>
+    <offers>`;
+
+    products.forEach(p => {
+      const pVariants = variants.filter(v => v.product_id === p.id);
+      
+      pVariants.forEach(v => {
+        const stock = v.stock > 0;
+        const scentFamilies = JSON.parse(p.scentFamilies || '[]');
+        const category = scentFamilies.length > 0 ? scentFamilies[0] : 'Парфюмерия';
+
+        xml += `
+      <offer id="${v.sku || `v${v.id}`}" available="${stock}">
+        <url>${domain}/catalog/${p.slug || p.id}</url>
+        <price>${v.price}</price>
+        <currencyId>BYN</currencyId>
+        <categoryId>1</categoryId>
+        <picture>${p.imageUrl.startsWith('http') ? p.imageUrl : domain + p.imageUrl}</picture>
+        <vendor>${p.brand}</vendor>
+        <model>${p.name} (${v.size})</model>
+        <description>${p.description.replace(/[<>&'"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;',"'":"&apos;",'"':'&quot;'}[c]))}</description>
+        <delivery>true</delivery>
+        <param name="Пол">${p.gender || 'Unisex'}</param>
+        <param name="Объем">${v.size}</param>
+        <param name="Концентрация">${p.concentration || 'EDP'}</param>
+      </offer>`;
+      });
+    });
+
+    xml += `
+    </offers>
+  </shop>
+</yml_catalog>`;
+
+    res.type('application/xml');
+    res.send(xml);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error generating YML feed');
+  }
+});
+
+app.get('/api/feeds/google.xml', (req, res) => {
+  try {
+    const domain = `${req.protocol}://${req.get('host')}`;
+    const products = db.prepare('SELECT * FROM products').all() as any[];
+    const variants = db.prepare('SELECT * FROM product_variants').all() as any[];
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>Arhetip - Нишевая парфюмерия</title>
+    <link>${domain}</link>
+    <description>Элитная нишевая парфюмерия в Беларуси</description>`;
+
+    products.forEach(p => {
+      const pVariants = variants.filter(v => v.product_id === p.id);
+      
+      pVariants.forEach(v => {
+        xml += `
+    <item>
+      <g:id>${v.sku || `v${v.id}`}</g:id>
+      <g:title>${p.brand} ${p.name} ${v.size}</g:title>
+      <g:link>${domain}/catalog/${p.slug || p.id}</g:link>
+      <g:image_link>${p.imageUrl.startsWith('http') ? p.imageUrl : domain + p.imageUrl}</g:image_link>
+      <g:description>${p.description}</g:description>
+      <g:price>${v.price} BYN</g:price>
+      <g:availability>${v.stock > 0 ? 'in_stock' : 'out_of_stock'}</g:availability>
+      <g:brand>${p.brand}</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Health &amp; Beauty &gt; Personal Care &gt; Cosmetics &gt; Perfume &amp; Cologne</g:google_product_category>
+      <g:gender>${p.gender === 'Male' ? 'male' : p.gender === 'Female' ? 'female' : 'unisex'}</g:gender>
+    </item>`;
+      });
+    });
+
+    xml += `
+  </channel>
+</rss>`;
+
+    res.type('application/xml');
+    res.send(xml);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error generating Google feed');
   }
 });
 
@@ -781,17 +908,72 @@ app.get('/api/products/:slug', (req, res) => {
   }
 });
 
+app.get('/api/accords', (req, res) => {
+  try {
+    const products = db.prepare('SELECT accords FROM products WHERE accords IS NOT NULL').all() as any[];
+    const accordsSet = new Set<string>();
+    products.forEach(p => {
+      try {
+        const parsed = JSON.parse(p.accords);
+        parsed.forEach((a: any) => {
+          if (a.name) accordsSet.add(a.name);
+        });
+      } catch (e) {
+        // ignore JSON parse errors
+      }
+    });
+    res.json(Array.from(accordsSet).sort());
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch accords' });
+  }
+});
+
+app.get('/api/suggestions', (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || typeof q !== 'string' || q.trim() === '') {
+      return res.json([]);
+    }
+
+    const allProducts = db.prepare('SELECT id, name, brand FROM products').all() as any[];
+    
+    // Create searchable items array combining both brands and actual product names
+    const searchableItems: { type: string, text: string, id?: number }[] = [];
+    const brandsSet = new Set<string>();
+    
+    allProducts.forEach(p => {
+      searchableItems.push({ type: 'product', text: p.name, id: p.id });
+      if (p.brand && !brandsSet.has(p.brand)) {
+        brandsSet.add(p.brand);
+        searchableItems.push({ type: 'brand', text: p.brand });
+      }
+    });
+
+    const fuse = new Fuse(searchableItems, {
+      keys: ['text'],
+      threshold: 0.4, // Allows typos
+      distance: 100
+    });
+
+    const results = fuse.search(q).slice(0, 5).map(res => res.item);
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch suggestions' });
+  }
+});
+
 app.get('/api/products', (req, res) => {
   try {
-    const { search, brand, gender, families, sort, category } = req.query;
+    const { search, brand, gender, families, accords, sort, category } = req.query;
 
     let query = 'SELECT * FROM products WHERE 1=1';
     const params: any[] = [];
 
-    if (search) {
-      query += ' AND (name LIKE ? OR brand LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
-    }
+    // Remove exact LIKE search, we'll do it in memory with fuse.js later
+    // if (search) {
+    //   query += ' AND (name LIKE ? OR brand LIKE ?)';
+    //   params.push(`%${search}%`, `%${search}%`);
+    // }
 
     if (brand && brand !== 'All') {
       query += ' AND brand = ?';
@@ -824,12 +1006,39 @@ app.get('/api/products', (req, res) => {
 
     let products = db.prepare(query).all(...params) as any[];
 
+    // In-memory fuzzy search using Fuse.js
+    if (search && typeof search === 'string' && search.trim() !== '') {
+      const fuse = new Fuse(products, {
+        keys: [
+          { name: 'name', weight: 0.6 },
+          { name: 'brand', weight: 0.3 },
+          { name: 'tags', weight: 0.1 }
+        ],
+        threshold: 0.4, // Allows for some typos
+        distance: 100
+      });
+      products = fuse.search(search).map(result => result.item);
+    }
+
     // In-memory filtering for scent families
     if (families) {
       const familyList = (families as string).split(',');
       products = products.filter((p: any) => {
         const pFamilies = JSON.parse(p.scentFamilies || '[]');
         return pFamilies.some((f: string) => familyList.includes(f));
+      });
+    }
+
+    // In-memory filtering for accords
+    if (accords) {
+      const accordList = (accords as string).split(',');
+      products = products.filter((p: any) => {
+        try {
+          const pAccords = JSON.parse(p.accords || '[]');
+          return pAccords.some((a: any) => accordList.includes(a.name));
+        } catch (e) {
+          return false;
+        }
       });
     }
 
@@ -1031,6 +1240,18 @@ app.put('/api/admin/reviews/:id/reply', requireAuth, (req, res) => {
 });
 
 // CMS Pages
+app.get('/api/pages/:id', (req, res) => {
+  try {
+    const page = db.prepare('SELECT * FROM cms_pages WHERE id = ?').get(req.params.id);
+    if (!page) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+    res.json(page);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch page' });
+  }
+});
+
 app.get('/api/admin/cms', requireAuth, (req, res) => {
   try {
     const pages = db.prepare('SELECT * FROM cms_pages').all();
@@ -1542,28 +1763,33 @@ app.post('/api/callback', async (req, res) => {
   }
 });
 
+// SiteMap generation rules
 app.get('/sitemap.xml', (req, res) => {
   try {
-    const products = db.prepare('SELECT slug FROM products').all() as { slug: string }[];
-    const baseUrl = process.env.APP_URL || 'https://ais-pre-jh4opa624el2qtdmd3kuys-422099355245.europe-west2.run.app';
+    const products = db.prepare('SELECT slug, updated_at FROM products').all() as any[];
     
-    const staticPages = ['', '/catalog', '/contacts', '/reviews', '/about'];
-    const productPages = products.map(p => `/catalog/${p.slug}`);
-    
-    const allPages = [...staticPages, ...productPages];
-    
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${allPages.map(page => `
-  <url>
-    <loc>${baseUrl}${page}</loc>
-    <changefreq>${page.includes('/catalog/') ? 'weekly' : 'daily'}</changefreq>
-    <priority>${page === '' ? '1.0' : (page.includes('/catalog/') ? '0.8' : '0.5')}</priority>
-  </url>`).join('')}
-</urlset>`;
+  <!-- static pages -->
+  <url><loc>https://archetype.by/</loc><priority>1.0</priority></url>
+  <url><loc>https://archetype.by/catalog</loc><priority>0.9</priority></url>
+  <url><loc>https://archetype.by/about</loc><priority>0.8</priority></url>
+  <url><loc>https://archetype.by/contacts</loc><priority>0.8</priority></url>
+  
+  <!-- dynamic products -->
+`;
+
+    products.forEach(p => {
+      xml += `  <url>
+    <loc>https://archetype.by/catalog/${p.slug}</loc>
+    <priority>0.7</priority>
+  </url>\n`;
+    });
+
+    xml += `</urlset>`;
 
     res.header('Content-Type', 'application/xml');
-    res.send(sitemap);
+    res.send(xml);
   } catch (error) {
     res.status(500).send('Error generating sitemap');
   }

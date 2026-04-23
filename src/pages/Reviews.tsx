@@ -33,8 +33,8 @@ export default function Reviews() {
       className="max-w-4xl mx-auto space-y-12 px-4 sm:px-6 lg:px-8 py-12"
     >
       <Helmet>
-        <title>{language === 'ru' ? 'Отзывы' : 'Водгукі'} | Arhetip</title>
-        <meta name="description" content={language === 'ru' ? 'Что говорят наши клиенты о Arhetip. Реальные отзывы о качестве парфюмерии и сервисе.' : 'Што кажуць нашы кліенты пра Arhetip. Рэальныя водгукі аб якасці парфумерыі і сэрвісе.'} />
+        <title>{language === 'ru' ? 'Отзывы' : 'Водгукі'} | АРХЕТИП</title>
+        <meta name="description" content={language === 'ru' ? 'Что говорят наши клиенты о АРХЕТИП. Реальные отзывы о качестве парфюмерии и сервисе.' : 'Што кажуць нашы кліенты пра АРХЕТИП. Рэальныя водгукі аб якасці парфумерыі і сэрвісе.'} />
         <link rel="canonical" href={`${window.location.origin}/reviews`} />
       </Helmet>
       <div className="text-center space-y-4">

@@ -22,7 +22,7 @@ export default function AdminPanel() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'orders' | 'customers' | 'reviews' | 'cms-general' | 'cms-home' | 'cms-pages' | 'reports' | 'promo' | 'carts'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'orders' | 'customers' | 'reviews' | 'cms-general' | 'cms-home' | 'cms-pages' | 'cms-contacts' | 'reports' | 'promo' | 'carts'>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -295,7 +295,8 @@ export default function AdminPanel() {
           <div className="pt-6 mt-6 border-t border-brand-border">
             <p className="px-4 text-xs font-medium uppercase tracking-wider text-brand-muted mb-3">Контент</p>
             {[
-              { id: 'cms-general', label: 'Общие настройки', icon: Settings },
+              { id: 'cms-contacts', label: 'Контактные данные', icon: MessageSquare },
+              { id: 'cms-general', label: 'О компании (Общее)', icon: Settings },
               { id: 'cms-home', label: 'Главная страница', icon: Home },
               { id: 'cms-pages', label: 'Информационные', icon: FileText },
             ].map(tab => (
@@ -331,7 +332,8 @@ export default function AdminPanel() {
               {activeTab === 'promo' && 'Промокоды'}
               {activeTab === 'carts' && 'Брошенные корзины'}
               {activeTab === 'reports' && 'Отчеты'}
-              {activeTab === 'cms-general' && 'Общие настройки'}
+              {activeTab === 'cms-contacts' && 'Контактные данные'}
+              {activeTab === 'cms-general' && 'О компании (Общее)'}
               {activeTab === 'cms-home' && 'Главная страница'}
               {activeTab === 'cms-pages' && 'Информационные страницы'}
             </h2>
@@ -413,6 +415,7 @@ export default function AdminPanel() {
               )}
               {activeTab === 'promo' && <PromoCodesView token={token!} />}
               {activeTab === 'carts' && <AbandonedCartsView token={token!} />}
+              {activeTab === 'cms-contacts' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="contacts" />}
               {activeTab === 'cms-general' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="general" />}
               {activeTab === 'cms-home' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="home" />}
               {activeTab === 'cms-pages' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="pages" />}

@@ -22,7 +22,7 @@ export default function About() {
       className="max-w-4xl mx-auto space-y-16 px-4 sm:px-6 lg:px-8 py-12"
     >
       <Helmet>
-        <title>{language === 'ru' ? 'О нас' : 'Пра нас'} | Arhetip</title>
+        <title>{language === 'ru' ? 'О нас' : 'Пра нас'} | АРХЕТИП</title>
         <meta name="description" content={language === 'ru' ? 'Путешествие в мир высокой парфюмерии.' : 'Падарожжа ў свет высокай парфумерыі.'} />
         <link rel="canonical" href={`${window.location.origin}/about`} />
       </Helmet>
@@ -52,8 +52,8 @@ export default function About() {
           </h2>
           <p className="text-brand-muted leading-relaxed font-light">
             {language === 'ru'
-              ? (settings?.aboutArtText1 || 'Основанный в 2020 году, Arhetip родился из страсти к нишевой парфюмерии. Мы верим, что аромат — это больше, чем просто запах. Это невидимый аксессуар, триггер воспоминаний и глубокое выражение личности.')
-              : (settings?.aboutArtText1_be || 'Заснаваны ў 2020 годзе, Arhetip нарадзіўся з запалу да нішавай парфумерыі. Мы верым, што водар — гэта больш, чым проста пах. Гэта нябачны аксэсуар, трыгер успамінаў і глыбокае выяўленне асобы.')}
+              ? (settings?.aboutArtText1 || 'Основанный в 2020 году, АРХЕТИП родился из страсти к нишевой парфюмерии. Мы верим, что аромат — это больше, чем просто запах. Это невидимый аксессуар, триггер воспоминаний и глубокое выражение личности.')
+              : (settings?.aboutArtText1_be || 'Заснаваны ў 2020 годзе, АРХЕТИП нарадзіўся з запалу да нішавай парфумерыі. Мы верым, што водар — гэта больш, чым проста пах. Гэта нябачны аксэсуар, трыгер успамінаў і глыбокае выяўленне асобы.')}
           </p>
           <p className="text-brand-muted leading-relaxed font-light">
             {language === 'ru'

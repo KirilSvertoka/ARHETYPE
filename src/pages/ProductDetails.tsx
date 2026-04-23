@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Product, getVariantType } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import NoteDiagram from '../components/NoteDiagram';
 import ScentProfileBlock from '../components/ScentProfileBlock';
@@ -10,6 +10,9 @@ import { useCart } from '../components/CartProvider';
 import { useLanguage } from '../components/LanguageProvider';
 import RelatedProducts from '../components/RelatedProducts';
 import RecentlyViewed from '../components/RecentlyViewed';
+import Breadcrumbs from '../components/Breadcrumbs';
+import CallbackForm from '../components/CallbackForm';
+import { trackViewItem, trackAddToCart } from '../utils/analytics';
 
 interface FlyingItem {
   id: number;
@@ -28,6 +31,7 @@ export default function ProductDetails() {
   const [isFullscreenGalleryOpen, setIsFullscreenGalleryOpen] = useState(false);
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
   const [flyingItems, setFlyingItems] = useState<FlyingItem[]>([]);
+  const [isCallbackOpen, setIsCallbackOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const [quantity, setQuantity] = useState(1);
@@ -51,6 +55,10 @@ export default function ProductDetails() {
     // Add to cart with quantity
     for (let i = 0; i < quantity; i++) {
       addToCart(product, selectedVariantId);
+    }
+    const variant = selectedVariantId ? product.variants?.find(v => v.id === selectedVariantId) : product.variants?.[0];
+    if (variant) {
+      trackAddToCart(product, variant, quantity);
     }
   };
 
@@ -87,6 +95,7 @@ export default function ProductDetails() {
         
         // Log view
         fetch(`/api/products/${data.id}/view`, { method: 'POST' }).catch(console.error);
+        trackViewItem(data, data.variants && data.variants.length > 0 ? data.variants[0] : undefined);
       })
       .catch(err => {
         console.error('Failed to fetch product', err);
@@ -130,6 +139,29 @@ export default function ProductDetails() {
     );
   }
 
+  const selectedVariant = selectedVariantId 
+    ? product.variants?.find(v => v.id === selectedVariantId) 
+    : product.variants?.[0];
+
+  const volumeStr = selectedVariant ? `${selectedVariant.size}` : '';
+  
+  const parseNotes = (notes: any) => {
+    try {
+      if (typeof notes === 'string') return JSON.parse(notes);
+      if (Array.isArray(notes)) return notes;
+      return [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const topNotesList = parseNotes(product.topNotes);
+  const baseNotesList = parseNotes(product.baseNotes);
+  const notesStr = [...topNotesList.slice(0, 3), ...baseNotesList.slice(0, 2)].join(', ');
+
+  const pageTitle = `Купить духи ${product.brand} ${product.name}${volumeStr ? ` ${volumeStr}` : ''} — цена в Гродно, оригинал`;
+  const pageDescription = `${product.concentration || 'Парфюмерная вода'}/духи ${product.brand} ${product.name} в интернет-магазине Archetype. Только оригинал, доставка по Беларуси. Отзывы, описание, ноты.`;
+
   const structuredData = {
     "@context": "https://schema.org/",
     "@type": "Product",
@@ -144,13 +176,39 @@ export default function ProductDetails() {
       "@type": "Offer",
       "url": window.location.href,
       "priceCurrency": "BYN",
-      "price": product.price,
-      "availability": "https://schema.org/InStock"
+      "price": selectedVariant ? selectedVariant.price : product.price,
+      "priceValidUntil": "2027-12-31",
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": selectedVariant && selectedVariant.stock > 0 
+        ? "https://schema.org/InStock" 
+        : "https://schema.org/OutOfStock"
     }
   };
 
-  const pageTitle = product.seoTitle || `${product.name} — ${product.brand} | Arhetip`;
-  const pageDescription = product.seoDescription || (language === 'be' && product.description_be ? product.description_be : product.description).substring(0, 160);
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": language === 'be' ? "Галоўная" : "Главная",
+        "item": window.location.origin
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": language === 'be' ? "Каталог" : "Каталог",
+        "item": `${window.location.origin}/catalog`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": product.name,
+        "item": window.location.href
+      }
+    ]
+  };
 
   return (
     <motion.div 
@@ -158,6 +216,14 @@ export default function ProductDetails() {
       animate={{ opacity: 1, y: 0 }}
       className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
     >
+      <Breadcrumbs 
+        items={[
+          { label: t('catalog') || (language === 'be' ? 'Каталог' : 'Каталог'), path: '/catalog' },
+          { label: product.brand, path: `/catalog?brand=${product.brand}` },
+          { label: product.name }
+        ]} 
+      />
+
       <AnimatePresence>
         {flyingItems.map(item => {
           const cartButton = document.getElementById('cart-button');
@@ -208,9 +274,12 @@ export default function ProductDetails() {
         <meta property="product:brand" content={product.brand} />
         <meta property="product:price:amount" content={product.price.toString()} />
         <meta property="product:price:currency" content="BYN" />
-        <link rel="canonical" href={`${window.location.origin}/catalog/${product.slug}`} />
+        <link rel="canonical" href={`https://archetype.by/catalog/${product.slug}`} />
         <script type="application/ld+json">
           {JSON.stringify(structuredData)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbData)}
         </script>
       </Helmet>
 
@@ -230,6 +299,8 @@ export default function ProductDetails() {
               alt={product.name} 
               className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
               referrerPolicy="no-referrer"
+              loading="lazy"
+              decoding="async"
             />
           </div>
           {product.images && product.images.length > 0 && (
@@ -242,7 +313,7 @@ export default function ProductDetails() {
                     : 'border-transparent opacity-50 hover:opacity-100 hover:border-brand-accent/30'
                 }`}
               >
-                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
               </button>
               {product.images.map((img, idx) => (
                 <button
@@ -254,7 +325,7 @@ export default function ProductDetails() {
                       : 'border-transparent opacity-50 hover:opacity-100 hover:border-brand-accent/30'
                   }`}
                 >
-                  <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>
@@ -265,7 +336,9 @@ export default function ProductDetails() {
           <div className="space-y-8">
             <div>
               <p className="text-sm font-medium uppercase tracking-widest text-brand-muted mb-2">{product.brand}</p>
-              <h1 className="text-4xl md:text-5xl font-serif text-brand-light mb-2 leading-tight">{product.name}</h1>
+              <h1 className="text-4xl md:text-5xl font-serif text-brand-light mb-2 leading-tight">
+                Парфюм {product.brand} {product.name} {product.concentration || 'EDP'} {volumeStr}
+              </h1>
               <div className="flex items-center gap-4 text-brand-muted text-sm">
                 <span>{product.concentration || 'EDP'}</span>
                 <span className="w-px h-4 bg-brand-border" />
@@ -365,12 +438,47 @@ export default function ProductDetails() {
                 <span>{t('addToCart')}</span>
               </motion.button>
             </div>
+
+            {/* NEW: Buy in 1 click, Delivery and Originality info */}
+            <div className="mt-8 space-y-6">
+              <button 
+                onClick={() => setIsCallbackOpen(true)}
+                className="w-full py-3 border border-brand-accent text-brand-accent rounded-xl text-sm font-medium uppercase tracking-widest hover:bg-brand-accent/5 transition-colors"
+              >
+                {language === 'be' ? 'Купіць у 1 клік' : 'Купить в 1 клик'}
+              </button>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
+                  <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
+                    <Truck className="w-4 h-4 text-brand-accent" />
+                    <span>{language === 'be' ? 'Дастаўка' : 'Доставка'}</span>
+                  </div>
+                  <p className="text-[10px] text-brand-muted leading-relaxed">
+                    {language === 'be' 
+                      ? 'Самавываз — бясплатна. Дастаўка па Беларусі — 1-3 дні. Бясплатна ад 150 BYN.' 
+                      : 'Самовывоз — бесплатно. Доставка по Беларуси — 1-3 дня. Бесплатно от 150 BYN.'}
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
+                  <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
+                    <CheckCircle className="w-4 h-4 text-brand-accent" />
+                    <span>{language === 'be' ? 'Гарантыя' : 'Гарантия'}</span>
+                  </div>
+                  <p className="text-[10px] text-brand-muted leading-relaxed">
+                    {language === 'be' 
+                      ? '100% арыгінальная прадукцыя. Маем усе неабходныя сертыфікаты якасці.' 
+                      : '100% оригинальная продукция. Имеем все необходимые сертификаты качества.'}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="mt-16 prose prose-invert max-w-none">
-        <p className="text-brand-muted leading-relaxed text-lg font-light">
+        <p className="text-brand-muted leading-relaxed text-lg font-light mb-12">
           {language === 'be' && product.description_be ? product.description_be : product.description}
         </p>
       </div>
@@ -383,6 +491,97 @@ export default function ProductDetails() {
             product={product}
           />
           <RecentlyViewed currentProductId={product.id} />
+
+          {/* Technical / Reference Information at the very bottom */}
+          <div className="mt-24 pt-12 border-t border-brand-border/30 opacity-40 hover:opacity-100 transition-opacity duration-500 max-w-6xl mx-auto px-4">
+            <h3 className="text-[10px] uppercase tracking-[0.3em] text-brand-muted mb-12 text-center font-medium">
+              {language === 'be' ? 'Тэхнічная інфармацыя' : 'Справочная информация'}
+            </h3>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
+              <div className="space-y-4">
+                <h4 className="text-[9px] uppercase tracking-widest text-brand-accent font-bold">{language === 'be' ? 'Канструкцыя' : 'Конструкция'}</h4>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Брэнд' : 'Бренд'}</dt>
+                    <dd className="text-xs text-brand-light font-light">{product.brand}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Пол' : 'Пол'}</dt>
+                    <dd className="text-xs text-brand-light font-light">
+                      {product.gender === 'Male' ? (language === 'be' ? 'Мужчынскі' : 'Мужской') : 
+                       product.gender === 'Female' ? (language === 'be' ? 'Жаночы' : 'Женский') : 
+                       (language === 'be' ? 'Унісекс' : 'Унисекс')}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-[9px] uppercase tracking-widest text-brand-accent font-bold">{language === 'be' ? 'Параметры' : 'Параметры'}</h4>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Канцэнтрацыя' : 'Концентрация'}</dt>
+                    <dd className="text-xs text-brand-light font-light">
+                      {product.concentration === 'Parfum' ? (language === 'be' ? 'Духі' : 'Духи') :
+                       product.concentration === 'EDP' ? (language === 'be' ? 'Парфумерная вада' : 'Парфюмерная вода') :
+                       product.concentration === 'EDT' ? (language === 'be' ? 'Туалетная вада' : 'Туалетная вода') :
+                       product.concentration === 'Cologne' ? (language === 'be' ? 'Адэкалон' : 'Одеколон') :
+                       (product.concentration || (language === 'be' ? 'Парфумерная вада' : 'Парфюмерная вода'))}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Сямейства' : 'Семейство'}</dt>
+                    <dd className="text-xs text-brand-light font-light">{(language === 'be' && product.scentFamilies_be ? product.scentFamilies_be : product.scentFamilies).join(', ')}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-[9px] uppercase tracking-widest text-brand-accent font-bold">{language === 'be' ? 'Піраміда нот' : 'Пирамида нот'}</h4>
+                <dl className="space-y-3">
+                  {topNotesList.length > 0 && (
+                    <div>
+                      <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Верхнія' : 'Верхние'}</dt>
+                      <dd className="text-[10px] text-brand-light font-light leading-relaxed">{topNotesList.join(', ')}</dd>
+                    </div>
+                  )}
+                  {parseNotes(product.heartNotes).length > 0 && (
+                    <div>
+                      <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Сэрца' : 'Сердце'}</dt>
+                      <dd className="text-[10px] text-brand-light font-light leading-relaxed">{parseNotes(product.heartNotes).join(', ')}</dd>
+                    </div>
+                  )}
+                  {baseNotesList.length > 0 && (
+                    <div>
+                      <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'База' : 'База'}</dt>
+                      <dd className="text-[10px] text-brand-light font-light leading-relaxed">{baseNotesList.join(', ')}</dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-[9px] uppercase tracking-widest text-brand-accent font-bold">{language === 'be' ? 'Выкарыстанне' : 'Использование'}</h4>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Аб\'ёмы' : 'Объемы'}</dt>
+                    <dd className="text-xs text-brand-light font-light">{product.variants?.map(v => v.size).join(', ') || volumeStr}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{t('unpLabel')}</dt>
+                    <dd className="text-xs text-brand-light font-light">{t('authenticatedOriginal')}</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </div>
+          
+          <CallbackForm 
+            isOpen={isCallbackOpen} 
+            onClose={() => setIsCallbackOpen(false)} 
+            productName={`${product.brand} ${product.name}`}
+          />
         </>
       )}
 
@@ -430,6 +629,8 @@ export default function ProductDetails() {
                 alt={`${product.name} gallery image ${fullscreenImageIndex + 1}`}
                 className="max-w-full max-h-full object-contain rounded-xl"
                 referrerPolicy="no-referrer"
+                loading="lazy"
+                decoding="async"
               />
             </div>
           </motion.div>

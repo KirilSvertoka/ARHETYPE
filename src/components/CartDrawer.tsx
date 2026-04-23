@@ -6,6 +6,7 @@ import { useLanguage } from './LanguageProvider';
 import { getVariantType } from '../types';
 import { europostOffices } from '../data/europostOffices';
 import { belpostOffices } from '../data/belpostOffices';
+import { trackBeginCheckout, trackPurchase } from '../utils/analytics';
 
 export default function CartDrawer() {
   const { items, isCartOpen, setIsCartOpen, updateQuantity, total, clearCart, justAdded } = useCart();
@@ -13,6 +14,12 @@ export default function CartDrawer() {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  useEffect(() => {
+    if (isCheckingOut && !isSuccess) {
+      trackBeginCheckout(items, total);
+    }
+  }, [isCheckingOut, isSuccess]);
   const [customerData, setCustomerData] = useState({ 
     name: '', 
     phone: '',
@@ -85,30 +92,37 @@ export default function CartDrawer() {
       // Simulate processing delay
       await new Promise(resolve => setTimeout(resolve, 1500));
 
+      const orderPayload = {
+        customer_name: customerData.name,
+        customer_phone: customerData.phone,
+        delivery_method: deliveryMethodText,
+        delivery_address: fullAddress,
+        comment: customerData.comment,
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          brand: item.brand,
+          size: item.selectedVariantSize,
+          selectedVariantId: item.selectedVariantId,
+          selectedVariantSize: item.selectedVariantSize,
+          imageUrl: item.imageUrl
+        })),
+        total
+      };
+
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name: customerData.name,
-          customer_phone: customerData.phone,
-          delivery_method: deliveryMethodText,
-          delivery_address: fullAddress,
-          comment: customerData.comment,
-          items: items.map(item => ({
-            id: item.id,
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price,
-            selectedVariantId: item.selectedVariantId,
-            selectedVariantSize: item.selectedVariantSize,
-            imageUrl: item.imageUrl
-          })),
-          total
-        })
+        body: JSON.stringify(orderPayload)
       });
 
       if (res.ok) {
+        const orderData = await res.json();
+        const orderId = orderData.orderId || Date.now().toString();
         setIsSuccess(true);
+        trackPurchase(orderId, orderPayload.items, total);
         clearCart();
       } else {
         const data = await res.json();
@@ -162,7 +176,7 @@ export default function CartDrawer() {
                 )}
                 <h2 className="text-2xl font-serif text-brand-light flex items-center gap-2">
                   <ShoppingBag className="w-6 h-6" />
-                  {isSuccess ? t('orderSuccess') : (isCheckingOut ? 'Оформление заказа' : t('cart'))}
+                  {isSuccess ? t('orderSuccess') : (isCheckingOut ? t('checkoutTitle') : t('cart'))}
                 </h2>
               </div>
               <button onClick={closeDrawer} className="p-2 text-brand-muted hover:text-brand-accent transition-colors">

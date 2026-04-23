@@ -146,7 +146,8 @@ export interface CMSPage {
   title_be?: string;
   content: string;
   content_be?: string;
-  updatedAt: string;
+  updated_at: string;
+  created_at?: string;
 }
 
 export interface HomeConfig {
@@ -165,10 +166,16 @@ export interface GeneralSettings {
   aboutPhoto: string;
   instagram: string;
   telegram: string;
+  viber?: string;
+  whatsapp?: string;
   email: string;
   phone: string;
+  workingHours: string;
+  workingHours_be?: string;
   address: string;
   address_be?: string;
+  unp?: string;
+  bankDetails?: string;
   aboutTitle: string;
   aboutTitle_be?: string;
   aboutDescription: string;

@@ -74,6 +74,24 @@ export default function Home() {
 
   const activeSlide = config.hero.slides[currentSlide] || config.hero.slides[0];
 
+  const orgData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "АРХЕТИП",
+    "url": "https://archetype.by",
+    "logo": "https://archetype.by/favicon.svg",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Grodno",
+      "addressCountry": "BY"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+37529XXXXXXX",
+      "contactType": "customer service"
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -87,10 +105,13 @@ export default function Home() {
         <meta property="og:title" content="АРХЕТИП | Элитная нишевая парфюмерия" />
         <meta property="og:description" content="Эксклюзивные ароматы для ценителей. Найдите свой идеальный парфюм в нашей коллекции." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={window.location.origin} />
+        <meta property="og:url" content="https://archetype.by" />
         <meta property="og:image" content={config.hero.slides[0]?.image} />
         <meta name="twitter:card" content="summary_large_image" />
-        <link rel="canonical" href={window.location.origin} />
+        <link rel="canonical" href="https://archetype.by" />
+        <script type="application/ld+json">
+          {JSON.stringify(orgData)}
+        </script>
       </Helmet>
 
       {/* Hero Section */}

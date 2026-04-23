@@ -16,6 +16,24 @@ export default function Contacts() {
       .catch(console.error);
   }, []);
 
+  const orgData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "АРХЕТИП",
+    "url": "https://archetype.by",
+    "logo": "https://archetype.by/favicon.svg",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Grodno",
+      "addressCountry": "BY"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": settings?.phone || "+37529XXXXXXX",
+      "contactType": "customer service"
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -23,9 +41,12 @@ export default function Contacts() {
       className="max-w-3xl mx-auto space-y-12 px-4 sm:px-6 lg:px-8 py-12"
     >
       <Helmet>
-        <title>{language === 'ru' ? 'Контакты' : 'Кантакты'} | Arhetip</title>
+        <title>{language === 'ru' ? 'Контакты' : 'Кантакты'} | АРХЕТИП</title>
         <meta name="description" content={language === 'ru' ? 'Свяжитесь с нами для консультации по выбору аромата.' : 'Звяжыцеся з намі для кансультацыі па выбары водару.'} />
-        <link rel="canonical" href={`${window.location.origin}/contacts`} />
+        <link rel="canonical" href="https://archetype.by/contacts" />
+        <script type="application/ld+json">
+          {JSON.stringify(orgData)}
+        </script>
       </Helmet>
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-serif text-brand-light">

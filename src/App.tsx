@@ -14,6 +14,7 @@ import ProductDetails from './pages/ProductDetails';
 import Contacts from './pages/Contacts';
 import Reviews from './pages/Reviews';
 import About from './pages/About';
+import Page from './pages/Page';
 import NotFound from './pages/NotFound';
 import Forbidden from './pages/Forbidden';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -54,6 +55,7 @@ export default function App() {
                     <Route path="catalog/:slug" element={<ProductDetails />} />
                     <Route path="contacts" element={<Contacts />} />
                     <Route path="about" element={<About />} />
+                    <Route path="p/:id" element={<Page />} />
                     <Route path="wishlist" element={<Wishlist />} />
                     <Route path={adminPath} element={<AdminPanel />} />
                     <Route path="forbidden" element={<Forbidden />} />

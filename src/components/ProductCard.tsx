@@ -131,8 +131,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             transition={{ duration: 0.4, ease: "easeOut" }}
             src={product.imageUrl} 
             alt={product.name} 
-            className="absolute inset-0 object-cover w-full h-full"
+            className="absolute inset-0 object-cover w-full h-full bg-brand-bg relative z-0 before:absolute before:inset-0 before:-z-10 before:bg-brand-bg"
             referrerPolicy="no-referrer"
+            loading="lazy"
+            decoding="async"
           />
           
           {/* Dark overlay on hover */}
@@ -218,7 +220,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                         whileTap={{ scale: 0.95 }}
                         onClick={handleAddToCart}
                         disabled={product.variants && product.variants.length > 0 && !selectedVariantId}
-                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-accent text-white rounded-xl font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-accent text-white rounded-xl font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 sm:py-2.5"
                       >
                         <ShoppingBag className="w-4 h-4" />
                         <span>{t('addToCart')}</span>

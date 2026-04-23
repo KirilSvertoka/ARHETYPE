@@ -2,5 +2,18 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /forbidden
+Disallow: /cart
+Disallow: /checkout
+Disallow: /profile
+Disallow: /*?search=
+Disallow: /*?sort=
+Disallow: /*?brand=
+Disallow: /*?gender=
+Disallow: /*?families=
+Disallow: /*?accords=
+Disallow: /*?category=
+Disallow: /*?utm_
+Disallow: /*&utm_
 
-Sitemap: https://ais-pre-jh4opa624el2qtdmd3kuys-422099355245.europe-west2.run.app/sitemap.xml
+Host: https://archetype.by
+Sitemap: https://archetype.by/sitemap.xml

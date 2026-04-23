@@ -4,9 +4,10 @@ import { useLocation } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import CallbackForm from '../components/CallbackForm';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, MessageCircle, X, ChevronDown, Check, SlidersHorizontal, Filter } from 'lucide-react';
+import { Search, MessageCircle, X, ChevronDown, Check, SlidersHorizontal, Filter, Grid2X2, Square } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { useLanguage } from '../components/LanguageProvider';
+import Breadcrumbs from '../components/Breadcrumbs';
 
 export default function Storefront() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,10 +20,26 @@ export default function Storefront() {
   const [selectedFamilies, setSelectedFamilies] = useState<string[]>([]);
   const [activeBrand, setActiveBrand] = useState<string>('All');
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [accordsList, setAccordsList] = useState<string[]>([]);
+  const [selectedAccords, setSelectedAccords] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [sortBy, setSortBy] = useState<string>('name-asc');
+  const [mobileGridCols, setMobileGridCols] = useState<1 | 2>(1);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [suggestions, setSuggestions] = useState<{type: string, text: string, id?: number}[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -43,6 +60,21 @@ export default function Storefront() {
   }, [searchQuery]);
 
   useEffect(() => {
+    if (searchQuery.trim().length > 1) {
+      fetch(`/api/suggestions?q=${encodeURIComponent(searchQuery)}`)
+        .then(res => res.json())
+        .then(data => {
+          setSuggestions(data);
+          setShowSuggestions(true);
+        })
+        .catch(console.error);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [searchQuery]);
+
+  useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       setIsScrolled(scrollPosition > 300);
@@ -51,7 +83,7 @@ export default function Storefront() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch brands on mount
+  // Fetch brands and accords on mount
   useEffect(() => {
     fetch('/api/brands')
       .then(res => {
@@ -59,6 +91,14 @@ export default function Storefront() {
         return res.json();
       })
       .then(data => setBrands(['All', ...data]))
+      .catch(console.error);
+
+    fetch('/api/accords')
+      .then(res => {
+        if (!res.ok) throw new Error(`Accords fetch failed: ${res.status}`);
+        return res.json();
+      })
+      .then(data => setAccordsList(data))
       .catch(console.error);
   }, []);
 
@@ -76,6 +116,9 @@ export default function Storefront() {
       const mappedFamilies = selectedFamilies.map(f => f.replace('family', ''));
       params.append('families', mappedFamilies.join(','));
     }
+    if (selectedAccords.length > 0) {
+      params.append('accords', selectedAccords.join(','));
+    }
     params.append('sort', sortBy);
 
     fetch(`/api/products?${params.toString()}`)
@@ -91,7 +134,7 @@ export default function Storefront() {
         console.error('Failed to fetch products', err);
         setLoading(false);
       });
-  }, [debouncedSearchQuery, activeBrand, activeGenderTab, selectedFamilies, sortBy, activeCategory]);
+  }, [debouncedSearchQuery, activeBrand, activeGenderTab, selectedFamilies, selectedAccords, sortBy, activeCategory]);
 
   const scentFamilies = [
     { id: 'familyFloral', label: t('familyFloral') },
@@ -114,22 +157,87 @@ export default function Storefront() {
     );
   };
 
+  const toggleAccord = (accord: string) => {
+    setSelectedAccords(prev =>
+      prev.includes(accord)
+        ? prev.filter(a => a !== accord)
+        : [...prev, accord]
+    );
+  };
+
   const resetFilters = () => {
     setActiveGenderTab('All');
     setSelectedFamilies([]);
+    setSelectedAccords([]);
     setActiveBrand('All');
     setActiveCategory('All');
     setSortBy('name-asc');
     setSearchQuery('');
   };
 
-  const activeFiltersCount = (activeGenderTab !== 'All' ? 1 : 0) + selectedFamilies.length + (activeBrand !== 'All' ? 1 : 0) + (sortBy !== 'name-asc' ? 1 : 0) + (activeCategory !== 'All' ? 1 : 0);
+  const activeFiltersCount = (activeGenderTab !== 'All' ? 1 : 0) + selectedFamilies.length + selectedAccords.length + (activeBrand !== 'All' ? 1 : 0) + (sortBy !== 'name-asc' ? 1 : 0) + (activeCategory !== 'All' ? 1 : 0);
 
   const scrollToCallback = () => {
     const element = document.getElementById('callback-section');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const getCategoryName = () => {
+    let parts = [];
+    
+    // Brand part (usually first for specific brands)
+    if (activeBrand !== 'All') {
+      parts.push(activeBrand);
+    }
+
+    // Gender part
+    if (activeGenderTab === 'Male') parts.push(language === 'be' ? 'Мужчынская парфумерыя' : 'Мужская парфюмерия');
+    else if (activeGenderTab === 'Female') parts.push(language === 'be' ? 'Жаночая парфумерыя' : 'Женская парфюмерия');
+    else if (activeGenderTab === 'Unisex') parts.push(language === 'be' ? 'Унісекс парфумерыя' : 'Унисекс парфюмерия');
+    else if (activeBrand === 'All') parts.push(language === 'be' ? 'Нішавая парфумерыя' : 'Нишевая парфюмерия');
+    else parts.push(language === 'be' ? 'парфумерыя' : 'парфюмерия');
+    
+    // Category part (suffix)
+    if (activeCategory === 'decant') parts.push(language === 'be' ? '(адліванты)' : '(отливанты)');
+    else if (activeCategory === 'perfume') parts.push(language === 'be' ? '(цэлыя флаконы)' : '(целые флаконы)');
+    
+    // Family part
+    if (selectedFamilies.length === 1) {
+      const family = scentFamilies.find(f => f.id === selectedFamilies[0]);
+      if (family) parts.push(`— ${family.label.toLowerCase()}`);
+    }
+
+    return parts.join(' ');
+  };
+
+  const categoryName = getCategoryName();
+  // Index Brand, Gender, and Brand+Gender intersections. Others noindex.
+  const isNoIndex = !!debouncedSearchQuery || (selectedFamilies.length > 0 && activeBrand === 'All') || (selectedAccords.length > 0);
+  
+  const minPrice = products.length > 0 ? Math.min(...products.flatMap(p => p.variants && p.variants.length > 0 ? p.variants.map(v => v.price) : [p.price])) : 0;
+
+  const pageTitle = `${categoryName} — купить в Гродно/Беларуси цены в интернет-магазине АРХЕТИП`;
+  const pageDescription = `Предлагаем купить ${categoryName} оригинал. Большой выбор, гарантия качества, доставка по Гродно и Беларуси. ${minPrice > 0 ? `Цены от ${minPrice.toFixed(2)} руб.` : ''}`;
+
+  const breadcrumbData = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": language === 'be' ? "Галоўная" : "Главная",
+        "item": window.location.origin
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": categoryName,
+        "item": window.location.href
+      }
+    ]
   };
 
   return (
@@ -140,17 +248,31 @@ export default function Storefront() {
       className="pb-24 relative"
     >
       <Helmet>
-        <title>Каталог нишевой парфюмерии | Arhetip</title>
-        <meta name="description" content="Широкий выбор селективных ароматов. Фильтруйте по брендам, семействам и полу. Найдите свой идеальный парфюм в нашем каталоге." />
-        <meta property="og:title" content="Каталог Arhetip | Эксклюзивные ароматы" />
-        <meta property="og:description" content="Исследуйте нашу коллекцию нишевой парфюмерии. Лучшие бренды и уникальные композиции." />
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        {isNoIndex && <meta name="robots" content="noindex, nofollow" />}
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href={`${window.location.origin}/catalog`} />
+        <link rel="canonical" href="https://archetype.by/catalog" />
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbData)}
+        </script>
       </Helmet>
 
-      <section className="text-center max-w-3xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6">
+        <Breadcrumbs 
+          items={[
+            { label: t('catalog') || (language === 'be' ? 'Каталог' : 'Каталог'), path: '/catalog' },
+            ...(activeBrand !== 'All' ? [{ label: activeBrand }] : []),
+            ...(activeGenderTab !== 'All' ? [{ label: activeGenderTab === 'Male' ? (language === 'be' ? 'Мужчынская' : 'Мужская') : activeGenderTab === 'Female' ? (language === 'be' ? 'Жаночая' : 'Женская') : (language === 'be' ? 'Унісекс' : 'Унисекс') }] : [])
+          ]} 
+        />
+      </div>
+
+      <section className="text-center max-w-3xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 pt-4 mb-8">
         <h1 className="text-5xl md:text-6xl font-serif tracking-tight text-brand-light leading-tight">
-          {t('ourCollection')}
+          {categoryName}
         </h1>
         <p className="text-lg text-brand-muted font-light leading-relaxed">
           {t('exploreCatalog')}
@@ -160,7 +282,7 @@ export default function Storefront() {
       <div className="sticky top-[96px] z-40 bg-brand-bg border-b border-brand-border mb-8 sm:mb-12 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-4">
-            <div className="relative flex-1">
+            <div className="relative flex-1" ref={searchRef}>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-brand-muted" />
               </div>
@@ -170,25 +292,68 @@ export default function Storefront() {
                 placeholder={t('search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  if (suggestions.length > 0) setShowSuggestions(true);
+                }}
               />
+              <AnimatePresence>
+                {showSuggestions && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-brand-bg border border-brand-border rounded-xl shadow-xl overflow-hidden z-50"
+                  >
+                    <ul>
+                      {suggestions.map((sugg, idx) => (
+                        <li key={idx}>
+                          <button
+                            onClick={() => {
+                              setSearchQuery(sugg.text);
+                              setShowSuggestions(false);
+                              if (sugg.type === 'brand') {
+                                setActiveBrand(sugg.text);
+                              }
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-brand-hover text-sm border-b border-brand-border/50 last:border-b-0 flex items-center justify-between"
+                          >
+                            <span className="text-brand-light font-medium">{sugg.text}</span>
+                            <span className="text-xs text-brand-muted uppercase tracking-wider">{sugg.type === 'brand' ? 'Бренд' : 'Аромат'}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
             
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${
-                isFilterOpen || activeFiltersCount > 0
-                  ? 'bg-brand-accent text-white border-brand-accent'
-                  : 'bg-brand-hover text-brand-muted border-brand-border hover:border-brand-accent/40'
-              }`}
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('filters')}</span>
-              {activeFiltersCount > 0 && (
-                <span className="bg-brand-bg text-brand-accent text-xs rounded-full w-5 h-5 flex items-center justify-center border border-brand-accent/20">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setMobileGridCols(prev => prev === 1 ? 2 : 1)}
+                className="sm:hidden p-2.5 text-brand-muted hover:text-brand-accent transition-colors border border-brand-border rounded-xl hover:bg-brand-hover bg-white"
+                title="Изменить вид сетки"
+              >
+                {mobileGridCols === 1 ? <Grid2X2 className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+              </button>
+
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                  isFilterOpen || activeFiltersCount > 0
+                    ? 'bg-brand-accent text-white border-brand-accent'
+                    : 'bg-brand-hover text-brand-muted border-brand-border hover:border-brand-accent/40'
+                }`}
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                <span className="hidden sm:inline">{t('filters')}</span>
+                {activeFiltersCount > 0 && (
+                  <span className="bg-brand-bg text-brand-accent text-xs rounded-full w-5 h-5 flex items-center justify-center border border-brand-accent/20">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           <AnimatePresence>
@@ -353,6 +518,40 @@ export default function Storefront() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Accords Filter */}
+                    {accordsList.length > 0 && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
+                            {language === 'be' ? 'Акорды' : 'Аккорды'}
+                          </h3>
+                          {selectedAccords.length > 0 && (
+                            <button 
+                              onClick={() => setSelectedAccords([])}
+                              className="text-xs text-brand-accent hover:underline font-medium"
+                            >
+                              {t('reset')}
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {accordsList.map(accord => (
+                            <button
+                              key={accord}
+                              onClick={() => toggleAccord(accord)}
+                              className={`px-4 py-2 rounded-full text-xs font-medium uppercase tracking-wider transition-all border ${
+                                selectedAccords.includes(accord)
+                                  ? 'bg-brand-accent text-white border-brand-accent'
+                                  : 'bg-white text-brand-muted border-brand-border hover:border-brand-accent/40 hover:text-brand-accent'
+                              }`}
+                            >
+                              {accord}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-6 border-t border-brand-border flex gap-4 bg-brand-bg">
@@ -394,7 +593,7 @@ export default function Storefront() {
           </div>
         )}
         
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 bg-brand-border overflow-hidden transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid ${mobileGridCols === 1 ? 'grid-cols-1' : 'grid-cols-2'} sm:grid-cols-2 lg:grid-cols-3 gap-1.5 transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
           {products.map((product, index) => {
             return (
               <div key={product.id} className="bg-brand-bg">
@@ -439,7 +638,7 @@ export default function Storefront() {
         transition={{ delay: 1, duration: 0.3 }}
         onClick={scrollToCallback}
         className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 p-4 bg-brand-accent text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-        aria-label="Contact us"
+        aria-label={t('contactUs')}
       >
         <MessageCircle className="w-6 h-6" />
       </motion.button>
