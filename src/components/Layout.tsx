@@ -172,15 +172,21 @@ export default function Layout() {
                   <Link to="/catalog" className="text-brand-muted hover:text-brand-accent transition-colors" title={t('search')}>
                     <Search className="w-4 h-4" />
                   </Link>
-                  <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent transition-colors">
-                    <Instagram className="w-4 h-4" />
-                  </a>
-                  <a href="https://t.me/username" target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent transition-colors">
-                    <Send className="w-4 h-4" />
-                  </a>
-                  <a href="mailto:hello@arhetip.com" className="text-brand-muted hover:text-brand-accent transition-colors">
-                    <Mail className="w-4 h-4" />
-                  </a>
+                  {settings?.instagram && (
+                    <a href={settings.instagram} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent transition-colors">
+                      <Instagram className="w-4 h-4" />
+                    </a>
+                  )}
+                  {settings?.telegram && (
+                    <a href={settings.telegram} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent transition-colors">
+                      <Send className="w-4 h-4" />
+                    </a>
+                  )}
+                  {settings?.email && (
+                    <a href={`mailto:${settings.email}`} className="text-brand-muted hover:text-brand-accent transition-colors">
+                      <Mail className="w-4 h-4" />
+                    </a>
+                  )}
                 </div>
 
                 <Link
@@ -303,15 +309,21 @@ export default function Layout() {
                 </div>
 
                 <div className="mt-12 flex gap-6">
-                  <a href={settings?.instagram || "https://instagram.com"} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent">
-                    <Instagram className="w-6 h-6" />
-                  </a>
-                  <a href={settings?.telegram || "https://t.me/username"} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent">
-                    <Send className="w-6 h-6" />
-                  </a>
-                  <a href={`mailto:${settings?.email || 'hello@arhetip.com'}`} className="text-brand-muted hover:text-brand-accent">
-                    <Mail className="w-6 h-6" />
-                  </a>
+                  {settings?.instagram && (
+                    <a href={settings.instagram} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent">
+                      <Instagram className="w-6 h-6" />
+                    </a>
+                  )}
+                  {settings?.telegram && (
+                    <a href={settings.telegram} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent">
+                      <Send className="w-6 h-6" />
+                    </a>
+                  )}
+                  {settings?.email && (
+                    <a href={`mailto:${settings.email}`} className="text-brand-muted hover:text-brand-accent">
+                      <Mail className="w-6 h-6" />
+                    </a>
+                  )}
                 </div>
               </div>
             </motion.div>
