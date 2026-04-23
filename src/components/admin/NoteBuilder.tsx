@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 import { Note } from '../../types';
-import { Plus, Trash2, ChevronDown, Check } from 'lucide-react';
-import * as Icons from 'lucide-react';
-
-const ICONS_LIST = [
-  'Leaf', 'Trees', 'Wind', 'Droplet', 'Flame', 'Sparkles', 'Coffee', 'Feather', 'Sun', 'Moon', 'Cloud', 'Clover',
-  'Citrus', 'Cherry', 'Apple', 'NutOff', 'Shell', 'Wine', 'Mountain', 'Waves', 'Star', 'Droplets',
-  'Zap', 'Snowflake', 'Sprout', 'Wheat', 'Grape', 'Candy', 'Pipette', 'FlaskConical', 'Gem', 'Crown',
-  'TreePine', 'TreeDeciduous', 'Beaker', 'Hexagon', 'Circle', 'Sparkle', 'Target', 'Compass',
-  'Flower', 'Flower2', 'Palmtree', 'Mushroom', 'Rose', 'Tent', 'ThermometerSun', 'GlassWater', 'Martini'
-] as const;
+import { Plus, Trash2, ChevronDown, Check, Circle as CircleIcon } from 'lucide-react';
+import { IconMap, ICONS_LIST } from '../../utils/icons';
 
 interface NoteBuilderProps {
   title: string;
@@ -50,7 +42,7 @@ export default function NoteBuilder({ title, notes, onChange }: NoteBuilderProps
       </div>
 
       {notes.map((note, idx) => {
-        const CurrentIcon = note.icon && (Icons as any)[note.icon] ? (Icons as any)[note.icon] : Icons.Circle;
+        const CurrentIcon = note.icon && IconMap[note.icon] ? IconMap[note.icon] : CircleIcon;
 
         return (
           <div key={idx} className="flex flex-col gap-3 bg-brand-hover p-3 rounded-xl border border-brand-border/50">
@@ -75,7 +67,7 @@ export default function NoteBuilder({ title, notes, onChange }: NoteBuilderProps
                     />
                     <div className="absolute top-12 left-0 z-50 w-64 h-64 overflow-y-auto bg-brand-bg border border-brand-border rounded-xl shadow-xl shadow-black/10 p-2 grid grid-cols-4 gap-2">
                       {ICONS_LIST.map((iconName) => {
-                        const IconCmp = (Icons as any)[iconName];
+                        const IconCmp = IconMap[iconName];
                         if (!IconCmp) return null;
                         const isSelected = note.icon === iconName;
                         return (

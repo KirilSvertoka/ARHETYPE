@@ -2,7 +2,7 @@ import React from 'react';
 import { Product } from '../types';
 import { useLanguage } from './LanguageProvider';
 import { motion } from 'motion/react';
-import * as Icons from 'lucide-react';
+import { IconMap } from '../utils/icons';
 
 interface ScentProfileBlockProps {
   product: Product;
@@ -10,7 +10,7 @@ interface ScentProfileBlockProps {
 
 const renderIcon = (iconName?: string) => {
   if (!iconName) return null;
-  const IconCmp = (Icons as any)[iconName];
+  const IconCmp = IconMap[iconName];
   if (!IconCmp) return null;
   return <IconCmp className="w-3.5 h-3.5 inline-block mr-1.5 opacity-70" />;
 };
