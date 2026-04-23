@@ -275,7 +275,6 @@ export default function AdminPanel() {
             { id: 'orders', label: 'Заказы', icon: ShoppingBag },
             { id: 'inventory', label: 'Товары', icon: Package },
             { id: 'customers', label: 'Клиенты', icon: Users },
-            { id: 'reviews', label: 'Отзывы', icon: MessageSquare },
             { id: 'promo', label: 'Промокоды', icon: Tag },
             { id: 'carts', label: 'Брошенные корзины', icon: ShoppingCart },
             { id: 'reports', label: 'Отчеты', icon: BarChart3 },
@@ -329,7 +328,6 @@ export default function AdminPanel() {
               {activeTab === 'orders' && 'Заказы'}
               {activeTab === 'inventory' && 'Товары'}
               {activeTab === 'customers' && 'Клиенты'}
-              {activeTab === 'reviews' && 'Отзывы'}
               {activeTab === 'promo' && 'Промокоды'}
               {activeTab === 'carts' && 'Брошенные корзины'}
               {activeTab === 'reports' && 'Отчеты'}
@@ -411,16 +409,6 @@ export default function AdminPanel() {
                   loading={loading}
                   pagination={pagination.customers}
                   onPageChange={(page) => fetchUsers(page)}
-                />
-              )}
-              {activeTab === 'reviews' && (
-                <ReviewsView 
-                  reviews={reviews} 
-                  token={token!} 
-                  onUpdate={fetchReviews} 
-                  loading={loading}
-                  pagination={pagination.reviews}
-                  onPageChange={(page) => fetchReviews(page)}
                 />
               )}
               {activeTab === 'promo' && <PromoCodesView token={token!} />}

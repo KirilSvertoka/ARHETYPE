@@ -14,6 +14,7 @@ interface CMSViewProps {
 
 export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage, token, loading, activeSection }: CMSViewProps) {
   const [editingPage, setEditingPage] = useState<CMSPage | null>(null);
+  const [isCreatingPage, setIsCreatingPage] = useState(false);
   const [localHomeConfig, setLocalHomeConfig] = useState<HomeConfig | null>(homeConfig);
   const [localGeneralSettings, setLocalGeneralSettings] = useState<GeneralSettings | null>(null);
 
@@ -132,14 +133,41 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
   const savePage = async () => {
     if (!editingPage) return;
     try {
-      const res = await fetch(`/api/admin/cms/${editingPage.id}`, {
-        method: 'PUT',
+      const isNew = isCreatingPage;
+      const url = isNew ? '/api/admin/cms' : `/api/admin/cms/${editingPage.id}`;
+      const method = isNew ? 'POST' : 'PUT';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(editingPage)
       });
       if (res.ok) {
         setEditingPage(null);
+        setIsCreatingPage(false);
         onUpdatePage();
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || 'Произошла ошибка при сохранении');
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  const deletePage = async (id: string) => {
+    if (!window.confirm('Вы уверены, что хотите удалить эту страницу? Это действие необратимо.')) return;
+    try {
+      const res = await fetch(`/api/admin/cms/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        onUpdatePage();
+        if (editingPage?.id === id) {
+          setEditingPage(null);
+          setIsCreatingPage(false);
+        }
+      } else {
+        alert('Ошибка при удалении');
       }
     } catch (err) { console.error(err); }
   };
@@ -502,17 +530,37 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
 
       {activeSection === 'pages' && (
         <div className="bg-white/5 p-8 rounded-3xl border border-brand-border shadow-sm">
-          <h3 className="text-xl font-serif text-brand-light mb-6">Информационные страницы</h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-serif text-brand-light">Информационные страницы</h3>
+            <button
+              onClick={() => {
+                setEditingPage({ id: '', title: '', content: '', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+                setIsCreatingPage(true);
+              }}
+              className="px-4 py-2 bg-brand-accent text-white rounded-xl hover:bg-brand-accent-hover text-sm font-medium flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Создать страницу
+            </button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {pages.map(page => (
-              <button 
+              <div
                 key={page.id}
-                onClick={() => setEditingPage(page)}
-                className="p-6 bg-white/5 rounded-2xl border border-brand-border text-left hover:border-brand-light transition-all"
+                className="p-6 bg-white/5 rounded-2xl border border-brand-border text-left hover:border-brand-light transition-all flex flex-col justify-between"
               >
-                <h4 className="font-medium text-brand-light">{page.title}</h4>
-                <p className="text-xs text-brand-muted mt-1">Последнее обновление: {new Date(page.updatedAt).toLocaleDateString()}</p>
-              </button>
+                <div>
+                  <h4 className="font-medium text-brand-light">{page.title}</h4>
+                  <p className="text-xs text-brand-muted mt-1 font-mono">/{page.id}</p>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <button onClick={() => { setEditingPage(page); setIsCreatingPage(false); }} className="flex-1 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-brand-border rounded-lg text-sm transition-colors text-brand-light">
+                    Редактировать
+                  </button>
+                  <button onClick={() => deletePage(page.id)} className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg transition-colors" title="Удалить">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -522,10 +570,25 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-brand-bg w-full max-w-4xl rounded-3xl p-8 shadow-2xl max-h-[90vh] overflow-y-auto border border-brand-border">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-serif text-brand-light">Редактирование страницы: {editingPage.title}</h3>
-              <button onClick={() => setEditingPage(null)}><XCircle className="w-6 h-6 text-brand-muted hover:text-brand-light" /></button>
+              <h3 className="text-2xl font-serif text-brand-light">
+                {isCreatingPage ? 'Новая страница' : `Редактирование: ${editingPage.title}`}
+              </h3>
+              <button onClick={() => { setEditingPage(null); setIsCreatingPage(false); }}><XCircle className="w-6 h-6 text-brand-muted hover:text-brand-light" /></button>
             </div>
             <div className="space-y-4">
+              {isCreatingPage && (
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-brand-light">URL код (slug)</label>
+                  <input 
+                    type="text" 
+                    value={editingPage.id}
+                    onChange={e => setEditingPage({...editingPage, id: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')})}
+                    className="w-full px-4 py-2 bg-white/5 border border-brand-border rounded-xl text-brand-light font-mono"
+                    placeholder="напр. about-us, delivery-info"
+                  />
+                  <p className="text-xs text-brand-muted mt-1">Допускаются только латинские буквы, цифры и дефис.</p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium mb-2 text-brand-light">Заголовок (RU)</label>
                 <input 
@@ -562,9 +625,11 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                   className="w-full px-4 py-2 bg-white/5 border border-brand-border rounded-xl font-mono text-sm text-brand-light"
                 />
               </div>
-              <div className="flex justify-end gap-3">
-                <button onClick={() => setEditingPage(null)} className="px-6 py-2 text-brand-muted hover:text-brand-light">Отмена</button>
-                <button onClick={savePage} className="px-6 py-2 bg-brand-accent text-white rounded-xl hover:bg-brand-accent-hover">Сохранить изменения</button>
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => { setEditingPage(null); setIsCreatingPage(false); }} className="px-6 py-2 text-brand-muted hover:text-brand-light">Отмена</button>
+                <button onClick={savePage} className="px-6 py-2 bg-brand-accent text-white rounded-xl hover:bg-brand-accent-hover">
+                  {isCreatingPage ? 'Создать страницу' : 'Сохранить изменения'}
+                </button>
               </div>
             </div>
           </div>

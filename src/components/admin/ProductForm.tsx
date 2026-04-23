@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Product, Note, ProductVariant } from '../../types';
 import { UploadCloud, RefreshCw, Plus, Trash2, Image as ImageIcon, Tag, Layers } from 'lucide-react';
+import NoteBuilder from './NoteBuilder';
 
 interface ProductFormProps {
   token: string;
@@ -110,9 +111,12 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     gender: initialData?.gender || 'Unisex',
     concentration: initialData?.concentration || 'EDP',
     stockThreshold: initialData?.stockThreshold?.toString() || '10',
-    topNotes: initialData ? initialData.topNotes.map(n => n.name).join(', ') : '',
-    heartNotes: initialData ? initialData.heartNotes.map(n => n.name).join(', ') : '',
-    baseNotes: initialData ? initialData.baseNotes.map(n => n.name).join(', ') : '',
+    topNotes: initialData?.topNotes || [],
+    heartNotes: initialData?.heartNotes || [],
+    baseNotes: initialData?.baseNotes || [],
+    accords: initialData?.accords || [],
+    longevity: initialData?.longevity?.toString() || '70',
+    sillage: initialData?.sillage?.toString() || '60',
     scentFamilies: initialData?.scentFamilies || [],
     scentFamilies_be: initialData?.scentFamilies_be || [],
     tags: initialData?.tags?.join(', ') || '',
@@ -200,20 +204,16 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     e.preventDefault();
     setSubmitting(true);
 
-    const parseNotes = (str: string): Note[] => {
-      return str.split(',').map(n => ({
-        name: n.trim(),
-        value: Math.floor(Math.random() * 40) + 20
-      })).filter(n => n.name !== '');
-    };
-
     const payload = {
       ...formData,
       price: parseFloat(formData.price),
       stockThreshold: parseInt(formData.stockThreshold),
-      topNotes: parseNotes(formData.topNotes),
-      heartNotes: parseNotes(formData.heartNotes),
-      baseNotes: parseNotes(formData.baseNotes),
+      topNotes: formData.topNotes,
+      heartNotes: formData.heartNotes,
+      baseNotes: formData.baseNotes,
+      accords: formData.accords,
+      longevity: parseInt(formData.longevity),
+      sillage: parseInt(formData.sillage),
       tags: formData.tags.split(',').map(t => t.trim()).filter(t => t !== ''),
       tags_be: formData.tags_be.split(',').map(t => t.trim()).filter(t => t !== ''),
       season: formData.season.split(',').map(t => t.trim()).filter(t => t !== ''),
@@ -374,26 +374,125 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       </div>
 
       {/* Scent Profile */}
-      <div className="bg-white/5 p-6 rounded-3xl border border-brand-border space-y-6">
+      <div className="bg-transparent p-6 rounded-3xl border border-brand-border space-y-6">
         <div className="flex items-center gap-2 mb-2">
           <h3 className="text-lg font-serif text-brand-light">Пирамида аромата</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Верхние ноты</label>
-            <input type="text" value={formData.topNotes} onChange={e => setFormData({...formData, topNotes: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted" placeholder="напр. Бергамот, Розовый перец" />
+        <div className="grid grid-cols-1 gap-6">
+          <NoteBuilder 
+            title="Верхние ноты" 
+            notes={formData.topNotes as Note[]} 
+            onChange={(notes) => setFormData({...formData, topNotes: notes})} 
+          />
+          <NoteBuilder 
+            title="Средние ноты" 
+            notes={formData.heartNotes as Note[]} 
+            onChange={(notes) => setFormData({...formData, heartNotes: notes})} 
+          />
+          <NoteBuilder 
+            title="Базовые ноты" 
+            notes={formData.baseNotes as Note[]} 
+            onChange={(notes) => setFormData({...formData, baseNotes: notes})} 
+          />
+        </div>
+
+        <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-brand-border">
+          <div className="space-y-1 mt-4">
+            <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Стойкость (0-100)</label>
+            <div className="flex items-center gap-4">
+              <input type="range" min="0" max="100" value={formData.longevity} onChange={e => setFormData({...formData, longevity: e.target.value})} className="flex-1 accent-brand-accent h-1.5 bg-brand-border rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-brand-accent [&::-webkit-slider-thumb]:rounded-full" />
+              <span className="text-brand-light font-medium w-8 text-right">{formData.longevity}%</span>
+            </div>
           </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Средние ноты</label>
-            <input type="text" value={formData.heartNotes} onChange={e => setFormData({...formData, heartNotes: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted" placeholder="напр. Роза, Жасмин" />
+          <div className="space-y-1 mt-4">
+            <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Шлейф (0-100)</label>
+            <div className="flex items-center gap-4">
+              <input type="range" min="0" max="100" value={formData.sillage} onChange={e => setFormData({...formData, sillage: e.target.value})} className="flex-1 accent-brand-accent h-1.5 bg-brand-border rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-brand-accent [&::-webkit-slider-thumb]:rounded-full" />
+              <span className="text-brand-light font-medium w-8 text-right">{formData.sillage}%</span>
+            </div>
           </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Базовые ноты</label>
-            <input type="text" value={formData.baseNotes} onChange={e => setFormData({...formData, baseNotes: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted" placeholder="напр. Сандал, Мускус" />
+        </div>
+
+        <div className="pt-4 border-t border-brand-border mt-4">
+          <div className="flex justify-between items-center mb-4">
+            <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Основные аккорды (визуальные бары)</label>
+            <button
+              type="button"
+              onClick={() => setFormData({...formData, accords: [...formData.accords, { name: '', name_be: '', color: '#ff6b35', value: 80 }]})}
+              className="text-xs flex items-center gap-1 text-brand-accent hover:text-white"
+            >
+              <Plus className="w-4 h-4" /> Добавить аккорд
+            </button>
+          </div>
+          <div className="space-y-3">
+            {formData.accords.map((accord, i) => (
+              <div key={i} className="flex flex-wrap md:flex-nowrap items-center gap-3 bg-brand-hover p-3 rounded-xl border border-brand-border/50">
+                <input
+                  type="text"
+                  value={accord.name}
+                  onChange={e => {
+                    const copy = [...formData.accords];
+                    copy[i].name = e.target.value;
+                    setFormData({...formData, accords: copy});
+                  }}
+                  className="flex-1 px-3 py-2 bg-transparent border border-brand-border rounded-lg text-sm"
+                  placeholder="Название (RU)"
+                />
+                <input
+                  type="text"
+                  value={accord.name_be}
+                  onChange={e => {
+                    const copy = [...formData.accords];
+                    copy[i].name_be = e.target.value;
+                    setFormData({...formData, accords: copy});
+                  }}
+                  className="flex-1 px-3 py-2 bg-transparent border border-brand-border rounded-lg text-sm"
+                  placeholder="Название (BE)"
+                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={accord.color}
+                    onChange={e => {
+                      const copy = [...formData.accords];
+                      copy[i].color = e.target.value;
+                      setFormData({...formData, accords: copy});
+                    }}
+                    className="w-10 h-10 p-1 rounded-lg bg-transparent border border-brand-border cursor-pointer shrink-0"
+                  />
+                  <div className="w-32 flex flex-col gap-1">
+                    <span className="text-[10px] text-brand-muted uppercase">Значение</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={accord.value}
+                      onChange={e => {
+                        const copy = [...formData.accords];
+                        copy[i].value = parseInt(e.target.value);
+                        setFormData({...formData, accords: copy});
+                      }}
+                      className="w-full accent-brand-accent h-1.5 bg-brand-border rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-brand-accent [&::-webkit-slider-thumb]:rounded-full"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const copy = [...formData.accords];
+                    copy.splice(i, 1);
+                    setFormData({...formData, accords: copy});
+                  }}
+                  className="p-2 text-brand-muted hover:text-red-500 transition-colors shrink-0"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
         
-        <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-brand-border mt-4">
           <div>
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1 mb-3 block">Семейства ароматов (RU)</label>
             <div className="flex flex-wrap gap-2">

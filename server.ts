@@ -303,6 +303,7 @@ const migrations = [
   "ALTER TABLE reviews ADD COLUMN admin_reply TEXT",
   "ALTER TABLE orders ADD COLUMN delivery_method TEXT",
   "ALTER TABLE orders ADD COLUMN delivery_address TEXT",
+  "ALTER TABLE products ADD COLUMN accords TEXT DEFAULT '[]'",
   "ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'При получении'",
   "ALTER TABLE orders ADD COLUMN comment TEXT"
 ];
@@ -769,6 +770,7 @@ app.get('/api/products/:slug', (req, res) => {
       topNotes: JSON.parse(product.topNotes),
       heartNotes: JSON.parse(product.heartNotes),
       baseNotes: JSON.parse(product.baseNotes),
+      accords: JSON.parse(product.accords || '[]'),
       tags: JSON.parse(product.tags || '[]'),
       tags_be: JSON.parse(product.tags_be || '[]'),
       variants
@@ -841,6 +843,7 @@ app.get('/api/products', (req, res) => {
         topNotes: JSON.parse(p.topNotes),
         heartNotes: JSON.parse(p.heartNotes),
         baseNotes: JSON.parse(p.baseNotes),
+        accords: JSON.parse(p.accords || '[]'),
         tags: JSON.parse(p.tags || '[]'),
         tags_be: JSON.parse(p.tags_be || '[]'),
         season: JSON.parse(p.season || '[]'),
@@ -1037,6 +1040,25 @@ app.get('/api/admin/cms', requireAuth, (req, res) => {
   }
 });
 
+app.post('/api/admin/cms', requireAuth, (req, res) => {
+  const { id, title, title_be, content, content_be } = req.body;
+  
+  if (!id || !title) {
+    return res.status(400).json({ error: 'ID and title are required' });
+  }
+
+  try {
+    db.prepare('INSERT INTO cms_pages (id, title, title_be, content, content_be, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
+      .run(id, title, title_be || null, content || '', content_be || null);
+    res.json({ success: true });
+  } catch (error: any) {
+    if (error.code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
+      return res.status(400).json({ error: 'Page with this ID already exists' });
+    }
+    res.status(500).json({ error: 'Failed to create CMS page' });
+  }
+});
+
 app.put('/api/admin/cms/:id', requireAuth, (req, res) => {
   const { title, title_be, content, content_be } = req.body;
   try {
@@ -1045,6 +1067,15 @@ app.put('/api/admin/cms/:id', requireAuth, (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update CMS page' });
+  }
+});
+
+app.delete('/api/admin/cms/:id', requireAuth, (req, res) => {
+  try {
+    db.prepare('DELETE FROM cms_pages WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete CMS page' });
   }
 });
 
@@ -1164,13 +1195,13 @@ app.get('/api/stats/views-over-time', requireAuth, (req, res) => {
 });
 
 app.post('/api/products', requireAuth, (req, res) => {
-  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants } = req.body;
+  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage } = req.body;
   const slug = slugify(`${brand}-${name}`);
   
   try {
     const insert = db.prepare(`
-      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description)
-      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @topNotes, @heartNotes, @baseNotes, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription)
+      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage)
+      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage)
     `);
     
     const result = insert.run({
@@ -1180,6 +1211,7 @@ app.post('/api/products', requireAuth, (req, res) => {
       topNotes: JSON.stringify(topNotes || []),
       heartNotes: JSON.stringify(heartNotes || []),
       baseNotes: JSON.stringify(baseNotes || []),
+      accords: JSON.stringify(accords || []),
       gender,
       scentFamilies: JSON.stringify(scentFamilies || []),
       scentFamilies_be: JSON.stringify(scentFamilies_be || []),
@@ -1190,6 +1222,8 @@ app.post('/api/products', requireAuth, (req, res) => {
       season: JSON.stringify(season || []),
       seoTitle: seoTitle || null,
       seoDescription: seoDescription || null,
+      longevity: longevity !== undefined ? longevity : 70,
+      sillage: sillage !== undefined ? sillage : 60,
       slug
     });
     
@@ -1224,15 +1258,15 @@ app.delete('/api/products/:id', requireAuth, (req, res) => {
 
 app.put('/api/products/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants } = req.body;
+  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage } = req.body;
   const slug = slugify(`${brand}-${name}`);
   
   try {
     db.prepare(`
       UPDATE products 
       SET name = @name, brand = @brand, description = @description, description_be = @description_be, imageUrl = @imageUrl, images = @images,
-          price = @price, topNotes = @topNotes, heartNotes = @heartNotes, baseNotes = @baseNotes, gender = @gender,
-          scentFamilies = @scentFamilies, scentFamilies_be = @scentFamilies_be, concentration = @concentration, stockThreshold = @stockThreshold, tags = @tags, tags_be = @tags_be, slug = @slug, season = @season, seo_title = @seoTitle, seo_description = @seoDescription
+          price = @price, topNotes = @topNotes, heartNotes = @heartNotes, baseNotes = @baseNotes, accords = @accords, gender = @gender,
+          scentFamilies = @scentFamilies, scentFamilies_be = @scentFamilies_be, concentration = @concentration, stockThreshold = @stockThreshold, tags = @tags, tags_be = @tags_be, slug = @slug, season = @season, seo_title = @seoTitle, seo_description = @seoDescription, longevity = @longevity, sillage = @sillage
       WHERE id = @id
     `).run({
       id, name, brand, description, description_be: description_be || null, imageUrl,
@@ -1241,6 +1275,7 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
       topNotes: JSON.stringify(topNotes || []),
       heartNotes: JSON.stringify(heartNotes || []),
       baseNotes: JSON.stringify(baseNotes || []),
+      accords: JSON.stringify(accords || []),
       gender,
       scentFamilies: JSON.stringify(scentFamilies || []),
       scentFamilies_be: JSON.stringify(scentFamilies_be || []),
@@ -1251,6 +1286,8 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
       season: JSON.stringify(season || []),
       seoTitle: seoTitle || null,
       seoDescription: seoDescription || null,
+      longevity: longevity !== undefined ? longevity : 70,
+      sillage: sillage !== undefined ? sillage : 60,
       slug
     });
 

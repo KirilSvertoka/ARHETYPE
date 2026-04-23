@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import NoteDiagram from '../components/NoteDiagram';
+import ScentProfileBlock from '../components/ScentProfileBlock';
 import { useCart } from '../components/CartProvider';
 import { useLanguage } from '../components/LanguageProvider';
 import RelatedProducts from '../components/RelatedProducts';
@@ -374,52 +375,7 @@ export default function ProductDetails() {
         </p>
       </div>
 
-      <div className="mt-24">
-        <h2 className="text-2xl font-serif text-brand-light mb-12 text-center">{t('notes')}</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-          <div className="bg-brand-hover p-6 rounded-3xl border border-brand-border flex flex-col justify-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-brand-muted mb-4">
-              {language === 'be' ? 'Стойкасць' : 'Стойкость'}
-            </p>
-            <div className="flex items-center gap-6">
-              <span className="text-4xl font-serif text-brand-light">{product.longevity || 70}%</span>
-              <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${product.longevity || 70}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, ease: "circOut" }}
-                  className="h-full bg-brand-accent"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="bg-brand-hover p-6 rounded-3xl border border-brand-border flex flex-col justify-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-brand-muted mb-4">
-              {language === 'be' ? 'Шлейф' : 'Шлейф'}
-            </p>
-            <div className="flex items-center gap-6">
-              <span className="text-4xl font-serif text-brand-light">{product.sillage || 60}%</span>
-              <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${product.sillage || 60}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, ease: "circOut" }}
-                  className="h-full bg-brand-accent"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <NoteDiagram 
-          topNotes={product.topNotes} 
-          heartNotes={product.heartNotes} 
-          baseNotes={product.baseNotes} 
-        />
-      </div>
+      <ScentProfileBlock product={product} />
 
       {product && (
         <>

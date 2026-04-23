@@ -2,6 +2,14 @@ export interface Note {
   name: string;
   name_be?: string;
   value: number;
+  icon?: string;
+}
+
+export interface Accord {
+  name: string;
+  name_be?: string;
+  color: string;
+  value: number; // 0-100 Width representation
 }
 
 export interface ProductVariant {
@@ -49,6 +57,9 @@ export interface Product {
   topNotes: Note[];
   heartNotes: Note[];
   baseNotes: Note[];
+  accords?: Accord[];
+  longevity?: number;
+  sillage?: number;
   gender: 'Male' | 'Female' | 'Unisex';
   scentFamilies: string[];
   scentFamilies_be?: string[];
