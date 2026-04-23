@@ -250,7 +250,7 @@ export default function CartDrawer() {
                           value={customerData.city}
                           onChange={e => setCustomerData({...customerData, city: e.target.value})}
                           className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm"
-                          placeholder="Минск"
+                          placeholder="Гродно"
                         />
                       </div>
                       

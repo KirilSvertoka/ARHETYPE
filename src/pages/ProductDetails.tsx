@@ -11,7 +11,6 @@ import { useLanguage } from '../components/LanguageProvider';
 import RelatedProducts from '../components/RelatedProducts';
 import RecentlyViewed from '../components/RecentlyViewed';
 import Breadcrumbs from '../components/Breadcrumbs';
-import CallbackForm from '../components/CallbackForm';
 import { trackViewItem, trackAddToCart } from '../utils/analytics';
 
 interface FlyingItem {
@@ -31,7 +30,6 @@ export default function ProductDetails() {
   const [isFullscreenGalleryOpen, setIsFullscreenGalleryOpen] = useState(false);
   const [fullscreenImageIndex, setFullscreenImageIndex] = useState(0);
   const [flyingItems, setFlyingItems] = useState<FlyingItem[]>([]);
-  const [isCallbackOpen, setIsCallbackOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const [quantity, setQuantity] = useState(1);
@@ -439,15 +437,8 @@ export default function ProductDetails() {
               </motion.button>
             </div>
 
-            {/* NEW: Buy in 1 click, Delivery and Originality info */}
+            {/* NEW: Delivery and Originality info */}
             <div className="mt-8 space-y-6">
-              <button 
-                onClick={() => setIsCallbackOpen(true)}
-                className="w-full py-3 border border-brand-accent text-brand-accent rounded-xl text-sm font-medium uppercase tracking-widest hover:bg-brand-accent/5 transition-colors"
-              >
-                {language === 'be' ? 'Купіць у 1 клік' : 'Купить в 1 клик'}
-              </button>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
                   <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
@@ -456,8 +447,8 @@ export default function ProductDetails() {
                   </div>
                   <p className="text-[10px] text-brand-muted leading-relaxed">
                     {language === 'be' 
-                      ? 'Самавываз — бясплатна. Дастаўка па Беларусі — 1-3 дні. Бясплатна ад 150 BYN.' 
-                      : 'Самовывоз — бесплатно. Доставка по Беларуси — 1-3 дня. Бесплатно от 150 BYN.'}
+                      ? 'Дастаўка па Гродне — сёння. Дастаўка па Беларусі — 5 дзён. Бясплатна ад 150 BYN.' 
+                      : 'Доставка по Гродно — сегодня. Доставка по Беларуси — 5 дней. Бесплатно от 150 BYN.'}
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
@@ -491,97 +482,6 @@ export default function ProductDetails() {
             product={product}
           />
           <RecentlyViewed currentProductId={product.id} />
-
-          {/* Technical / Reference Information at the very bottom */}
-          <div className="mt-24 pt-12 border-t border-brand-border/30 opacity-40 hover:opacity-100 transition-opacity duration-500 max-w-6xl mx-auto px-4">
-            <h3 className="text-[10px] uppercase tracking-[0.3em] text-brand-muted mb-12 text-center font-medium">
-              {language === 'be' ? 'Тэхнічная інфармацыя' : 'Справочная информация'}
-            </h3>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
-              <div className="space-y-4">
-                <h4 className="text-[9px] uppercase tracking-widest text-brand-accent font-bold">{language === 'be' ? 'Канструкцыя' : 'Конструкция'}</h4>
-                <dl className="space-y-3">
-                  <div>
-                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Брэнд' : 'Бренд'}</dt>
-                    <dd className="text-xs text-brand-light font-light">{product.brand}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Пол' : 'Пол'}</dt>
-                    <dd className="text-xs text-brand-light font-light">
-                      {product.gender === 'Male' ? (language === 'be' ? 'Мужчынскі' : 'Мужской') : 
-                       product.gender === 'Female' ? (language === 'be' ? 'Жаночы' : 'Женский') : 
-                       (language === 'be' ? 'Унісекс' : 'Унисекс')}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="text-[9px] uppercase tracking-widest text-brand-accent font-bold">{language === 'be' ? 'Параметры' : 'Параметры'}</h4>
-                <dl className="space-y-3">
-                  <div>
-                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Канцэнтрацыя' : 'Концентрация'}</dt>
-                    <dd className="text-xs text-brand-light font-light">
-                      {product.concentration === 'Parfum' ? (language === 'be' ? 'Духі' : 'Духи') :
-                       product.concentration === 'EDP' ? (language === 'be' ? 'Парфумерная вада' : 'Парфюмерная вода') :
-                       product.concentration === 'EDT' ? (language === 'be' ? 'Туалетная вада' : 'Туалетная вода') :
-                       product.concentration === 'Cologne' ? (language === 'be' ? 'Адэкалон' : 'Одеколон') :
-                       (product.concentration || (language === 'be' ? 'Парфумерная вада' : 'Парфюмерная вода'))}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Сямейства' : 'Семейство'}</dt>
-                    <dd className="text-xs text-brand-light font-light">{(language === 'be' && product.scentFamilies_be ? product.scentFamilies_be : product.scentFamilies).join(', ')}</dd>
-                  </div>
-                </dl>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="text-[9px] uppercase tracking-widest text-brand-accent font-bold">{language === 'be' ? 'Піраміда нот' : 'Пирамида нот'}</h4>
-                <dl className="space-y-3">
-                  {topNotesList.length > 0 && (
-                    <div>
-                      <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Верхнія' : 'Верхние'}</dt>
-                      <dd className="text-[10px] text-brand-light font-light leading-relaxed">{topNotesList.join(', ')}</dd>
-                    </div>
-                  )}
-                  {parseNotes(product.heartNotes).length > 0 && (
-                    <div>
-                      <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Сэрца' : 'Сердце'}</dt>
-                      <dd className="text-[10px] text-brand-light font-light leading-relaxed">{parseNotes(product.heartNotes).join(', ')}</dd>
-                    </div>
-                  )}
-                  {baseNotesList.length > 0 && (
-                    <div>
-                      <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'База' : 'База'}</dt>
-                      <dd className="text-[10px] text-brand-light font-light leading-relaxed">{baseNotesList.join(', ')}</dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="text-[9px] uppercase tracking-widest text-brand-accent font-bold">{language === 'be' ? 'Выкарыстанне' : 'Использование'}</h4>
-                <dl className="space-y-3">
-                  <div>
-                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{language === 'be' ? 'Аб\'ёмы' : 'Объемы'}</dt>
-                    <dd className="text-xs text-brand-light font-light">{product.variants?.map(v => v.size).join(', ') || volumeStr}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-[8px] uppercase tracking-widest text-brand-muted mb-0.5">{t('unpLabel')}</dt>
-                    <dd className="text-xs text-brand-light font-light">{t('authenticatedOriginal')}</dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
-          </div>
-          
-          <CallbackForm 
-            isOpen={isCallbackOpen} 
-            onClose={() => setIsCallbackOpen(false)} 
-            productName={`${product.brand} ${product.name}`}
-          />
         </>
       )}
 

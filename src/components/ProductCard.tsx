@@ -141,13 +141,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300" />
 
           {/* Content */}
-          <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 flex flex-col justify-end text-white z-10 pointer-events-none">
+          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 md:p-8 flex flex-col justify-end text-white z-10 pointer-events-none">
             <div className="transform transition-transform duration-300 translate-y-4 group-hover:translate-y-0">
-              <p className="text-xs md:text-sm font-medium uppercase tracking-widest text-white/90 mb-1" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>{product.brand}</p>
-              <div className="flex justify-between items-end gap-4">
-                <h3 className="font-serif text-2xl md:text-3xl leading-tight" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{product.name}</h3>
-                <div className="flex flex-col items-end">
-                  <span className="text-lg md:text-xl font-light whitespace-nowrap" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+              <p className="text-[10px] md:text-sm font-medium uppercase tracking-widest text-white/90 mb-1" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>{product.brand}</p>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1 sm:gap-4">
+                <h3 className="font-serif text-xl sm:text-2xl md:text-3xl leading-tight" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{product.name}</h3>
+                <div className="flex flex-col items-start sm:items-end shrink-0">
+                  <span className="text-base sm:text-lg md:text-xl font-light whitespace-nowrap" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
                     {product.variants && product.variants.length > 0 
                       ? `${language === 'be' ? 'ад' : 'от'} ${Math.min(...product.variants.map(v => v.price)).toFixed(2)}` 
                       : product.price.toFixed(2)} {t('currency')}

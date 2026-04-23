@@ -257,8 +257,8 @@ const defaultGeneralSettings = {
   phone: "+375 (29) 123-45-67",
   workingHours: "Пн-Пт: 10:00 - 20:00, Сб-Вс: 11:00 - 18:00",
   workingHours_be: "Пн-Пт: 10:00 - 20:00, Сб-Нд: 11:00 - 18:00",
-  address: "ул. Парфюмерная 123, Минск, Беларусь",
-  address_be: "вул. Парфумерная 123, Мінск, Беларусь",
+  address: "ул. Парфюмерная 123, Гродно, Беларусь",
+  address_be: "вул. Парфумерная 123, Гродна, Беларусь",
   unp: "123456789",
   bankDetails: "IBAN: BY00 ABCD 0000 0000 0000 0000, BIC: ABCDBY2X",
   aboutTitle: "Наша история",
@@ -286,12 +286,28 @@ db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('gen
 
 // Seed CMS pages
 const seedCMS = [
-  { id: 'delivery', title: 'Доставка и оплата', title_be: 'Дастаўка і аплата', content: 'Информация о способах доставки по Минску и Беларуси. Оплата наличными, картой, ЕРИП.' },
-  { id: 'returns', title: 'Гарантия и возврат', title_be: 'Гарантыя і вяртанне', content: 'Согласно постановлению Совета Министров РБ №778 парфюмерно-косметические товары надлежащего качества обмену и возврату не подлежат.' },
+  { 
+    id: 'delivery', 
+    title: 'Доставка и оплата', 
+    title_be: 'Дастаўка і аплата', 
+    content: 'Доставка по Гродно — сегодня. Доставка по Беларуси — 5 дней. Бесплатно от 150 BYN. Оплата наличными, картой, ЕРИП.',
+    content_be: 'Дастаўка па Гродне — сёння. Дастаўка па Беларусі — 5 дзён. Бясплатна ад 150 BYN. Аплата наяўнымі, картай, АРІП.'
+  },
+  { 
+    id: 'returns', 
+    title: 'Гарантия и возврат', 
+    title_be: 'Гарантыя і вяртанне', 
+    content: 'Согласно постановлению Совета Министров РБ №778 парфюмерно-косметические товары надлежащего качества обмену и возврату не подлежат.',
+    content_be: 'Згодна з пастановай Савета Міністраў РБ №778 парфумерна-касметычныя тавары належнай якасці абмену і вяртанню не падлягаюць.'
+  },
 ];
 seedCMS.forEach(page => {
-  db.prepare('INSERT OR IGNORE INTO cms_pages (id, title, title_be, content, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)')
-    .run(page.id, page.title, page.title_be, page.content);
+  db.prepare('INSERT OR IGNORE INTO cms_pages (id, title, title_be, content, content_be, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
+    .run(page.id, page.title, page.title_be, page.content, page.content_be);
+  
+  // Force update for existing records to reflect Grodno changes
+  db.prepare('UPDATE cms_pages SET title = ?, title_be = ?, content = ?, content_be = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+    .run(page.title, page.title_be, page.content, page.content_be, page.id);
 });
 
 // Migration for new columns

@@ -376,12 +376,12 @@ export default function Layout() {
               </p>
               <div className="flex gap-4">
                 {settings?.instagram && (
-                  <a href={settings.instagram} target="_blank" rel="noreferrer" className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-bg text-brand-muted hover:text-brand-accent transition-colors">
+                  <a href={settings.instagram} target="_blank" rel="noreferrer" className="w-8 h-8 flex items-center justify-center rounded-lg border border-brand-border text-brand-muted hover:text-brand-accent hover:border-brand-accent transition-colors">
                     <Instagram className="w-4 h-4" />
                   </a>
                 )}
                 {settings?.telegram && (
-                  <a href={settings.telegram} target="_blank" rel="noreferrer" className="w-8 h-8 flex items-center justify-center rounded-lg bg-brand-bg text-brand-muted hover:text-brand-accent transition-colors">
+                  <a href={settings.telegram} target="_blank" rel="noreferrer" className="w-8 h-8 flex items-center justify-center rounded-lg border border-brand-border text-brand-muted hover:text-brand-accent hover:border-brand-accent transition-colors">
                     <Send className="w-4 h-4" />
                   </a>
                 )}
@@ -454,27 +454,6 @@ export default function Layout() {
               <p>&copy; {new Date().getFullYear()} АРХЕТИП. {t('allRightsReserved')}</p>
               {settings?.unp && <p>УНП {settings.unp}</p>}
               {settings?.bankDetails && <p>{settings.bankDetails}</p>}
-            </div>
-            
-            <div className="flex items-center gap-6 opacity-80 hover:opacity-100 transition-all">
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_2021.svg" 
-                alt="Visa" 
-                className="h-4 w-auto" 
-                referrerPolicy="no-referrer"
-              />
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg" 
-                alt="Mastercard" 
-                className="h-6 w-auto" 
-                referrerPolicy="no-referrer"
-              />
-              <img 
-                src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Belkart_logo.svg" 
-                alt="Belkart" 
-                className="h-4 w-auto" 
-                referrerPolicy="no-referrer"
-              />
             </div>
           </div>
         </div>

@@ -84,7 +84,7 @@ export default function Contacts() {
             {language === 'ru' ? 'Студия' : 'Студыя'}
           </h3>
           <p className="text-sm text-brand-muted">
-            {language === 'ru' ? (settings?.address || 'ул. Парфюмерная 123, Минск, Беларусь') : (settings?.address_be || 'вул. Парфумерная 123, Мінск, Беларусь')}
+            {language === 'ru' ? (settings?.address || 'ул. Парфюмерная 123, Гродно, Беларусь') : (settings?.address_be || 'вул. Парфумерная 123, Гродна, Беларусь')}
           </p>
         </div>
       </div>
