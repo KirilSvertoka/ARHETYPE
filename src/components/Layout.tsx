@@ -63,8 +63,8 @@ export default function Layout() {
       }
     };
 
-    // Minimum loading time of 2.5 seconds for the animation
-    const minLoadTime = new Promise(resolve => setTimeout(resolve, 2500));
+    // Minimum loading time for the full animation sequence (stroke + fill)
+    const minLoadTime = new Promise(resolve => setTimeout(resolve, 3200));
     
     Promise.all([fetchData(), minLoadTime]).then(() => {
       setIsLoading(false);

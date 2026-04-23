@@ -124,18 +124,34 @@ export default function Home() {
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.8 }}
-                className="text-5xl md:text-7xl lg:text-8xl text-white mb-6 tracking-tight max-w-5xl flex flex-col gap-4 drop-shadow-lg uppercase"
+                className="text-5xl md:text-7xl lg:text-8xl text-white mb-6 tracking-tight max-w-5xl flex flex-col gap-4 uppercase drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
               >
-                <span style={{ fontFamily: 'var(--font-oranienbaum)' }}>{language === 'be' ? 'АРХЕТЫП:' : 'АРХЕТИП:'}</span>
-                <span style={{ fontFamily: 'var(--font-arsenica)' }}>{language === 'be' ? 'Парфумерная крама' : 'Парфюмерный магазин'}</span>
+                <span style={{ 
+                  fontFamily: 'var(--font-oranienbaum)',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.3)',
+                  WebkitTextStroke: '0.5px rgba(0,0,0,0.1)'
+                }}>
+                  {language === 'be' ? 'АРХЕТЫП:' : 'АРХЕТИП:'}
+                </span>
+                <span style={{ 
+                  fontFamily: 'var(--font-arsenica)',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.3)',
+                  WebkitTextStroke: '0.5px rgba(0,0,0,0.1)'
+                }}>
+                  {language === 'be' ? 'Парфумерная крама' : 'Парфюмерный магазин'}
+                </span>
               </motion.h1>
 
               <motion.p 
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5, duration: 0.8 }}
-                className="text-lg md:text-xl text-white/80 font-light max-w-2xl mb-10"
-                style={{ fontFamily: 'var(--font-adventor)' }}
+                className="text-lg md:text-xl text-white font-light max-w-2xl mb-10"
+                style={{ 
+                  fontFamily: 'var(--font-adventor)',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                  WebkitTextStroke: '0.2px rgba(0,0,0,0.05)'
+                }}
               >
                 {language === 'be' ? 'Множнасць архетыпаў. Множнасць водараў' : 'Множественность архетипов. Множественность ароматов'}
               </motion.p>
@@ -147,7 +163,7 @@ export default function Home() {
               >
                 <Link 
                   to={activeSlide.link || "/catalog"} 
-                  className="inline-flex items-center gap-2 bg-brand-accent text-white px-8 py-4 rounded-full font-medium uppercase tracking-widest hover:bg-brand-accent-hover transition-colors"
+                  className="inline-flex items-center gap-2 bg-brand-accent text-white px-8 py-4 rounded-full font-medium uppercase tracking-widest hover:bg-brand-accent-hover transition-all shadow-2xl hover:scale-105 active:scale-95"
                 >
                   {t('shopCollection')}
                   <ArrowRight className="w-4 h-4" />

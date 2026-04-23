@@ -11,13 +11,13 @@ export default function Loader() {
         <defs>
           <mask id="textMask">
             <motion.rect
-              x="-800"
+              x="0"
               y="0"
-              width="800"
               height="200"
               fill="white"
-              animate={{ x: 0 }}
-              transition={{ duration: 2.5, ease: "easeInOut" }}
+              initial={{ width: 0 }}
+              animate={{ width: 800 }}
+              transition={{ duration: 1.0, delay: 2.0, ease: "easeInOut" }}
             />
           </mask>
         </defs>
@@ -31,13 +31,13 @@ export default function Loader() {
           className="font-serif text-6xl sm:text-7xl md:text-8xl lg:text-9xl tracking-tighter"
           style={{
             stroke: 'var(--color-brand-light)',
-            strokeWidth: 1,
+            strokeWidth: 1.5,
             fill: 'transparent',
             strokeDasharray: 1000,
           }}
           initial={{ strokeDashoffset: 1000 }}
           animate={{ strokeDashoffset: 0 }}
-          transition={{ duration: 2.5, ease: "easeInOut" }}
+          transition={{ duration: 2.0, ease: "easeInOut" }}
         >
           АРХЕТИП
         </motion.text>
