@@ -6,6 +6,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Storefront from './pages/Storefront';
@@ -42,8 +43,9 @@ export default function App() {
   const adminPath = (import.meta as any).env.VITE_ADMIN_PATH?.replace(/^\//, '') || 'admin';
 
   return (
-    <HelmetProvider>
-      <ThemeProvider>
+    <ErrorBoundary>
+      <HelmetProvider>
+        <ThemeProvider>
         <LanguageProvider>
           <WishlistProvider>
             <CartProvider>
@@ -71,5 +73,6 @@ export default function App() {
         </LanguageProvider>
       </ThemeProvider>
     </HelmetProvider>
+    </ErrorBoundary>
   );
 }
