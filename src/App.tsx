@@ -17,6 +17,7 @@ import About from './pages/About';
 import Page from './pages/Page';
 import NotFound from './pages/NotFound';
 import Forbidden from './pages/Forbidden';
+import ServerError from './pages/ServerError';
 import { ThemeProvider } from './components/ThemeProvider';
 import { LanguageProvider } from './components/LanguageProvider';
 import { CartProvider } from './components/CartProvider';
@@ -59,6 +60,8 @@ export default function App() {
                     <Route path="wishlist" element={<Wishlist />} />
                     <Route path={adminPath} element={<AdminPanel />} />
                     <Route path="forbidden" element={<Forbidden />} />
+                    <Route path="502" element={<ServerError />} />
+                    <Route path="500" element={<ServerError />} />
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>
