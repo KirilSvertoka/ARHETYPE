@@ -31,8 +31,8 @@ export default function InventoryView({ products, loading, token, onUpdate, onAu
     switch (sortBy) {
       case 'name_asc': return a.name.localeCompare(b.name);
       case 'name_desc': return b.name.localeCompare(a.name);
-      case 'price_asc': return a.price - b.price;
-      case 'price_desc': return b.price - a.price;
+      case 'price_asc': return parseFloat(String(a.price)) - parseFloat(String(b.price));
+      case 'price_desc': return parseFloat(String(b.price)) - parseFloat(String(a.price));
       default: return 0;
     }
   });

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Product, getVariantType } from '../types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from './LanguageProvider';
 import { useCart } from './CartProvider';
@@ -23,6 +23,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { t, language } = useLanguage();
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const navigate = useNavigate();
   const [selectedVariantId, setSelectedVariantId] = useState<number | undefined>(
     product.variants && product.variants.length > 0 ? product.variants[0].id : undefined
   );
@@ -61,6 +62,12 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   const isWishlisted = isInWishlist(product.id);
+
+  const handleBrandClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/catalog?brand=${encodeURIComponent(product.brand)}`);
+  };
 
   return (
     <motion.div 
@@ -141,19 +148,29 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300" />
 
           {/* Content */}
-          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 md:p-8 flex flex-col justify-end text-white z-10 pointer-events-none">
+          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 md:p-6 flex flex-col justify-end text-white z-10 pointer-events-none">
             <div className="transform transition-transform duration-300 translate-y-4 group-hover:translate-y-0">
-              <p className="text-[10px] md:text-sm font-medium uppercase tracking-widest text-white/90 mb-1" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>{product.brand}</p>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1 sm:gap-4">
-                <h3 className="font-serif text-xl sm:text-2xl md:text-3xl leading-tight" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{product.name}</h3>
-                <div className="flex flex-col items-start sm:items-end shrink-0">
-                  <span className="text-base sm:text-lg md:text-xl font-light whitespace-nowrap" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+              <button 
+                onClick={handleBrandClick}
+                className="pointer-events-auto text-[10px] md:text-xs font-medium uppercase tracking-widest text-white/90 mb-1 hover:text-brand-accent transition-colors relative z-20 cursor-pointer" 
+                style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
+              >
+                {product.brand}
+              </button>
+              <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-0.5 md:gap-4">
+                <h3 className="font-serif text-lg sm:text-xl md:text-2xl leading-tight" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{product.name}</h3>
+                <div className="flex flex-col items-start md:items-end shrink-0">
+                  <span className="text-[11px] sm:text-base md:text-lg font-light whitespace-nowrap" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
                     {product.variants && product.variants.length > 0 
-                      ? `${language === 'be' ? 'ад' : 'от'} ${Math.min(...product.variants.map(v => v.price)).toFixed(2)}` 
-                      : product.price.toFixed(2)} {t('currency')}
+                      ? `${language === 'be' ? 'ад' : 'от'} ${(() => {
+                          const prices = product.variants.map(v => typeof v.price === 'number' ? v.price : parseFloat(v.price as string));
+                          const minPrice = Math.min(...prices.filter(p => !isNaN(p)));
+                          return isFinite(minPrice) ? minPrice.toFixed(2) : product.variants[0].price;
+                        })()}` 
+                      : (typeof product.price === 'number' ? product.price.toFixed(2) : product.price)} {t('currency')}
                   </span>
                   {product.variants && product.variants.every(v => v.stock === 0) && (
-                    <span className="text-[10px] uppercase tracking-wider text-red-400 font-bold" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+                    <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-red-400 font-bold" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
                       {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
                     </span>
                   )}
@@ -181,7 +198,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                         <div className="flex flex-col gap-3 w-full max-h-32 overflow-y-auto custom-scrollbar pr-2">
                           {Object.entries(
                             product.variants.reduce((acc, variant) => {
-                              const type = getVariantType(variant.size, language);
+                              const type = getVariantType(variant, language);
                               if (!acc[type]) acc[type] = [];
                               acc[type].push(variant);
                               return acc;

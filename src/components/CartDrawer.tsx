@@ -426,7 +426,7 @@ export default function CartDrawer() {
                                 <p className="text-sm text-brand-muted">{item.brand}</p>
                                 {item.selectedVariantSize && (
                                   <span className="text-[10px] px-1.5 py-0.5 bg-white/10 text-brand-muted rounded uppercase tracking-wider font-medium">
-                                    {getVariantType(item.selectedVariantSize, language)} {item.selectedVariantSize}
+                                    {getVariantType({ variant_type: item.variant_type as any } as any, language)} {item.selectedVariantSize}
                                   </span>
                                 )}
                               </div>
@@ -437,7 +437,7 @@ export default function CartDrawer() {
                                 <span className="text-sm font-medium text-brand-light w-4 text-center">{item.quantity}</span>
                                 <button onClick={() => updateQuantity(cartItemId, item.quantity + 1)} className="text-brand-muted hover:text-brand-accent"><Plus className="w-4 h-4" /></button>
                               </div>
-                              <span className="font-medium text-brand-light">{item.price.toFixed(2)} {t('currency')}</span>
+                              <span className="font-medium text-brand-light">{typeof item.price === 'number' ? item.price.toFixed(2) : item.price} {t('currency')}</span>
                             </div>
                           </div>
                         </div>

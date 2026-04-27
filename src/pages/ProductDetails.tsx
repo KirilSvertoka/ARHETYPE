@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Product, getVariantType } from '../types';
+import { Product, getVariantType, GeneralSettings, getConcentrationLabel } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle } from 'lucide-react';
+import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle, Send } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import NoteDiagram from '../components/NoteDiagram';
 import ScentProfileBlock from '../components/ScentProfileBlock';
@@ -11,7 +11,7 @@ import { useLanguage } from '../components/LanguageProvider';
 import RelatedProducts from '../components/RelatedProducts';
 import RecentlyViewed from '../components/RecentlyViewed';
 import Breadcrumbs from '../components/Breadcrumbs';
-import { trackViewItem, trackAddToCart } from '../utils/analytics';
+import { trackViewItem, trackAddToCart, trackGoal } from '../utils/analytics';
 
 interface FlyingItem {
   id: number;
@@ -24,6 +24,7 @@ export default function ProductDetails() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string>('');
+  const [settings, setSettings] = useState<GeneralSettings | null>(null);
   const { addToCart } = useCart();
   const { t, language } = useLanguage();
   const [selectedVariantId, setSelectedVariantId] = useState<number | undefined>(undefined);
@@ -100,6 +101,12 @@ export default function ProductDetails() {
         setProduct(null);
         setLoading(false);
       });
+
+    // Fetch settings for manager links
+    fetch('/api/settings/general')
+      .then(res => res.json())
+      .then(setSettings)
+      .catch(console.error);
   }, [slug]);
 
   if (loading) {
@@ -157,8 +164,8 @@ export default function ProductDetails() {
   const baseNotesList = parseNotes(product.baseNotes);
   const notesStr = [...topNotesList.slice(0, 3), ...baseNotesList.slice(0, 2)].join(', ');
 
-  const pageTitle = `Купить духи ${product.brand} ${product.name}${volumeStr ? ` ${volumeStr}` : ''} — цена в Гродно, оригинал`;
-  const pageDescription = `${product.concentration || 'Парфюмерная вода'}/духи ${product.brand} ${product.name} в интернет-магазине Archetype. Только оригинал, доставка по Беларуси. Отзывы, описание, ноты.`;
+  const pageTitle = `Купить ${product.brand} ${product.name} — цена в Гродно, оригинал`;
+  const pageDescription = `${getConcentrationLabel(product.concentration, language)} ${product.brand} ${product.name} в интернет-магазине Archetype. Только оригинал, доставка по Беларуси. Отзывы, описание, ноты.`;
 
   const structuredData = {
     "@context": "https://schema.org/",
@@ -217,7 +224,7 @@ export default function ProductDetails() {
       <Breadcrumbs 
         items={[
           { label: t('catalog') || (language === 'be' ? 'Каталог' : 'Каталог'), path: '/catalog' },
-          { label: product.brand, path: `/catalog?brand=${product.brand}` },
+          { label: product.brand, path: `/catalog?brand=${encodeURIComponent(product.brand)}` },
           { label: product.name }
         ]} 
       />
@@ -333,12 +340,17 @@ export default function ProductDetails() {
         <div className="flex flex-col h-full md:min-h-[calc(100%-2rem)] justify-between py-2">
           <div className="space-y-8">
             <div>
-              <p className="text-sm font-medium uppercase tracking-widest text-brand-muted mb-2">{product.brand}</p>
-              <h1 className="text-4xl md:text-5xl font-serif text-brand-light mb-2 leading-tight">
-                Парфюм {product.brand} {product.name} {product.concentration || 'EDP'} {volumeStr}
+              <Link 
+                to={`/catalog?brand=${encodeURIComponent(product.brand)}`}
+                className="inline-block text-sm font-medium uppercase tracking-widest text-brand-muted mb-2 hover:text-brand-accent transition-colors"
+              >
+                {product.brand}
+              </Link>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-brand-light mb-2 leading-tight break-words [hyphens:auto]">
+                <span className="inline-block">{product.brand}</span> <span className="inline-block">{product.name}</span>
               </h1>
               <div className="flex items-center gap-4 text-brand-muted text-sm">
-                <span>{product.concentration || 'EDP'}</span>
+                <span>{getConcentrationLabel(product.concentration, language)}</span>
                 <span className="w-px h-4 bg-brand-border" />
                 <span>{product.gender === 'Male' ? (language === 'be' ? 'Для яго' : 'Для него') : product.gender === 'Female' ? (language === 'be' ? 'Для яе' : 'Для нее') : (language === 'be' ? 'Унісекс' : 'Для него и для нее')}</span>
               </div>
@@ -352,7 +364,7 @@ export default function ProductDetails() {
                 <div className="flex flex-col gap-6">
                   {Object.entries(
                     product.variants.reduce((acc, variant) => {
-                      const type = getVariantType(variant.size, language);
+                      const type = getVariantType(variant, language);
                       if (!acc[type]) acc[type] = [];
                       acc[type].push(variant);
                       return acc;
@@ -365,12 +377,12 @@ export default function ProductDetails() {
                             <button
                               key={variant.id}
                               onClick={() => setSelectedVariantId(variant.id)}
-                              disabled={variant.stock === 0}
-                              className={`px-6 py-3 rounded-lg border text-sm font-medium transition-all duration-300 ${
+                              disabled={variant.stock === 0 && variant.variant_type !== 'remainder'}
+                              className={`px-4 py-3 rounded-lg border text-sm font-medium transition-all duration-300 ${
                                 selectedVariantId === variant.id
                                   ? 'bg-brand-light text-brand-bg border-brand-light shadow-lg'
                                   : 'border-brand-border text-brand-light hover:border-brand-accent/60'
-                              } ${variant.stock === 0 ? 'opacity-40 cursor-not-allowed grayscale' : ''}`}
+                              } ${variant.stock === 0 && variant.variant_type !== 'remainder' ? 'opacity-40 cursor-not-allowed grayscale' : ''} whitespace-nowrap`}
                             >
                               {variant.size}
                             </button>
@@ -383,85 +395,102 @@ export default function ProductDetails() {
             )}
           </div>
 
-          <div className="mt-8 pt-8 border-t border-brand-border">
-            <div className="flex items-baseline gap-2 mb-6">
-              <span className="text-3xl font-serif text-brand-light">
-                {(selectedVariantId 
-                  ? product.variants?.find(v => v.id === selectedVariantId)?.price 
-                  : product.price
-                )?.toFixed(2)} {t('currency')}
-              </span>
-              {selectedVariantId && product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 && (
-                <span className="text-xs font-bold text-red-500 uppercase tracking-widest">
-                  {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
-                </span>
-              )}
+          {selectedVariant?.variant_type === 'remainder' ? (
+            <div className="mt-8 pt-8 border-t border-brand-border space-y-6">
+              <div className="p-6 rounded-2xl bg-brand-hover border border-brand-border flex flex-col items-center text-center gap-4">
+                <p className="text-sm font-medium text-brand-muted">
+                  {language === 'be' 
+                    ? 'Цану і бягучы аб\'ём удакладняйце ў мэнэджэра' 
+                    : 'Ценник и текущий объём уточняется у менеджера'}
+                </p>
+                <a 
+                  href={settings?.telegram || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackGoal('messenger_click', 'remainder_manager')}
+                  className="w-full flex items-center justify-center gap-3 px-8 py-3 bg-brand-accent text-white rounded-xl font-medium uppercase tracking-widest hover:bg-brand-accent-hover transition-all"
+                >
+                  <Send className="w-5 h-5" />
+                  <span>{language === 'be' ? 'Напісаць мэнэджэру' : 'Написать менеджеру'}</span>
+                </a>
+              </div>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="flex flex-col gap-2 w-full sm:w-auto">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-brand-muted ml-1">
-                  {language === 'be' ? 'Колькасць' : 'Количество'}
-                </label>
-                <div className="flex items-center w-full sm:w-32 bg-brand-hover border border-brand-border rounded-xl overflow-hidden">
+          ) : (
+            <div className="mt-8 pt-8 border-t border-brand-border">
+              <div className="flex items-baseline gap-2 mb-6">
+                <span className="text-3xl font-serif text-brand-light">
+                  {(() => {
+                    const price = selectedVariantId 
+                      ? product.variants?.find(v => v.id === selectedVariantId)?.price 
+                      : product.price;
+                    return typeof price === 'number' ? price.toFixed(2) : price;
+                  })()} {t('currency')}
+                </span>
+                {selectedVariantId && product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 && (
+                  <span className="text-xs font-bold text-red-500 uppercase tracking-widest">
+                    {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-row items-center gap-2 sm:gap-3 mt-6">
+                <div className="flex items-center bg-brand-hover border border-brand-border rounded-xl overflow-hidden shrink-0 h-10 sm:h-12">
                   <button 
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="flex-1 h-12 flex items-center justify-center text-brand-light hover:bg-brand-accent/10 transition-colors"
+                    className="w-8 sm:w-10 h-full flex items-center justify-center text-brand-light hover:bg-brand-accent/10 transition-colors"
                   >
-                    <Minus className="w-4 h-4" />
+                    <Minus className="w-3 h-3 sm:w-4 h-4" />
                   </button>
                   <input 
                     type="number" 
                     value={quantity}
                     onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-10 text-center bg-transparent border-none focus:ring-0 text-brand-light font-medium"
+                    className="w-8 sm:w-10 text-center bg-transparent border-none focus:ring-0 text-brand-light font-medium text-xs sm:text-sm p-0"
                   />
                   <button 
                     onClick={() => setQuantity(quantity + 1)}
-                    className="flex-1 h-12 flex items-center justify-center text-brand-light hover:bg-brand-accent/10 transition-colors"
+                    className="w-8 sm:w-10 h-full flex items-center justify-center text-brand-light hover:bg-brand-accent/10 transition-colors"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-3 h-3 sm:w-4 h-4" />
                   </button>
                 </div>
+
+                <motion.button 
+                  ref={buttonRef}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleAddToCart}
+                  disabled={selectedVariantId ? product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 : false}
+                  className="flex-1 px-3 sm:px-8 h-10 sm:h-12 bg-brand-accent text-white rounded-xl font-medium uppercase tracking-tighter sm:tracking-widest hover:bg-brand-accent-hover transition-all shadow-xl shadow-brand-accent/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 text-[10px] sm:text-sm whitespace-nowrap"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5 sm:w-5 h-5" />
+                  <span>{t('addToCart')}</span>
+                </motion.button>
               </div>
-
-              <motion.button 
-                ref={buttonRef}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleAddToCart}
-                disabled={selectedVariantId ? product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 : false}
-                className="flex-1 px-8 py-4 bg-brand-accent text-white rounded-xl font-medium uppercase tracking-widest hover:bg-brand-accent-hover transition-all shadow-xl shadow-brand-accent/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 h-12"
-              >
-                <ShoppingBag className="w-5 h-5" />
-                <span>{t('addToCart')}</span>
-              </motion.button>
             </div>
+          )}
 
-            {/* NEW: Delivery and Originality info */}
-            <div className="mt-8 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
-                  <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
-                    <Truck className="w-4 h-4 text-brand-accent" />
-                    <span>{language === 'be' ? 'Дастаўка' : 'Доставка'}</span>
-                  </div>
-                  <p className="text-[10px] text-brand-muted leading-relaxed">
-                    {language === 'be' 
-                      ? 'Дастаўка па Гродне — сёння. Дастаўка па Беларусі — 5 дзён. Бясплатна ад 150 BYN.' 
-                      : 'Доставка по Гродно — сегодня. Доставка по Беларуси — 5 дней. Бесплатно от 150 BYN.'}
-                  </p>
+          <div className="mt-8 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
+                <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
+                  <Truck className="w-4 h-4 text-brand-accent" />
+                  <span>{language === 'be' ? 'Дастаўка' : 'Доставка'}</span>
                 </div>
-                <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
-                  <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
-                    <CheckCircle className="w-4 h-4 text-brand-accent" />
-                    <span>{language === 'be' ? 'Гарантыя' : 'Гарантия'}</span>
-                  </div>
-                  <p className="text-[10px] text-brand-muted leading-relaxed">
-                    {language === 'be' 
-                      ? '100% арыгінальная прадукцыя. Маем усе неабходныя сертыфікаты якасці.' 
-                      : '100% оригинальная продукция. Имеем все необходимые сертификаты качества.'}
-                  </p>
+                <p className="text-[10px] text-brand-muted leading-relaxed">
+                  {language === 'be' 
+                    ? 'Дастаўка па Гродне — сёння. Дастаўка па Беларусі — 5 дзён. Бясплатна ад 150 BYN.' 
+                    : 'Доставка по Гродно — сегодня. Доставка по Беларуси — 5 дней. Бесплатно от 150 BYN.'}
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
+                <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
+                  <CheckCircle className="w-4 h-4 text-brand-accent" />
+                  <span>{language === 'be' ? 'Гарантыя' : 'Гарантия'}</span>
                 </div>
+                <p className="text-[10px] text-brand-muted leading-relaxed">
+                  {language === 'be' 
+                    ? '100% арыгінальная прадукцыя. Маем усе неабходныя сертыфікаты якасці.' 
+                    : '100% оригинальная продукция. Имеем все необходимые сертификаты качества.'}
+                </p>
               </div>
             </div>
           </div>
@@ -469,7 +498,7 @@ export default function ProductDetails() {
       </div>
 
       <div className="mt-16 prose prose-invert max-w-none">
-        <p className="text-brand-muted leading-relaxed text-lg font-light mb-12">
+        <p className="text-brand-muted leading-relaxed text-lg font-light mb-12 break-words [hyphens:auto]">
           {language === 'be' && product.description_be ? product.description_be : product.description}
         </p>
       </div>

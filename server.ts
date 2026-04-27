@@ -107,7 +107,7 @@ db.exec(`
     description TEXT NOT NULL,
     imageUrl TEXT NOT NULL,
     images TEXT DEFAULT '[]',
-    price REAL NOT NULL,
+    price TEXT NOT NULL,
     topNotes TEXT NOT NULL,
     heartNotes TEXT NOT NULL,
     baseNotes TEXT NOT NULL,
@@ -125,9 +125,10 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_id INTEGER NOT NULL,
     size TEXT NOT NULL,
-    price REAL NOT NULL,
+    price TEXT NOT NULL,
     stock INTEGER DEFAULT 0,
     sku TEXT,
+    variant_type TEXT DEFAULT 'decant', -- decant (отливант), splitting (распив), full (флакон), tester (тестер), remainder (остаток)
     FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
   );
 
@@ -138,7 +139,7 @@ db.exec(`
     customer_email TEXT NOT NULL,
     customer_phone TEXT NOT NULL,
     customer_region TEXT NOT NULL,
-    total REAL NOT NULL,
+    total TEXT NOT NULL,
     status TEXT DEFAULT 'New',
     tracking_number TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -152,7 +153,7 @@ db.exec(`
     product_name TEXT NOT NULL,
     variant_size TEXT,
     quantity INTEGER NOT NULL,
-    price REAL NOT NULL,
+    price TEXT NOT NULL,
     FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE
   );
 
@@ -180,7 +181,9 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS cms_pages (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
+    title_be TEXT,
     content TEXT NOT NULL,
+    content_be TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -284,32 +287,6 @@ const defaultGeneralSettings = {
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('home_config', JSON.stringify(defaultHomeConfig));
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('general_settings', JSON.stringify(defaultGeneralSettings));
 
-// Seed CMS pages
-const seedCMS = [
-  { 
-    id: 'delivery', 
-    title: 'Доставка и оплата', 
-    title_be: 'Дастаўка і аплата', 
-    content: 'Доставка по Гродно — сегодня. Доставка по Беларуси — 5 дней. Бесплатно от 150 BYN. Оплата наличными, картой, ЕРИП.',
-    content_be: 'Дастаўка па Гродне — сёння. Дастаўка па Беларусі — 5 дзён. Бясплатна ад 150 BYN. Аплата наяўнымі, картай, АРІП.'
-  },
-  { 
-    id: 'returns', 
-    title: 'Гарантия и возврат', 
-    title_be: 'Гарантыя і вяртанне', 
-    content: 'Согласно постановлению Совета Министров РБ №778 парфюмерно-косметические товары надлежащего качества обмену и возврату не подлежат.',
-    content_be: 'Згодна з пастановай Савета Міністраў РБ №778 парфумерна-касметычныя тавары належнай якасці абмену і вяртанню не падлягаюць.'
-  },
-];
-seedCMS.forEach(page => {
-  db.prepare('INSERT OR IGNORE INTO cms_pages (id, title, title_be, content, content_be, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
-    .run(page.id, page.title, page.title_be, page.content, page.content_be);
-  
-  // Force update for existing records to reflect Grodno changes
-  db.prepare('UPDATE cms_pages SET title = ?, title_be = ?, content = ?, content_be = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-    .run(page.title, page.title_be, page.content, page.content_be, page.id);
-});
-
 // Migration for new columns
 const migrations = [
   "ALTER TABLE products ADD COLUMN gender TEXT DEFAULT 'Unisex'",
@@ -340,7 +317,8 @@ const migrations = [
   "ALTER TABLE orders ADD COLUMN delivery_address TEXT",
   "ALTER TABLE products ADD COLUMN accords TEXT DEFAULT '[]'",
   "ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'При получении'",
-  "ALTER TABLE orders ADD COLUMN comment TEXT"
+  "ALTER TABLE orders ADD COLUMN comment TEXT",
+  "ALTER TABLE product_variants ADD COLUMN variant_type TEXT DEFAULT 'decant'"
 ];
 
 function slugify(text: string) {
@@ -373,6 +351,32 @@ for (const migration of migrations) {
     // Column likely already exists
   }
 }
+
+// Seed CMS pages
+const seedCMS = [
+  { 
+    id: 'delivery', 
+    title: 'Доставка и оплата', 
+    title_be: 'Дастаўка і аплата', 
+    content: 'Доставка по Гродно — сегодня. Доставка по Беларуси — 5 дней. Бесплатно от 150 BYN. Оплата наличными, картой, ЕРИП.',
+    content_be: 'Дастаўка па Гродне — сёння. Дастаўка па Беларусі — 5 дзён. Бясплатна ад 150 BYN. Аплата наяўнымі, картай, АРІП.'
+  },
+  { 
+    id: 'returns', 
+    title: 'Гарантия и возврат', 
+    title_be: 'Гарантыя і вяртанне', 
+    content: 'Согласно постановлению Совета Министров РБ №778 парфюмерно-косметические товары надлежащего качества обмену и возврату не подлежат.',
+    content_be: 'Згодна з пастановай Савета Міністраў РБ №778 парфумерна-касметычныя тавары належнай якасці абмену і вяртанню не падлягаюць.'
+  },
+];
+seedCMS.forEach(page => {
+  db.prepare('INSERT OR IGNORE INTO cms_pages (id, title, title_be, content, content_be, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
+    .run(page.id, page.title, page.title_be, page.content, page.content_be);
+  
+  // Force update for existing records to reflect Grodno changes
+  db.prepare('UPDATE cms_pages SET title = ?, title_be = ?, content = ?, content_be = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+    .run(page.title, page.title_be, page.content, page.content_be, page.id);
+});
 
 // Update all products with new transliterated slugs
 const allProducts = db.prepare('SELECT id, name, brand FROM products').all() as { id: number, name: string, brand: string }[];
@@ -1467,9 +1471,9 @@ app.post('/api/products', requireAuth, (req, res) => {
     const productId = result.lastInsertRowid;
     
     if (variants && Array.isArray(variants)) {
-      const insertVariant = db.prepare('INSERT INTO product_variants (product_id, size, price, stock, sku) VALUES (?, ?, ?, ?, ?)');
+      const insertVariant = db.prepare('INSERT INTO product_variants (product_id, size, price, stock, sku, variant_type) VALUES (?, ?, ?, ?, ?, ?)');
       for (const v of variants) {
-        insertVariant.run(productId, v.size, v.price, v.stock, v.sku);
+        insertVariant.run(productId, v.size, v.price, v.stock, v.sku, v.variant_type || 'decant');
       }
     }
     
@@ -1530,9 +1534,9 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
 
     db.prepare('DELETE FROM product_variants WHERE product_id = ?').run(id);
     if (variants && Array.isArray(variants)) {
-      const insertVariant = db.prepare('INSERT INTO product_variants (product_id, size, price, stock, sku) VALUES (?, ?, ?, ?, ?)');
+      const insertVariant = db.prepare('INSERT INTO product_variants (product_id, size, price, stock, sku, variant_type) VALUES (?, ?, ?, ?, ?, ?)');
       for (const v of variants) {
-        insertVariant.run(id, v.size, v.price, v.stock, v.sku);
+        insertVariant.run(id, v.size, v.price, v.stock, v.sku, v.variant_type || 'decant');
       }
     }
 

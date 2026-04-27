@@ -46,10 +46,12 @@ export default function Storefront() {
     const categoryParam = params.get('category');
     const genderParam = params.get('gender');
     const sortParam = params.get('sort');
+    const brandParam = params.get('brand');
 
     if (categoryParam) setActiveCategory(categoryParam);
     if (genderParam) setActiveGenderTab(genderParam as any);
     if (sortParam) setSortBy(sortParam);
+    if (brandParam) setActiveBrand(brandParam);
   }, [location.search]);
 
   useEffect(() => {
@@ -216,7 +218,13 @@ export default function Storefront() {
   // Index Brand, Gender, and Brand+Gender intersections. Others noindex.
   const isNoIndex = !!debouncedSearchQuery || (selectedFamilies.length > 0 && activeBrand === 'All') || (selectedAccords.length > 0);
   
-  const minPrice = products.length > 0 ? Math.min(...products.flatMap(p => p.variants && p.variants.length > 0 ? p.variants.map(v => v.price) : [p.price])) : 0;
+  const minPrice = products.length > 0 ? Math.min(...products.flatMap(p => {
+    if (p.variants && p.variants.length > 0) {
+      return p.variants.map(v => typeof v.price === 'number' ? v.price : parseFloat(v.price as string)).filter(p => !isNaN(p));
+    }
+    const basePrice = typeof p.price === 'number' ? p.price : parseFloat(p.price as string);
+    return isNaN(basePrice) ? [] : [basePrice];
+  })) : 0;
 
   const pageTitle = `${categoryName} — купить в Гродно/Беларуси цены в интернет-магазине АРХЕТИП`;
   const pageDescription = `Предлагаем купить ${categoryName} оригинал. Большой выбор, гарантия качества, доставка по Гродно и Беларуси. ${minPrice > 0 ? `Цены от ${minPrice.toFixed(2)} руб.` : ''}`;
@@ -399,7 +407,6 @@ export default function Storefront() {
                           <option value="perfume">{t('perfume')}</option>
                           <option value="eau_de_toilette">{t('eauDeToilette')}</option>
                           <option value="cologne">{t('cologne')}</option>
-                          <option value="oil">{t('oil')}</option>
                           <option value="decant">{language === 'be' ? 'Адліванты' : 'Отливанты'}</option>
                           <option value="set">{language === 'be' ? 'Наборы' : 'Наборы'}</option>
                         </select>

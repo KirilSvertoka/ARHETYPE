@@ -30,31 +30,14 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
         </div>
         <div className="space-y-6">
           {sortedNotes.map((note, idx) => {
-            // Calculate opacity based on value (min 30%, max 100%)
-            const opacity = 0.3 + (note.value / 100) * 0.7;
             const isDominant = idx === 0 && note.value > 0;
 
             return (
-              <div key={idx} className="space-y-2">
-                <div className="flex justify-between items-end">
-                  <span className={`text-sm ${isDominant ? 'font-bold text-brand-accent' : 'font-medium text-brand-light/80'}`}>
-                    {getNoteName(note)}
-                    {isDominant && <span className="ml-2 text-[10px] uppercase tracking-widest text-brand-accent/70">{dominantText}</span>}
-                  </span>
-                  <span className="text-xs font-mono text-brand-muted">
-                    {note.value}%
-                  </span>
-                </div>
-                <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${note.value}%` }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, delay: delay + (idx * 0.1), ease: "circOut" }}
-                    className="h-full bg-brand-accent rounded-full"
-                    style={{ opacity }}
-                  />
-                </div>
+              <div key={idx} className="flex items-center gap-3">
+                <span className={`text-sm ${isDominant ? 'font-bold text-brand-accent' : 'font-medium text-brand-light/80'}`}>
+                  {getNoteName(note)}
+                  {isDominant && <span className="ml-2 text-[10px] uppercase tracking-widest text-brand-accent/70">{dominantText}</span>}
+                </span>
               </div>
             );
           })}

@@ -5,7 +5,8 @@ export interface CartItem extends Product {
   quantity: number;
   selectedVariantId?: number;
   selectedVariantSize?: string;
-  price: number; // The price of the selected variant or base price
+  variant_type?: string;
+  price: string | number; // The price of the selected variant or base price
 }
 
 interface CartContextType {
@@ -56,6 +57,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         quantity: 1,
         selectedVariantId: variant?.id,
         selectedVariantSize: variant?.size,
+        variant_type: variant?.variant_type || (variant ? 'full' : undefined),
         price: variant ? variant.price : product.price
       };
       return [...prev, newItem];
@@ -84,7 +86,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems([]);
   };
 
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = items.reduce((sum, item) => {
+    const priceNum = typeof item.price === 'number' ? item.price : parseFloat(item.price as string);
+    return sum + (isNaN(priceNum) ? 0 : priceNum) * item.quantity;
+  }, 0);
 
   return (
     <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, isCartOpen, setIsCartOpen, total, clearCart, justAdded }}>

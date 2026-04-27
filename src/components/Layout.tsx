@@ -20,11 +20,11 @@ export default function Layout() {
   const { items, setIsCartOpen } = useCart();
   const { wishlist } = useWishlist();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(location.pathname === '/');
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isMobileCatalogOpen, setIsMobileCatalogOpen] = useState(false);
   const catalogRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -65,7 +65,11 @@ export default function Layout() {
     };
 
     // Minimum loading time for the full animation sequence (stroke + fill)
-    const minLoadTime = new Promise(resolve => setTimeout(resolve, 3200));
+    // ONLY play on home page
+    const isHome = location.pathname === '/';
+    const minLoadTime = isHome 
+      ? new Promise(resolve => setTimeout(resolve, 3200))
+      : Promise.resolve();
     
     Promise.all([fetchData(), minLoadTime]).then(() => {
       setIsLoading(false);
@@ -186,17 +190,15 @@ export default function Layout() {
                       <Instagram className="w-4 h-4" />
                     </a>
                   )}
-                  {settings?.telegram && (
-                    <a 
-                      href={settings.telegram} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-brand-muted hover:text-brand-accent transition-colors"
-                      onClick={() => trackGoal('messenger_click', 'telegram_header')}
-                    >
-                      <Send className="w-4 h-4" />
-                    </a>
-                  )}
+                  <a 
+                    href="https://t.me/archetype_by" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="text-brand-muted hover:text-brand-accent transition-colors"
+                    onClick={() => trackGoal('messenger_click', 'telegram_header')}
+                  >
+                    <Send className="w-4 h-4" />
+                  </a>
                   {settings?.email && (
                     <a 
                       href={`mailto:${settings.email}`} 
@@ -243,7 +245,7 @@ export default function Layout() {
                         {items.reduce((sum, item) => sum + item.quantity, 0)} {t('items')}
                       </span>
                       <span className="text-[10px] font-bold text-brand-light whitespace-nowrap">
-                        {items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)} BYN
+                        {items.reduce((sum, item) => sum + (parseFloat(String(item.price)) * item.quantity), 0).toFixed(2)} BYN
                       </span>
                     </div>
                   )}

@@ -185,7 +185,8 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       size: '',
       price: parseFloat(formData.price) || 0,
       stock: 0,
-      sku: ''
+      sku: '',
+      variant_type: 'decant'
     };
     setFormData(prev => ({ ...prev, variants: [...prev.variants, newVariant] }));
   };
@@ -206,7 +207,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
 
     const payload = {
       ...formData,
-      price: parseFloat(formData.price),
+      price: formData.price,
       stockThreshold: parseInt(formData.stockThreshold),
       topNotes: formData.topNotes,
       heartNotes: formData.heartNotes,
@@ -221,7 +222,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       seoDescription: formData.seoDescription,
       variants: formData.variants.map(v => ({
         ...v,
-        price: typeof v.price === 'string' ? parseFloat(v.price) : v.price,
+        price: v.price,
         stock: typeof v.stock === 'string' ? parseInt(v.stock) : v.stock
       }))
     };
@@ -275,7 +276,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Базовая цена (BYN)</label>
-              <input required type="number" min="0.01" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="320.00" />
+              <input required type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="320.00 или 'Уточняйте'" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Порог остатка</label>
@@ -629,14 +630,28 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             <p className="text-sm text-brand-muted text-center py-4">Нет добавленных вариантов. Будет использована базовая цена.</p>
           ) : (
             formData.variants.map((variant, idx) => (
-              <div key={idx} className="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 bg-transparent rounded-2xl border border-brand-border items-end">
+              <div key={idx} className="grid grid-cols-1 sm:grid-cols-5 gap-4 p-4 bg-transparent rounded-2xl border border-brand-border items-end">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-brand-muted">Объем</label>
                   <input required type="text" value={variant.size} onChange={e => updateVariant(idx, 'size', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted" placeholder="100ml" />
                 </div>
                 <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase text-brand-muted">Тип</label>
+                  <select 
+                    value={variant.variant_type || 'decant'} 
+                    onChange={e => updateVariant(idx, 'variant_type', e.target.value)}
+                    className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light outline-none"
+                  >
+                    <option value="decant">Отливант ( Decant )</option>
+                    <option value="splitting">Распив ( Splitting )</option>
+                    <option value="full">Флакон ( Full Bottle )</option>
+                    <option value="tester">Тестер ( Tester )</option>
+                    <option value="remainder">Остаток во флаконе</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-brand-muted">Цена (BYN)</label>
-                  <input required type="number" step="0.01" value={variant.price} onChange={e => updateVariant(idx, 'price', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted" placeholder="290.00" />
+                  <input required type="text" value={variant.price} onChange={e => updateVariant(idx, 'price', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted" placeholder="290.00" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-brand-muted">Остаток</label>

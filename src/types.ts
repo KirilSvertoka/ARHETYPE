@@ -12,36 +12,44 @@ export interface Accord {
   value: number; // 0-100 Width representation
 }
 
+export function getConcentrationLabel(concentration: string | undefined, language: string): string {
+  if (!concentration) return language === 'be' ? 'Парфумаваная вада' : 'Парфюмерная вода';
+  
+  const c = concentration.toUpperCase();
+  if (c === 'PARFUM') return language === 'be' ? 'Парфумы' : 'Духи';
+  if (c === 'EDP' || c === 'PERFUME') return language === 'be' ? 'Парфумаваная вада' : 'Парфюмерная вода';
+  if (c === 'EDT' || c === 'EAU DE TOILETTE') return language === 'be' ? 'Туалетная вада' : 'Туалетная вода';
+  if (c === 'EDC' || c === 'COLOGNE') return language === 'be' ? 'Адэкалон' : 'Одеколон';
+  
+  return concentration;
+}
+
 export interface ProductVariant {
   id?: number;
   productId: number;
   size: string; // e.g., '30ml', '50ml', '100ml', 'Tester'
-  price: number;
+  price: string | number;
   stock: number;
   sku: string;
+  variant_type?: 'decant' | 'splitting' | 'full' | 'tester' | 'remainder';
 }
 
-export function getVariantType(size: string, language: string): string {
-  const lowerSize = size.toLowerCase();
-  if (lowerSize.includes('тестер') || lowerSize.includes('tester')) {
-    return language === 'be' ? 'Тэстар' : 'Тестер';
-  }
-  if (lowerSize.includes('отливант') || lowerSize.includes('decant')) {
-    return language === 'be' ? 'Адлівант' : 'Отливант';
-  }
+export function getVariantType(variant: ProductVariant, language: string): string {
+  const type = variant.variant_type || 'decant';
   
-  // Extract ml
-  const mlMatch = lowerSize.match(/(\d+)\s*(ml|мл)/);
-  if (mlMatch) {
-    const ml = parseInt(mlMatch[1], 10);
-    if (ml <= 20) {
+  switch (type) {
+    case 'splitting':
+      return language === 'be' ? 'Расьпіў' : 'Распив';
+    case 'decant':
       return language === 'be' ? 'Адлівант' : 'Отливант';
-    } else {
+    case 'tester':
+      return language === 'be' ? 'Тэстар' : 'Тестер';
+    case 'remainder':
+      return language === 'be' ? 'Астатак ва флаконе' : 'Остаток во флаконе';
+    case 'full':
+    default:
       return language === 'be' ? 'Флакон' : 'Флакон';
-    }
   }
-  
-  return language === 'be' ? 'Флакон' : 'Флакон';
 }
 
 export interface Product {
@@ -53,7 +61,7 @@ export interface Product {
   imageUrl: string;
   images?: string[];
   slug: string;
-  price: number; // Base price or starting price
+  price: string | number; // Base price or starting price
   topNotes: Note[];
   heartNotes: Note[];
   baseNotes: Note[];
