@@ -516,9 +516,24 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                 <span className="w-2 h-2 rounded-full bg-brand-light"></span>
                 Главный баннер (Слайды)
               </h4>
-              <button onClick={addSlide} className="text-sm font-medium text-brand-muted hover:text-brand-light flex items-center gap-1">
-                <Plus className="w-4 h-4" /> Добавить слайд
-              </button>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    id="hideHeroTitles"
+                    checked={localHomeConfig.hero.hideTitles || false}
+                    onChange={e => setLocalHomeConfig({
+                      ...localHomeConfig, 
+                      hero: { ...localHomeConfig.hero, hideTitles: e.target.checked }
+                    })}
+                    className="w-4 h-4 rounded border-brand-border text-brand-light focus:ring-brand-light"
+                  />
+                  <label htmlFor="hideHeroTitles" className="text-sm font-medium text-brand-light">Скрыть надписи</label>
+                </div>
+                <button onClick={addSlide} className="text-sm font-medium text-brand-muted hover:text-brand-light flex items-center gap-1">
+                  <Plus className="w-4 h-4" /> Добавить слайд
+                </button>
+              </div>
             </div>
             
             <div className="space-y-4">

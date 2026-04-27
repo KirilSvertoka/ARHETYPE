@@ -235,7 +235,8 @@ const defaultHomeConfig = {
         subtitle_be: "Знайдзіце свой ідэальны водар.",
         link: "/catalog"
       }
-    ]
+    ],
+    hideTitles: false
   },
   featuredProductsTitle: "Новые поступления",
   featuredProductsTitle_be: "Новыя паступленні",
