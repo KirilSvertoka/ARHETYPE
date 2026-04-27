@@ -170,12 +170,19 @@ export interface HomeConfig {
   dynamicBlocks: { type: 'New' | 'BestSellers' | 'Recommended'; title: string; title_be?: string; active: boolean }[];
 }
 
+export interface SocialLink {
+  platform: 'instagram' | 'telegram' | 'whatsapp' | 'viber' | 'vkontakte' | 'facebook' | 'youtube' | 'tiktok' | 'other';
+  url: string;
+  active: boolean;
+}
+
 export interface GeneralSettings {
   aboutPhoto: string;
-  instagram: string;
-  telegram: string;
+  instagram: string; // Maintain for backward compatibility
+  telegram: string;  // Maintain for backward compatibility
   viber?: string;
   whatsapp?: string;
+  socialLinks?: SocialLink[];
   email: string;
   phone: string;
   workingHours: string;

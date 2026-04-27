@@ -348,15 +348,93 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
             </div>
 
             <div className="space-y-6">
-              <h4 className="text-[10px] font-bold text-brand-muted uppercase tracking-[0.2em] mb-4">Мессенджеры и Соцсети</h4>
-              <div className="grid gap-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-[10px] font-bold text-brand-muted uppercase tracking-[0.2em]">Мессенджеры и Соцсети</h4>
+                <button 
+                  onClick={() => {
+                    const links = localGeneralSettings.socialLinks || [];
+                    setLocalGeneralSettings({
+                      ...localGeneralSettings,
+                      socialLinks: [...links, { platform: 'instagram', url: '', active: true }]
+                    });
+                  }}
+                  className="text-[10px] font-bold text-brand-accent uppercase tracking-wider hover:text-brand-accent-hover transition-colors flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" /> Добавить ссылку
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Legacy Fields (Automatically sync back if changed, but we prefer socialLinks) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input type="text" value={localGeneralSettings.instagram} onChange={e => setLocalGeneralSettings({...localGeneralSettings, instagram: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light" placeholder="Instagram URL" />
-                  <input type="text" value={localGeneralSettings.telegram} onChange={e => setLocalGeneralSettings({...localGeneralSettings, telegram: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light" placeholder="Telegram URL" />
+                  <input type="text" value={localGeneralSettings.instagram} onChange={e => setLocalGeneralSettings({...localGeneralSettings, instagram: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light" placeholder="Instagram URL (Legacy)" />
+                  <input type="text" value={localGeneralSettings.telegram} onChange={e => setLocalGeneralSettings({...localGeneralSettings, telegram: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light" placeholder="Telegram URL (Legacy)" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input type="text" value={localGeneralSettings.viber || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, viber: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light" placeholder="Viber Link" />
-                  <input type="text" value={localGeneralSettings.whatsapp || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, whatsapp: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light" placeholder="WhatsApp URL" />
+
+                {/* Dynamic Social Links */}
+                <div className="space-y-3 pt-4 border-t border-brand-border/30">
+                  <p className="text-[10px] text-brand-muted uppercase tracking-widest mb-2 font-medium">Дополнительные и настраиваемые ссылки:</p>
+                  {(localGeneralSettings.socialLinks || []).map((link, idx) => (
+                    <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-brand-border group">
+                      <select 
+                        value={link.platform}
+                        onChange={(e) => {
+                          const links = [...(localGeneralSettings.socialLinks || [])];
+                          links[idx].platform = e.target.value as any;
+                          setLocalGeneralSettings({...localGeneralSettings, socialLinks: links});
+                        }}
+                        className="bg-brand-bg text-xs text-brand-light px-2 py-1.5 rounded-lg border border-brand-border outline-none focus:border-brand-accent"
+                      >
+                        <option value="instagram">Instagram</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="viber">Viber</option>
+                        <option value="vkontakte">VK</option>
+                        <option value="tiktok">TikTok</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="other">Другое</option>
+                      </select>
+                      
+                      <input 
+                        type="text" 
+                        value={link.url}
+                        onChange={(e) => {
+                          const links = [...(localGeneralSettings.socialLinks || [])];
+                          links[idx].url = e.target.value;
+                          setLocalGeneralSettings({...localGeneralSettings, socialLinks: links});
+                        }}
+                        placeholder="https://..."
+                        className="flex-1 bg-transparent border-none text-sm text-brand-light placeholder:text-brand-muted outline-none"
+                      />
+
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => {
+                            const links = [...(localGeneralSettings.socialLinks || [])];
+                            links[idx].active = !links[idx].active;
+                            setLocalGeneralSettings({...localGeneralSettings, socialLinks: links});
+                          }}
+                          title={link.active ? "Скрыть" : "Показать"}
+                          className={`p-1.5 rounded-lg transition-colors ${link.active ? 'text-green-400 bg-green-400/10' : 'text-brand-muted bg-white/5'}`}
+                        >
+                          {link.active ? <Plus className="w-3.5 h-3.5 rotate-45" /> : <Plus className="w-3.5 h-3.5" />}
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const links = (localGeneralSettings.socialLinks || []).filter((_, i) => i !== idx);
+                            setLocalGeneralSettings({...localGeneralSettings, socialLinks: links});
+                          }}
+                          className="p-1.5 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {(localGeneralSettings.socialLinks || []).length === 0 && (
+                    <p className="text-xs text-brand-muted italic text-center py-4">Нет дополнительных ссылок. Нажмите "Добавить ссылку", чтобы расширить блок в шапке и подвале.</p>
+                  )}
                 </div>
               </div>
             </div>

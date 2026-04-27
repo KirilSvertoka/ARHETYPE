@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Moon, Sun, Instagram, Send, Mail, ShoppingBag, Heart, Menu, X, ChevronDown, Search, Phone, MessageSquare, PhoneCall, MessageCircle, MapPin } from 'lucide-react';
+import { Moon, Sun, Instagram, Send, Mail, ShoppingBag, Heart, Menu, X, ChevronDown, Search, Phone, MessageSquare, PhoneCall, MessageCircle, MapPin, Youtube, Facebook, Globe } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useState, useEffect, useRef } from 'react';
 import { HomeConfig, GeneralSettings } from '../types';
@@ -82,6 +82,78 @@ export default function Layout() {
     { label: language === 'be' ? 'Унісекс' : 'Унисекс', to: '/catalog?gender=Unisex' },
     { label: language === 'be' ? 'Наборы' : 'Наборы', to: '/catalog?category=set' },
   ];
+
+  const SocialIcon = ({ platform, className }: { platform: string, className?: string }) => {
+    switch (platform) {
+      case 'instagram': return <Instagram className={className} />;
+      case 'telegram': return <Send className={className} />;
+      case 'whatsapp': return <MessageCircle className={className} />;
+      case 'viber': return <PhoneCall className={className} />;
+      case 'facebook': return <Facebook className={className} />;
+      case 'youtube': return <Youtube className={className} />;
+      case 'tiktok': return <Globe className={className} />;
+      default: return <Globe className={className} />;
+    }
+  };
+
+  const renderSocialLinks = (isFooter = false) => {
+    const links = settings?.socialLinks?.filter(l => l.active && l.url) || [];
+    
+    // If no dynamic links, fallback to legacy
+    if (links.length === 0) {
+      return (
+        <div className={`flex items-center ${isFooter ? 'gap-4' : 'gap-4 mr-2 border-r border-brand-border pr-6'}`}>
+          <Link to="/catalog" className="text-brand-muted hover:text-brand-accent transition-colors" title={t('search')}>
+            <Search className="w-4 h-4" />
+          </Link>
+          {settings?.instagram && (
+            <a 
+              href={settings.instagram} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="text-brand-muted hover:text-brand-accent transition-colors"
+              onClick={() => trackGoal('instagram_click', isFooter ? 'footer' : 'header')}
+            >
+              <Instagram className="w-4 h-4" />
+            </a>
+          )}
+          {settings?.telegram && (
+            <a 
+              href={settings.telegram} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="text-brand-muted hover:text-brand-accent transition-colors"
+              onClick={() => trackGoal('messenger_click', `telegram_${isFooter ? 'footer' : 'header'}`)}
+            >
+              <Send className="w-4 h-4" />
+            </a>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className={`flex items-center ${isFooter ? 'gap-4' : 'gap-4 mr-2 border-r border-brand-border pr-6'}`}>
+        {!isFooter && (
+          <Link to="/catalog" className="text-brand-muted hover:text-brand-accent transition-colors" title={t('search')}>
+            <Search className="w-4 h-4" />
+          </Link>
+        )}
+        {links.map((link, idx) => (
+          <a
+            key={idx}
+            href={link.url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-brand-muted hover:text-brand-accent transition-colors"
+            onClick={() => trackGoal('social_click', `${link.platform}_${isFooter ? 'footer' : 'header'}`)}
+          >
+            <SocialIcon platform={link.platform} className={isFooter ? "w-4 h-4" : "w-4 h-4"} />
+          </a>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -175,39 +247,8 @@ export default function Layout() {
               </nav>
               
               <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-                <div className="hidden md:flex items-center gap-4 mr-2 border-r border-brand-border pr-6">
-                  <Link to="/catalog" className="text-brand-muted hover:text-brand-accent transition-colors" title={t('search')}>
-                    <Search className="w-4 h-4" />
-                  </Link>
-                  {settings?.instagram && (
-                    <a 
-                      href={settings.instagram} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="text-brand-muted hover:text-brand-accent transition-colors"
-                      onClick={() => trackGoal('instagram_click', 'header')}
-                    >
-                      <Instagram className="w-4 h-4" />
-                    </a>
-                  )}
-                  <a 
-                    href="https://t.me/archetype_by" 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="text-brand-muted hover:text-brand-accent transition-colors"
-                    onClick={() => trackGoal('messenger_click', 'telegram_header')}
-                  >
-                    <Send className="w-4 h-4" />
-                  </a>
-                  {settings?.email && (
-                    <a 
-                      href={`mailto:${settings.email}`} 
-                      className="text-brand-muted hover:text-brand-accent transition-colors"
-                      onClick={() => trackGoal('email_click', 'header')}
-                    >
-                      <Mail className="w-4 h-4" />
-                    </a>
-                  )}
+                <div className="hidden md:flex flex items-center">
+                  {renderSocialLinks(false)}
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -335,21 +376,7 @@ export default function Layout() {
                 </div>
 
                 <div className="mt-12 flex gap-6">
-                  {settings?.instagram && (
-                    <a href={settings.instagram} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent">
-                      <Instagram className="w-6 h-6" />
-                    </a>
-                  )}
-                  {settings?.telegram && (
-                    <a href={settings.telegram} target="_blank" rel="noreferrer" className="text-brand-muted hover:text-brand-accent">
-                      <Send className="w-6 h-6" />
-                    </a>
-                  )}
-                  {settings?.email && (
-                    <a href={`mailto:${settings.email}`} className="text-brand-muted hover:text-brand-accent">
-                      <Mail className="w-6 h-6" />
-                    </a>
-                  )}
+                  {renderSocialLinks(true)}
                 </div>
               </div>
             </motion.div>
@@ -377,16 +404,7 @@ export default function Layout() {
                   : 'Ваш проводник в мире нишевой парфюмерии. Мы предлагаем только оригинальную продукцию и высокий уровень сервиса.'}
               </p>
               <div className="flex gap-4">
-                {settings?.instagram && (
-                  <a href={settings.instagram} target="_blank" rel="noreferrer" className="w-8 h-8 flex items-center justify-center rounded-lg border border-brand-border text-brand-muted hover:text-brand-accent hover:border-brand-accent transition-colors">
-                    <Instagram className="w-4 h-4" />
-                  </a>
-                )}
-                {settings?.telegram && (
-                  <a href={settings.telegram} target="_blank" rel="noreferrer" className="w-8 h-8 flex items-center justify-center rounded-lg border border-brand-border text-brand-muted hover:text-brand-accent hover:border-brand-accent transition-colors">
-                    <Send className="w-4 h-4" />
-                  </a>
-                )}
+                {renderSocialLinks(true)}
               </div>
             </div>
 
