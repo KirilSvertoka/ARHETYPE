@@ -12,11 +12,10 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
   const { language, t } = useLanguage();
   
   const getNoteName = (note: Note) => language === 'be' && note.name_be ? note.name_be : note.name;
-  const dominantText = language === 'be' ? 'Дамінанта' : 'Доминанта';
 
   const NoteGroup = ({ title, notes, delay }: { title: string, notes: Note[], delay: number }) => {
-    // Sort notes by value descending to show dominant notes first
-    const sortedNotes = [...notes].sort((a, b) => b.value - a.value);
+    // Show notes in the order they were provided
+    const displayNotes = [...notes];
 
     return (
       <div className="bg-white/5 border border-brand-border rounded-3xl p-6 md:p-8 hover:bg-white/[0.07] transition-colors">
@@ -28,15 +27,12 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
             {notes.length} {t('notes').toLowerCase()}
           </span>
         </div>
-        <div className="space-y-6">
-          {sortedNotes.map((note, idx) => {
-            const isDominant = idx === 0 && note.value > 0;
-
+        <div className="space-y-4">
+          {displayNotes.map((note, idx) => {
             return (
               <div key={idx} className="flex items-center gap-3">
-                <span className={`text-sm ${isDominant ? 'font-bold text-brand-accent' : 'font-medium text-brand-light/80'}`}>
+                <span className="text-sm font-medium text-brand-light/80">
                   {getNoteName(note)}
-                  {isDominant && <span className="ml-2 text-[10px] uppercase tracking-widest text-brand-accent/70">{dominantText}</span>}
                 </span>
               </div>
             );

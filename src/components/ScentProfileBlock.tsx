@@ -48,25 +48,16 @@ export default function ScentProfileBlock({ product }: ScentProfileBlockProps) {
               <h3 className="text-xs uppercase tracking-widest text-brand-muted mb-6 font-medium">
                 {language === 'be' ? 'Асноўныя акорды' : 'Основные аккорды'}
               </h3>
-              <div className="space-y-1.5">
+              <div className="flex flex-wrap gap-2">
                 {sortedAccords.map((accord, idx) => (
                   <div 
                     key={idx} 
-                    className="relative flex items-center h-10 rounded-e-xl rounded-s-sm px-4 group cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg text-white font-medium text-xs drop-shadow-sm whitespace-nowrap"
                     style={{ 
-                      width: `${accord.value}%`, 
                       backgroundColor: accord.color || '#ff6b35',
-                      minWidth: 'fit-content'
                     }}
-                    title={`${getAccordName(accord)} - ${accord.value}%`}
                   >
-                    <div 
-                      className="absolute inset-0 opacity-20 transition-opacity group-hover:opacity-30" 
-                      style={{ backgroundColor: 'white' }} 
-                    />
-                    <span className="relative z-10 text-white font-medium text-sm drop-shadow-md whitespace-nowrap px-2">
-                      {getAccordName(accord)}
-                    </span>
+                    {getAccordName(accord)}
                   </div>
                 ))}
               </div>
@@ -131,28 +122,17 @@ export default function ScentProfileBlock({ product }: ScentProfileBlockProps) {
                 <div className="text-[10px] uppercase tracking-widest text-brand-muted mb-4 font-medium flex justify-between">
                   <span>{language === 'be' ? 'Верхнія ноты' : 'Верхние ноты'}</span>
                 </div>
-                <div className="space-y-4">
-                  {[...product.topNotes].sort((a,b) => b.value - a.value).map((note, idx) => (
+                <div className="space-y-3">
+                  {product.topNotes.map((note, idx) => (
                     <div 
                       key={idx} 
                       className="group cursor-pointer"
                       title={`${language === 'be' ? 'Раскрываецца адразу пасля нанясення' : 'Раскрывается сразу после нанесения'}`}
                     >
-                      <div className="flex justify-between items-end mb-1">
-                        <span className="text-sm font-medium text-brand-light group-hover:text-brand-accent transition-colors flex items-center">
-                          {renderIcon(note.icon)}
-                          {getNoteName(note)}
-                        </span>
-                      </div>
-                      <div className="h-1 w-full bg-brand-border rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${note.value}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 1, delay: 0.1 + (idx * 0.1), ease: "circOut" }}
-                          className="h-full bg-brand-accent rounded-full"
-                        />
-                      </div>
+                      <span className="text-sm font-medium text-brand-light group-hover:text-brand-accent transition-colors flex items-center">
+                        {renderIcon(note.icon)}
+                        {getNoteName(note)}
+                      </span>
                     </div>
                   ))}
                   {product.topNotes.length === 0 && <span className="text-sm text-brand-muted italic">-</span>}
@@ -164,28 +144,17 @@ export default function ScentProfileBlock({ product }: ScentProfileBlockProps) {
                 <div className="text-[10px] uppercase tracking-widest text-brand-muted mb-4 font-medium flex justify-between">
                   <span>{language === 'be' ? 'Сярэднія ноты' : 'Средние ноты'}</span>
                 </div>
-                <div className="space-y-4">
-                  {[...product.heartNotes].sort((a,b) => b.value - a.value).map((note, idx) => (
+                <div className="space-y-3">
+                  {product.heartNotes.map((note, idx) => (
                     <div 
                       key={idx} 
                       className="group cursor-pointer"
                       title={`${language === 'be' ? 'Сэрца водару, гучыць некалькі гадзін' : 'Сердце аромата, звучит несколько часов'}`}
                     >
-                      <div className="flex justify-between items-end mb-1">
-                        <span className="text-sm font-medium text-brand-light group-hover:text-brand-accent transition-colors flex items-center">
-                          {renderIcon(note.icon)}
-                          {getNoteName(note)}
-                        </span>
-                      </div>
-                      <div className="h-1 w-full bg-brand-border rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${note.value}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 1, delay: 0.3 + (idx * 0.1), ease: "circOut" }}
-                          className="h-full bg-brand-accent rounded-full"
-                        />
-                      </div>
+                      <span className="text-sm font-medium text-brand-light group-hover:text-brand-accent transition-colors flex items-center">
+                        {renderIcon(note.icon)}
+                        {getNoteName(note)}
+                      </span>
                     </div>
                   ))}
                   {product.heartNotes.length === 0 && <span className="text-sm text-brand-muted italic">-</span>}
@@ -197,28 +166,17 @@ export default function ScentProfileBlock({ product }: ScentProfileBlockProps) {
                 <div className="text-[10px] uppercase tracking-widest text-brand-muted mb-4 font-medium flex justify-between">
                   <span>{language === 'be' ? 'Базавыя ноты' : 'Базовые ноты'}</span>
                 </div>
-                <div className="space-y-4">
-                  {[...product.baseNotes].sort((a,b) => b.value - a.value).map((note, idx) => (
+                <div className="space-y-3">
+                  {product.baseNotes.map((note, idx) => (
                     <div 
                       key={idx} 
                       className="group cursor-pointer"
                       title={`${language === 'be' ? 'Шлейф, застаецца на скуры даўжэй за ўсё' : 'Шлейф, остается на коже дольше всего'}`}
                     >
-                      <div className="flex justify-between items-end mb-1">
-                        <span className="text-sm font-medium text-brand-light group-hover:text-brand-accent transition-colors flex items-center">
-                          {renderIcon(note.icon)}
-                          {getNoteName(note)}
-                        </span>
-                      </div>
-                      <div className="h-1 w-full bg-brand-border rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${note.value}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 1, delay: 0.5 + (idx * 0.1), ease: "circOut" }}
-                          className="h-full bg-brand-accent rounded-full"
-                        />
-                      </div>
+                      <span className="text-sm font-medium text-brand-light group-hover:text-brand-accent transition-colors flex items-center">
+                        {renderIcon(note.icon)}
+                        {getNoteName(note)}
+                      </span>
                     </div>
                   ))}
                   {product.baseNotes.length === 0 && <span className="text-sm text-brand-muted italic">-</span>}

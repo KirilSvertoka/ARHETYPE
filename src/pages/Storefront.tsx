@@ -198,7 +198,7 @@ export default function Storefront() {
     if (activeGenderTab === 'Male') parts.push(language === 'be' ? 'Мужчынская парфумерыя' : 'Мужская парфюмерия');
     else if (activeGenderTab === 'Female') parts.push(language === 'be' ? 'Жаночая парфумерыя' : 'Женская парфюмерия');
     else if (activeGenderTab === 'Unisex') parts.push(language === 'be' ? 'Унісекс парфумерыя' : 'Унисекс парфюмерия');
-    else if (activeBrand === 'All') parts.push(language === 'be' ? 'Нішавая парфумерыя' : 'Нишевая парфюмерия');
+    else if (activeBrand === 'All') parts.push(language === 'be' ? 'Каталог' : 'Каталог');
     else parts.push(language === 'be' ? 'парфумерыя' : 'парфюмерия');
     
     // Category part (suffix)

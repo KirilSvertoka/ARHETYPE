@@ -986,43 +986,44 @@ app.get('/api/products', (req, res) => {
   try {
     const { search, brand, gender, families, accords, sort, category } = req.query;
 
-    let query = 'SELECT * FROM products WHERE 1=1';
+    let query = 'SELECT DISTINCT p.* FROM products p';
+    let joins = '';
+    let where = ' WHERE 1=1';
     const params: any[] = [];
 
-    // Remove exact LIKE search, we'll do it in memory with fuse.js later
-    // if (search) {
-    //   query += ' AND (name LIKE ? OR brand LIKE ?)';
-    //   params.push(`%${search}%`, `%${search}%`);
-    // }
+    if (category && category !== 'All') {
+      if (category === 'decant') {
+        joins += ' JOIN product_variants v_cat ON p.id = v_cat.product_id';
+        where += ' AND v_cat.variant_type = "decant"';
+      } else if (category === 'set') {
+        joins += ' JOIN product_variants v_cat ON p.id = v_cat.product_id';
+        where += ' AND v_cat.variant_type = "set"';
+      } else {
+        let concentrationValues: string[] = [];
+        switch (category) {
+          case 'perfume': concentrationValues = ['Parfum', 'Extrait de Parfum', 'Pure Perfume', 'EDP', 'Eau de Parfum']; break;
+          case 'eau_de_toilette': concentrationValues = ['EDT', 'Eau de Toilette']; break;
+          case 'cologne': concentrationValues = ['EDC', 'Cologne', 'Eau de Cologne']; break;
+          case 'oil': concentrationValues = ['Oil', 'Perfume Oil']; break;
+        }
+        if (concentrationValues.length > 0) {
+          where += ` AND p.concentration IN (${concentrationValues.map(() => '?').join(',')})`;
+          params.push(...concentrationValues);
+        }
+      }
+    }
 
     if (brand && brand !== 'All') {
-      query += ' AND brand = ?';
+      where += ' AND LOWER(p.brand) = LOWER(?)';
       params.push(brand);
     }
 
     if (gender && gender !== 'All') {
-      query += ' AND gender = ?';
+      where += ' AND p.gender = ?';
       params.push(gender);
     }
 
-    if (category && category !== 'All') {
-      if (category === 'decant') {
-        query += ' AND (name LIKE ? OR description LIKE ? OR tags LIKE ?)';
-        params.push('%отливант%', '%отливант%', '%отливант%');
-      } else {
-        let concentration = '';
-        switch (category) {
-          case 'perfume': concentration = 'Parfum'; break;
-          case 'eau_de_toilette': concentration = 'EDT'; break;
-          case 'cologne': concentration = 'EDC'; break;
-          case 'oil': concentration = 'Oil'; break;
-        }
-        if (concentration) {
-          query += ' AND concentration = ?';
-          params.push(concentration);
-        }
-      }
-    }
+    query += joins + where;
 
     let products = db.prepare(query).all(...params) as any[];
 
@@ -1055,7 +1056,10 @@ app.get('/api/products', (req, res) => {
       products = products.filter((p: any) => {
         try {
           const pAccords = JSON.parse(p.accords || '[]');
-          return pAccords.some((a: any) => accordList.includes(a.name));
+          return pAccords.some((a: any) => {
+            const name = typeof a === 'string' ? a : a.name;
+            return accordList.includes(name);
+          });
         } catch (e) {
           return false;
         }
@@ -1085,7 +1089,13 @@ app.get('/api/products', (req, res) => {
     // Sorting
     if (sort) {
       result.sort((a: any, b: any) => {
-        const getPrice = (p: any) => p.variants && p.variants.length > 0 ? Math.min(...p.variants.map((v: any) => v.price)) : p.price;
+        const getPrice = (p: any) => {
+          if (p.variants && p.variants.length > 0) {
+            const prices = p.variants.map((v: any) => parseFloat(String(v.price)));
+            return Math.min(...prices.filter((pr: number) => !isNaN(pr)));
+          }
+          return parseFloat(String(p.price));
+        };
         switch (sort) {
           case 'name-asc': return a.name.localeCompare(b.name);
           case 'name-desc': return b.name.localeCompare(a.name);

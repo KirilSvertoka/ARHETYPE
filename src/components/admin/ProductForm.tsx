@@ -461,21 +461,6 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                     }}
                     className="w-10 h-10 p-1 rounded-lg bg-transparent border border-brand-border cursor-pointer shrink-0"
                   />
-                  <div className="w-32 flex flex-col gap-1">
-                    <span className="text-[10px] text-brand-muted uppercase">Значение</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={accord.value}
-                      onChange={e => {
-                        const copy = [...formData.accords];
-                        copy[i].value = parseInt(e.target.value);
-                        setFormData({...formData, accords: copy});
-                      }}
-                      className="w-full accent-brand-accent h-1.5 bg-brand-border rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-brand-accent [&::-webkit-slider-thumb]:rounded-full"
-                    />
-                  </div>
                 </div>
                 <button
                   type="button"

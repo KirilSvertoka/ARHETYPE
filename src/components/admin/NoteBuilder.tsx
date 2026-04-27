@@ -120,20 +120,6 @@ export default function NoteBuilder({ title, notes, onChange }: NoteBuilderProps
                 <Trash2 className="w-5 h-5" />
               </button>
             </div>
-
-            {/* Value Slider */}
-            <div className="flex items-center gap-4 pl-12 pr-4">
-              <span className="text-[10px] uppercase text-brand-muted block w-16">Интенсив.</span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={note.value}
-                onChange={(e) => updateNote(idx, { value: parseInt(e.target.value) })}
-                className="flex-1 accent-brand-accent h-1.5 bg-brand-border rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-brand-accent [&::-webkit-slider-thumb]:rounded-full"
-              />
-              <span className="text-xs font-medium text-brand-light w-8 text-right">{note.value}%</span>
-            </div>
           </div>
         );
       })}
