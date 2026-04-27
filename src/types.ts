@@ -161,7 +161,7 @@ export interface CMSPage {
 export interface HomeConfig {
   announcement: { text: string; text_be?: string; active: boolean };
   hero: { 
-    slides: { image: string; title: string; title_be?: string; subtitle: string; subtitle_be?: string; link?: string; timerEnd?: string }[];
+    slides: { image: string; mobileImage?: string; title: string; title_be?: string; subtitle: string; subtitle_be?: string; link?: string; timerEnd?: string }[];
     hideTitles?: boolean;
   };
   featuredProductsTitle: string;

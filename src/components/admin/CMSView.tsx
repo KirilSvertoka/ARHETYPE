@@ -559,9 +559,9 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                       <label className="text-xs font-medium uppercase tracking-wider text-brand-muted">Подзаголовок (BE)</label>
                       <input type="text" value={slide.subtitle_be || ''} onChange={e => updateSlide(idx, 'subtitle_be', e.target.value)} className="w-full px-3 py-2 bg-transparent border border-brand-border rounded-lg text-sm text-brand-light" />
                     </div>
-                    <div className="space-y-1 md:col-span-2">
+                    <div className="space-y-1">
                       <ImageDropzone 
-                        label="Изображение слайда"
+                        label="Десктоп (основное)"
                         currentUrl={slide.image}
                         onUpload={(file) => handleFileUpload(file, (url) => updateSlide(idx, 'image', url))}
                       />
@@ -570,7 +570,21 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                         value={slide.image} 
                         onChange={e => updateSlide(idx, 'image', e.target.value)} 
                         className="w-full px-3 py-1.5 bg-transparent border border-brand-border rounded-lg text-[10px] font-mono mt-1 text-brand-light placeholder:text-brand-muted" 
-                        placeholder="Или вставьте URL..." 
+                        placeholder="URL десктоп..." 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <ImageDropzone 
+                        label="Мобильная версия (постер)"
+                        currentUrl={slide.mobileImage || ''}
+                        onUpload={(file) => handleFileUpload(file, (url) => updateSlide(idx, 'mobileImage', url))}
+                      />
+                      <input 
+                        type="text" 
+                        value={slide.mobileImage || ''} 
+                        onChange={e => updateSlide(idx, 'mobileImage', e.target.value)} 
+                        className="w-full px-3 py-1.5 bg-transparent border border-brand-border rounded-lg text-[10px] font-mono mt-1 text-brand-light placeholder:text-brand-muted" 
+                        placeholder="URL мобильный..." 
                       />
                     </div>
                     <div className="space-y-1">

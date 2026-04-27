@@ -229,6 +229,7 @@ const defaultHomeConfig = {
     slides: [
       {
         image: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2000&auto=format&fit=crop",
+        mobileImage: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1000&auto=format&fit=crop",
         title: "Искусство минимализма",
         title_be: "Мастацтва мінімалізму",
         subtitle: "Найдите свой идеальный аромат.",

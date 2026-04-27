@@ -53,6 +53,14 @@ export default function Home() {
   }, []);
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (!config || config.hero.slides.length <= 1) return;
@@ -131,7 +139,7 @@ export default function Home() {
                   initial={{ scale: 1 }}
                   animate={{ scale: 1.15 }}
                   transition={{ duration: 7, ease: "linear" }}
-                  src={activeSlide.image} 
+                  src={(isMobile && activeSlide.mobileImage) ? activeSlide.mobileImage : activeSlide.image} 
                   alt={activeSlide.title || "Hero"} 
                   className="absolute inset-0 w-full h-full object-cover opacity-60"
                   referrerPolicy="no-referrer"
@@ -140,7 +148,7 @@ export default function Home() {
               </>
             )}
             
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 z-10">
+            <div className={`absolute inset-0 flex flex-col items-center px-4 z-10 ${config.hero.hideTitles ? 'justify-end pb-24' : 'justify-center text-center'}`}>
               {!config.hero.hideTitles && (
                 <>
                   <motion.h1 
