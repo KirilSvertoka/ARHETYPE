@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { CMSPage, HomeConfig, GeneralSettings } from '../../types';
 import { XCircle, Plus, Trash2, GripVertical, Image as ImageIcon, UploadCloud } from 'lucide-react';
+import { uploadImageChunks } from '../../utils/uploadUtils';
 
 interface CMSViewProps {
   pages: CMSPage[];
@@ -46,19 +47,9 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
     }
     // No size limit
 
-    const formDataUpload = new FormData();
-    formDataUpload.append('image', file);
-
     try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formDataUpload
-      });
-
-      if (!res.ok) throw new Error('Ошибка при загрузке');
-      const data = await res.json();
-      callback(data.url);
+      const url = await uploadImageChunks(file, token);
+      callback(url);
     } catch (err: any) {
       alert(err.message);
     }

@@ -817,6 +817,29 @@ app.get('/api/feeds/google.xml', (req, res) => {
   }
 });
 
+app.post('/api/upload/chunk', requireAuth, express.json({ limit: '50mb' }), (req, res) => {
+  try {
+    const { uploadId, chunkIndex, totalChunks, chunkData, filename } = req.body;
+    const buffer = Buffer.from(chunkData, 'base64');
+    const tempPath = path.join(uploadDir, `temp-${uploadId}`);
+    
+    fs.appendFileSync(tempPath, buffer);
+    
+    if (Number(chunkIndex) === Number(totalChunks) - 1) {
+      const sanitizedName = filename.replace(/[^a-zA-Z0-9.-]/g, '');
+      const finalName = `${Date.now()}-${sanitizedName}`;
+      const finalPath = path.join(uploadDir, finalName);
+      fs.renameSync(tempPath, finalPath);
+      res.json({ url: `/uploads/${finalName}` });
+    } else {
+      res.json({ success: true });
+    }
+  } catch (err) {
+    console.error('Chunk upload error:', err);
+    res.status(500).json({ error: 'Failed to upload chunk' });
+  }
+});
+
 app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });

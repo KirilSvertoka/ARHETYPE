@@ -3,6 +3,8 @@ import { Product, Note, ProductVariant } from '../../types';
 import { UploadCloud, RefreshCw, Plus, Trash2, Image as ImageIcon, Tag, Layers } from 'lucide-react';
 import NoteBuilder from './NoteBuilder';
 
+import { uploadImageChunks } from '../../utils/uploadUtils';
+
 interface ProductFormProps {
   token: string;
   initialData?: Product | null;
@@ -143,18 +145,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
         }
         // No size limit
 
-        const formDataUpload = new FormData();
-        formDataUpload.append('image', file);
-
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formDataUpload
-        });
-
-        if (!res.ok) throw new Error(`Ошибка при загрузке ${file.name}`);
-        const data = await res.json();
-        return data.url;
+        return await uploadImageChunks(file, token);
       });
 
       const urls = await Promise.all(uploadPromises);
