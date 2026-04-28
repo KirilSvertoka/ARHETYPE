@@ -73,7 +73,7 @@ const ImageDropzone = ({
             </div>
             <div className="text-center">
               <p className="text-xs font-medium text-brand-light">Нажмите или перетащите</p>
-              <p className="text-[10px] text-brand-muted mt-1">PNG, JPG до 5MB</p>
+              <p className="text-[10px] text-brand-muted mt-1">PNG, JPG</p>
             </div>
           </>
         )}
@@ -141,9 +141,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
         if (!file.type.startsWith('image/')) {
           throw new Error(`Файл ${file.name} не является изображением`);
         }
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error(`Файл ${file.name} слишком большой (макс. 5МБ)`);
-        }
+        // No size limit
 
         const formDataUpload = new FormData();
         formDataUpload.append('image', file);

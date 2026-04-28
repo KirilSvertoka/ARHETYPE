@@ -44,10 +44,7 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
       alert('Пожалуйста, загрузите изображение');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Размер файла должен быть меньше 5 МБ');
-      return;
-    }
+    // No size limit
 
     const formDataUpload = new FormData();
     formDataUpload.append('image', file);
