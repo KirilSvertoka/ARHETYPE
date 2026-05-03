@@ -13,6 +13,8 @@ interface CMSPage {
   content: string;
   content_be?: string;
   updated_at: string;
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 export default function Page() {
@@ -70,7 +72,8 @@ export default function Page() {
       className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-24"
     >
       <Helmet>
-        <title>{title} — Archetype</title>
+        <title>{page.seoTitle || `${title} — Archetype`}</title>
+        {page.seoDescription && <meta name="description" content={page.seoDescription} />}
       </Helmet>
 
       <div className="mb-12">

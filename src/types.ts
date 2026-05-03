@@ -154,6 +154,8 @@ export interface CMSPage {
   title_be?: string;
   content: string;
   content_be?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   updated_at: string;
   created_at?: string;
 }
@@ -169,6 +171,8 @@ export interface HomeConfig {
   featuredProductIds: number[];
   promoImages: string[];
   dynamicBlocks: { type: 'New' | 'BestSellers' | 'Recommended'; title: string; title_be?: string; active: boolean }[];
+  seoTitle?: string;
+  seoDescription?: string;
 }
 
 export interface SocialLink {
@@ -211,4 +215,6 @@ export interface GeneralSettings {
   stat3Value: string;
   stat3Label: string;
   stat3Label_be?: string;
+  seoTitle?: string;
+  seoDescription?: string;
 }

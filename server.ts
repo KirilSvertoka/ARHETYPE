@@ -250,7 +250,9 @@ const defaultHomeConfig = {
     { type: 'New', title: 'Новинки', title_be: 'Навінкі', active: true },
     { type: 'BestSellers', title: 'Хиты продаж', title_be: 'Хіты продажаў', active: true },
     { type: 'Recommended', title: 'Рекомендуем', title_be: 'Рэкамендуем', active: true }
-  ]
+  ],
+  seoTitle: "АРХЕТИП | Элитная парфюмерия и отливанты в Беларуси",
+  seoDescription: "Оригинальная нишевая и селективная парфюмерия. Распив (отливанты) в Гродно и с доставкой по Беларуси. Честные цены, только оригинал."
 };
 const defaultGeneralSettings = {
   aboutPhoto: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2000&auto=format&fit=crop",
@@ -284,7 +286,9 @@ const defaultGeneralSettings = {
   stat2Label_be: "Нішавых брэндаў",
   stat3Value: "10k+",
   stat3Label: "Счастливых клиентов",
-  stat3Label_be: "Шчаслівых кліентаў"
+  stat3Label_be: "Шчаслівых кліентаў",
+  seoTitle: "Arhetip Perfume",
+  seoDescription: "Магазин нишевой парфюмерии Arhetip"
 };
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('home_config', JSON.stringify(defaultHomeConfig));
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('general_settings', JSON.stringify(defaultGeneralSettings));
@@ -1019,10 +1023,10 @@ app.get('/api/products', (req, res) => {
     if (category && category !== 'All') {
       if (category === 'decant') {
         joins += ' JOIN product_variants v_cat ON p.id = v_cat.product_id';
-        where += ' AND v_cat.variant_type = "decant"';
+        where += " AND (v_cat.size LIKE '%ml' AND CAST(v_cat.size AS INTEGER) <= 20)";
       } else if (category === 'set') {
         joins += ' JOIN product_variants v_cat ON p.id = v_cat.product_id';
-        where += ' AND v_cat.variant_type = "set"';
+        where += " AND v_cat.size LIKE '%set%'";
       } else {
         let concentrationValues: string[] = [];
         switch (category) {
@@ -1135,7 +1139,7 @@ app.get('/api/products', (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Failed to fetch products:', error);
-    res.status(500).json({ error: 'Failed to fetch products' });
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to fetch products' });
   }
 });
 

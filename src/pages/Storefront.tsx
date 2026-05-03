@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Product } from '../types';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import CallbackForm from '../components/CallbackForm';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,26 +10,29 @@ import { useLanguage } from '../components/LanguageProvider';
 import Breadcrumbs from '../components/Breadcrumbs';
 
 export default function Storefront() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { t, language } = useLanguage();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [activeGenderTab, setActiveGenderTab] = useState<'All' | 'Male' | 'Female' | 'Unisex'>('All');
-  const [selectedFamilies, setSelectedFamilies] = useState<string[]>([]);
-  const [activeBrand, setActiveBrand] = useState<string>('All');
-  const [activeCategory, setActiveCategory] = useState<string>('All');
+  
+  const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(location.search).get('search') || '');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(() => new URLSearchParams(location.search).get('search') || '');
+  const [activeGenderTab, setActiveGenderTab] = useState<'All' | 'Male' | 'Female' | 'Unisex'>(() => (new URLSearchParams(location.search).get('gender') as any) || 'All');
+  const [selectedFamilies, setSelectedFamilies] = useState<string[]>(() => new URLSearchParams(location.search).get('families')?.split(',') || []);
+  const [activeBrand, setActiveBrand] = useState<string>(() => new URLSearchParams(location.search).get('brand') || 'All');
+  const [activeCategory, setActiveCategory] = useState<string>(() => new URLSearchParams(location.search).get('category') || 'All');
   const [accordsList, setAccordsList] = useState<string[]>([]);
-  const [selectedAccords, setSelectedAccords] = useState<string[]>([]);
+  const [selectedAccords, setSelectedAccords] = useState<string[]>(() => new URLSearchParams(location.search).get('accords')?.split(',') || []);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<string>('name-asc');
+  const [sortBy, setSortBy] = useState<string>(() => new URLSearchParams(location.search).get('sort') || 'name-asc');
   const [mobileGridCols, setMobileGridCols] = useState<1 | 2>(1);
   const [isScrolled, setIsScrolled] = useState(false);
   const [suggestions, setSuggestions] = useState<{type: string, text: string, id?: number}[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -41,25 +44,98 @@ export default function Storefront() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Update URL search params when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (activeBrand !== 'All') params.set('brand', activeBrand);
+    if (activeGenderTab !== 'All') params.set('gender', activeGenderTab);
+    if (activeCategory !== 'All') params.set('category', activeCategory);
+    if (sortBy !== 'name-asc') params.set('sort', sortBy);
+    if (debouncedSearchQuery) params.set('search', debouncedSearchQuery);
+    if (selectedFamilies.length > 0) params.set('families', selectedFamilies.join(','));
+    if (selectedAccords.length > 0) params.set('accords', selectedAccords.join(','));
+    
+    const currentParams = new URLSearchParams(location.search);
+    
+    let isDifferent = false;
+    
+    // Check if lengths are different
+    if (Array.from(params.keys()).length !== Array.from(currentParams.keys()).length) {
+      isDifferent = true;
+    } else {
+      // Check if values are different
+      for (const [key, value] of params.entries()) {
+        if (currentParams.get(key) !== value) {
+          isDifferent = true;
+          break;
+        }
+      }
+    }
+    
+    if (isDifferent) {
+      const newSearch = params.toString();
+      navigate(`/catalog${newSearch ? `?${newSearch}` : ''}`, { replace: true });
+    }
+  }, [activeBrand, activeGenderTab, activeCategory, sortBy, debouncedSearchQuery, selectedFamilies, selectedAccords, navigate, location.pathname]);
+
+  // Sync state with URL search params (on initial load or back/forward navigation)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const categoryParam = params.get('category');
     const genderParam = params.get('gender');
     const sortParam = params.get('sort');
     const brandParam = params.get('brand');
+    const searchParam = params.get('search');
+    const familiesParam = params.get('families');
+    const accordsParam = params.get('accords');
 
-    if (categoryParam) setActiveCategory(categoryParam);
-    if (genderParam) setActiveGenderTab(genderParam as any);
-    if (sortParam) setSortBy(sortParam);
-    if (brandParam) setActiveBrand(brandParam);
+    const newCategory = categoryParam || 'All';
+    if (newCategory !== activeCategory) setActiveCategory(newCategory);
+
+    const newGender = (genderParam as any) || 'All';
+    if (newGender !== activeGenderTab) setActiveGenderTab(newGender);
+
+    const newSort = sortParam || 'name-asc';
+    if (newSort !== sortBy) setSortBy(newSort);
+
+    const newBrand = brandParam || 'All';
+    if (newBrand !== activeBrand) setActiveBrand(newBrand);
+
+    const newSearchQuery = searchParam || '';
+    if (newSearchQuery !== searchQuery) setSearchQuery(newSearchQuery);
+    
+    if (familiesParam) {
+      const fams = familiesParam.split(',');
+      if (JSON.stringify(fams) !== JSON.stringify(selectedFamilies)) setSelectedFamilies(fams);
+    } else if (selectedFamilies.length > 0) {
+      setSelectedFamilies([]);
+    }
+
+    if (accordsParam) {
+      const accs = accordsParam.split(',');
+      if (JSON.stringify(accs) !== JSON.stringify(selectedAccords)) setSelectedAccords(accs);
+    } else if (selectedAccords.length > 0) {
+      setSelectedAccords([]);
+    }
   }, [location.search]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
+      // Only debounce if not already same as URL
+      const params = new URLSearchParams(location.search);
+      if (searchQuery !== params.get('search')) {
+        setDebouncedSearchQuery(searchQuery);
+      }
     }, 300);
     return () => clearTimeout(handler);
-  }, [searchQuery]);
+  }, [searchQuery, location.search]);
+
+  // Ensure debounced search is also updated when URL changes directly
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get('search');
+    setDebouncedSearchQuery(searchParam || '');
+  }, [location.search]);
 
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
@@ -177,7 +253,7 @@ export default function Storefront() {
     setSearchQuery('');
   };
 
-  const activeFiltersCount = (activeGenderTab !== 'All' ? 1 : 0) + selectedFamilies.length + selectedAccords.length + (activeBrand !== 'All' ? 1 : 0) + (sortBy !== 'name-asc' ? 1 : 0) + (activeCategory !== 'All' ? 1 : 0);
+  const activeFiltersCount = (activeGenderTab !== 'All' ? 1 : 0) + selectedFamilies.length + selectedAccords.length + (activeBrand !== 'All' ? 1 : 0) + (sortBy !== 'name-asc' ? 1 : 0) + (activeCategory !== 'All' ? 1 : 0) + (searchQuery ? 1 : 0);
 
   const scrollToCallback = () => {
     const element = document.getElementById('callback-section');
@@ -273,6 +349,14 @@ export default function Storefront() {
           items={[
             { label: t('catalog') || (language === 'be' ? 'Каталог' : 'Каталог'), path: '/catalog' },
             ...(activeBrand !== 'All' ? [{ label: activeBrand }] : []),
+            ...(activeCategory !== 'All' ? [{ 
+              label: activeCategory === 'decant' ? (language === 'be' ? 'Адліванты' : 'Отливанты') :
+                     activeCategory === 'set' ? (language === 'be' ? 'Наборы' : 'Наборы') :
+                     activeCategory === 'perfume' ? t('perfume') :
+                     activeCategory === 'eau_de_toilette' ? t('eauDeToilette') :
+                     activeCategory === 'cologne' ? t('cologne') :
+                     activeCategory === 'oil' ? t('oil') : activeCategory 
+            }] : []),
             ...(activeGenderTab !== 'All' ? [{ label: activeGenderTab === 'Male' ? (language === 'be' ? 'Мужчынская' : 'Мужская') : activeGenderTab === 'Female' ? (language === 'be' ? 'Жаночая' : 'Женская') : (language === 'be' ? 'Унісекс' : 'Унисекс') }] : [])
           ]} 
         />
@@ -409,6 +493,7 @@ export default function Storefront() {
                           <option value="cologne">{t('cologne')}</option>
                           <option value="decant">{language === 'be' ? 'Адліванты' : 'Отливанты'}</option>
                           <option value="set">{language === 'be' ? 'Наборы' : 'Наборы'}</option>
+                          <option value="oil">{t('oil')}</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-brand-muted">
                           <ChevronDown className="w-4 h-4" />

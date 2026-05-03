@@ -293,6 +293,20 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
               </div>
             ))}
           </div>
+
+          <div className="space-y-4 pt-6 border-t border-brand-border">
+            <h4 className="border-l-2 border-brand-accent pl-4 text-sm font-medium text-brand-muted uppercase tracking-wider">SEO по умолчанию (если не задано на странице)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/5 p-5 rounded-2xl">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-brand-muted">SEO Заголовок по умолчанию</label>
+                <input type="text" value={localGeneralSettings.seoTitle || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, seoTitle: e.target.value})} className="w-full px-4 py-2 bg-transparent border border-brand-border rounded-xl text-sm text-brand-light" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-brand-muted">SEO Описание по умолчанию</label>
+                <textarea value={localGeneralSettings.seoDescription || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, seoDescription: e.target.value})} className="w-full px-4 py-2 bg-transparent border border-brand-border rounded-xl text-sm text-brand-light" rows={2} />
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -702,6 +716,23 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
             </div>
           </div>
 
+          <div className="space-y-4 pt-6 border-t border-brand-border">
+            <h4 className="font-medium text-brand-light flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-brand-accent"></span>
+              SEO настройки Главной страницы
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-brand-accent/5 p-6 rounded-2xl border border-brand-accent/20">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-brand-muted">SEO Заголовок (Title)</label>
+                <input type="text" value={localHomeConfig.seoTitle || ''} onChange={e => setLocalHomeConfig({...localHomeConfig, seoTitle: e.target.value})} className="w-full px-4 py-2 bg-transparent border border-brand-border rounded-xl text-sm text-white" placeholder="АРХЕТИП | Элитная парфюмерия и отливанты" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-brand-muted">SEO Описание (Meta Description)</label>
+                <textarea value={localHomeConfig.seoDescription || ''} onChange={e => setLocalHomeConfig({...localHomeConfig, seoDescription: e.target.value})} className="w-full px-4 py-2 bg-transparent border border-brand-border rounded-xl text-sm text-white" rows={2} placeholder="Опишите ваш магазин для поисковых систем..." />
+              </div>
+            </div>
+          </div>
+
         </div>
       )}
 
@@ -801,6 +832,16 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                   onChange={e => setEditingPage({...editingPage, content_be: e.target.value})}
                   className="w-full px-4 py-2 bg-white/5 border border-brand-border rounded-xl font-mono text-sm text-brand-light"
                 />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-brand-border pt-4 mt-2">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-muted">SEO Заголовок</label>
+                  <input type="text" value={editingPage.seoTitle || ''} onChange={e => setEditingPage({...editingPage, seoTitle: e.target.value})} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light" />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-brand-muted">SEO Описание</label>
+                  <textarea value={editingPage.seoDescription || ''} onChange={e => setEditingPage({...editingPage, seoDescription: e.target.value})} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light" rows={2} />
+                </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
                 <button onClick={() => { setEditingPage(null); setIsCreatingPage(false); }} className="px-6 py-2 text-brand-muted hover:text-brand-light">Отмена</button>

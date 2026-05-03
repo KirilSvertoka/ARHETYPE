@@ -126,10 +126,10 @@ export default function InventoryView({ products, loading, token, onUpdate, onAu
                     <td className="px-6 py-4 text-brand-muted">{product.brand}</td>
                     <td className="px-6 py-4 font-medium text-brand-light">{product.price} BYN</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                         (product.variants?.reduce((acc: number, v: any) => acc + v.stock, 0) || 0) <= product.stockThreshold
-                          ? 'bg-red-500/20 text-red-400'
-                          : 'bg-emerald-500/20 text-emerald-400'
+                          ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                          : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
                       }`}>
                         {product.variants?.reduce((acc: number, v: any) => acc + v.stock, 0) || 0} в наличии
                       </span>

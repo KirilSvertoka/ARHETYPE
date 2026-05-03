@@ -133,6 +133,8 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [activeTab, setActiveTab] = useState<'basic' | 'media' | 'description' | 'scent' | 'variants' | 'seo'>('basic');
+
   const handleFilesUpload = async (files: FileList | File[], targetField: 'imageUrl' | 'gallery' | number) => {
     const fileArray = Array.from(files);
     if (fileArray.length === 0) return;
@@ -245,15 +247,50 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="flex items-center justify-between border-b border-brand-border pb-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between border-b border-brand-border pb-4 pt-4 gap-4">
         <h2 className="text-xl font-serif text-brand-light">{initialData ? 'Редактировать аромат' : 'Новый аромат'}</h2>
-        <button type="button" onClick={onCancel} className="text-sm text-brand-muted hover:text-brand-light">Отмена</button>
+        <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto no-scrollbar">
+          <button type="button" onClick={onCancel} className="text-sm text-brand-muted hover:text-brand-light px-4 py-2 border border-brand-border rounded-xl whitespace-nowrap">Отмена</button>
+          <button 
+            type="submit" 
+            disabled={submitting}
+            className="px-6 py-2 bg-brand-accent text-white rounded-xl text-sm font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-70 flex items-center gap-2 whitespace-nowrap"
+          >
+            {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            <span>Сохранить</span>
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Basic Info */}
-        <div className="space-y-6">
+      <div className="flex flex-wrap gap-2 border-b border-brand-border pb-4">
+        {[
+          { id: 'basic', label: 'Основное' },
+          { id: 'media', label: 'Медиа' },
+          { id: 'variants', label: 'Варианты' },
+          { id: 'description', label: 'Описание' },
+          { id: 'scent', label: 'Аромат и Сезонность' },
+          { id: 'seo', label: 'SEO' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+              activeTab === tab.id 
+                ? 'bg-brand-accent text-white' 
+                : 'bg-white/5 text-brand-muted hover:text-brand-light hover:bg-white/10'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className={activeTab === 'basic' ? 'block' : 'hidden'}>
+        <div className="grid grid-cols-1 gap-8">
+          {/* Basic Info */}
+          <div className="space-y-6 max-w-3xl">
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Название товара</label>
             <input required type="text" minLength={2} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Santal 33" />
@@ -292,9 +329,12 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             </div>
           </div>
         </div>
+      </div>
+      </div>
 
+      <div className={activeTab === 'media' ? 'block' : 'hidden'}>
         {/* Image Upload */}
-        <div className="space-y-4">
+        <div className="space-y-4 max-w-3xl">
           <div className="flex justify-between items-center">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Изображения товара</label>
             <div className="flex gap-2">
@@ -339,8 +379,9 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
         </div>
       </div>
 
-      {/* Description & Tags */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className={activeTab === 'description' ? 'block' : 'hidden'}>
+        {/* Description & Tags */}
+        <div className="grid grid-cols-1 gap-8 max-w-4xl">
         <div className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Описание (RU)</label>
@@ -362,7 +403,9 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           </div>
         </div>
       </div>
+      </div>
 
+      <div className={activeTab === 'scent' ? 'block' : 'hidden'}>
       {/* Scent Profile */}
       <div className="bg-transparent p-6 rounded-3xl border border-brand-border space-y-6">
         <div className="flex items-center gap-2 mb-2">
@@ -571,7 +614,9 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           </div>
         </div>
       </div>
+      </div>
 
+      <div className={activeTab === 'seo' ? 'block' : 'hidden'}>
       {/* SEO */}
       <div className="bg-white/5 p-6 rounded-3xl border border-brand-border space-y-6">
         <h3 className="text-lg font-serif text-brand-light">SEO Настройки</h3>
@@ -586,7 +631,9 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           </div>
         </div>
       </div>
+      </div>
 
+      <div className={activeTab === 'variants' ? 'block' : 'hidden'}>
       {/* Variants */}
       <div className="bg-white/5 p-6 rounded-3xl border border-brand-border space-y-6">
         <div className="flex items-center justify-between mb-2">
@@ -645,17 +692,6 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           )}
         </div>
       </div>
-
-      <div className="flex justify-end pt-4 gap-4">
-        <button type="button" onClick={onCancel} className="px-8 py-3 text-brand-muted font-medium hover:text-brand-light transition-colors">Отмена</button>
-        <button 
-          type="submit" 
-          disabled={submitting}
-          className="px-10 py-3 bg-brand-accent text-white rounded-xl font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-70 flex items-center gap-2 shadow-lg shadow-black/10"
-        >
-          {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-          <span>{initialData ? 'Обновить товар' : 'Создать товар'}</span>
-        </button>
       </div>
     </form>
   );
