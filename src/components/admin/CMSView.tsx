@@ -325,16 +325,53 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
             <div className="space-y-6">
               <h4 className="text-[10px] font-bold text-brand-muted uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 bg-brand-accent rounded-full animate-pulse" />
+                Текст главной секции 'Контактов'
+              </h4>
+              <div className="grid gap-4">
+                <div className="space-y-1.5 border border-brand-border rounded-xl p-4 bg-white/5">
+                  <label className="text-[10px] font-bold text-brand-muted uppercase mb-1 block">Заголовок (RU / BE)</label>
+                  <input type="text" value={localGeneralSettings.contactsTitle || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, contactsTitle: e.target.value})} className="w-full px-4 py-2 bg-brand-bg/50 border border-brand-border rounded-xl text-sm text-brand-light mb-2" placeholder="Свяжитесь с нами" />
+                  <input type="text" value={localGeneralSettings.contactsTitle_be || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, contactsTitle_be: e.target.value})} className="w-full px-4 py-2 bg-brand-bg/50 border border-brand-border rounded-xl text-sm text-brand-light" placeholder="Звяжыцеся з намі" />
+                </div>
+                <div className="space-y-1.5 border border-brand-border rounded-xl p-4 bg-white/5">
+                  <label className="text-[10px] font-bold text-brand-muted uppercase mb-1 block">Описание (RU / BE)</label>
+                  <textarea value={localGeneralSettings.contactsDescription || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, contactsDescription: e.target.value})} className="w-full px-4 py-2 bg-brand-bg/50 border border-brand-border rounded-xl text-sm text-brand-light mb-2" placeholder="Мы будем рады ответить..." rows={2} />
+                  <textarea value={localGeneralSettings.contactsDescription_be || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, contactsDescription_be: e.target.value})} className="w-full px-4 py-2 bg-brand-bg/50 border border-brand-border rounded-xl text-sm text-brand-light" placeholder="Мы будзем рады адказаць..." rows={2} />
+                </div>
+              </div>
+
+              <h4 className="text-[10px] font-bold text-brand-muted uppercase tracking-[0.2em] mb-4 mt-8 flex items-center gap-2">
+                <span className="w-2 h-2 bg-brand-accent rounded-full animate-pulse" />
                 Связь с нами
               </h4>
               <div className="grid gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-brand-muted uppercase px-1">Телефон</label>
-                  <input type="text" value={localGeneralSettings.phone} onChange={e => setLocalGeneralSettings({...localGeneralSettings, phone: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light focus:border-brand-accent transition-colors" placeholder="+375 (...)" />
+                <div className="space-y-1.5 p-4 bg-white/5 border border-brand-border rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[10px] font-medium text-brand-muted uppercase">Телефон</label>
+                    <label className="flex items-center cursor-pointer">
+                      <div className="relative">
+                        <input type="checkbox" className="sr-only" checked={localGeneralSettings.showContactsPhone !== false} onChange={e => setLocalGeneralSettings({...localGeneralSettings, showContactsPhone: e.target.checked})} />
+                        <div className={`block w-10 h-6 rounded-full transition-colors ${localGeneralSettings.showContactsPhone !== false ? 'bg-brand-accent' : 'bg-brand-muted/30'}`}></div>
+                        <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${localGeneralSettings.showContactsPhone !== false ? 'transform translate-x-4' : ''}`}></div>
+                      </div>
+                      <span className="ml-2 text-xs text-brand-muted">Отображать на стр. Контакты</span>
+                    </label>
+                  </div>
+                  <input type="text" value={localGeneralSettings.phone} onChange={e => setLocalGeneralSettings({...localGeneralSettings, phone: e.target.value})} className="w-full px-4 py-3 bg-brand-bg/50 border border-brand-border rounded-xl text-sm text-brand-light focus:border-brand-accent transition-colors" placeholder="+375 (...)" />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-brand-muted uppercase px-1">Email</label>
-                  <input type="text" value={localGeneralSettings.email} onChange={e => setLocalGeneralSettings({...localGeneralSettings, email: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light focus:border-brand-accent transition-colors" placeholder="hello@arhetip.by" />
+                <div className="space-y-1.5 p-4 bg-white/5 border border-brand-border rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[10px] font-medium text-brand-muted uppercase">Email</label>
+                    <label className="flex items-center cursor-pointer">
+                      <div className="relative">
+                        <input type="checkbox" className="sr-only" checked={localGeneralSettings.showContactsEmail !== false} onChange={e => setLocalGeneralSettings({...localGeneralSettings, showContactsEmail: e.target.checked})} />
+                        <div className={`block w-10 h-6 rounded-full transition-colors ${localGeneralSettings.showContactsEmail !== false ? 'bg-brand-accent' : 'bg-brand-muted/30'}`}></div>
+                        <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${localGeneralSettings.showContactsEmail !== false ? 'transform translate-x-4' : ''}`}></div>
+                      </div>
+                      <span className="ml-2 text-xs text-brand-muted">Отображать на стр. Контакты</span>
+                    </label>
+                  </div>
+                  <input type="text" value={localGeneralSettings.email} onChange={e => setLocalGeneralSettings({...localGeneralSettings, email: e.target.value})} className="w-full px-4 py-3 bg-brand-bg/50 border border-brand-border rounded-xl text-sm text-brand-light focus:border-brand-accent transition-colors" placeholder="hello@arhetip.by" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -352,18 +389,28 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
             <div className="space-y-6">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-[10px] font-bold text-brand-muted uppercase tracking-[0.2em]">Мессенджеры и Соцсети</h4>
-                <button 
-                  onClick={() => {
-                    const links = localGeneralSettings.socialLinks || [];
-                    setLocalGeneralSettings({
-                      ...localGeneralSettings,
-                      socialLinks: [...links, { platform: 'instagram', url: '', active: true }]
-                    });
-                  }}
-                  className="text-[10px] font-bold text-brand-accent uppercase tracking-wider hover:text-brand-accent-hover transition-colors flex items-center gap-1"
-                >
-                  <Plus className="w-3 h-3" /> Добавить ссылку
-                </button>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center cursor-pointer" title="Отображать блок на странице контактов">
+                    <div className="relative">
+                      <input type="checkbox" className="sr-only" checked={localGeneralSettings.showContactsSocials !== false} onChange={e => setLocalGeneralSettings({...localGeneralSettings, showContactsSocials: e.target.checked})} />
+                      <div className={`block w-8 h-4 rounded-full transition-colors ${localGeneralSettings.showContactsSocials !== false ? 'bg-brand-accent' : 'bg-brand-muted/30'}`}></div>
+                      <div className={`dot absolute left-1 top-0.5 bg-white w-3 h-3 rounded-full transition-transform ${localGeneralSettings.showContactsSocials !== false ? 'transform translate-x-4' : ''}`}></div>
+                    </div>
+                    <span className="ml-2 text-[10px] uppercase tracking-wider text-brand-muted">На странице</span>
+                  </label>
+                  <button 
+                    onClick={() => {
+                      const links = localGeneralSettings.socialLinks || [];
+                      setLocalGeneralSettings({
+                        ...localGeneralSettings,
+                        socialLinks: [...links, { platform: 'instagram', url: '', active: true }]
+                      });
+                    }}
+                    className="text-[10px] font-bold text-brand-accent uppercase tracking-wider hover:text-brand-accent-hover transition-colors flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" /> Добавить
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -445,14 +492,25 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
           <div className="pt-8 border-t border-brand-border">
             <h4 className="text-[10px] font-bold text-brand-muted uppercase tracking-[0.2em] mb-6 underline decoration-brand-accent/30 underline-offset-8">Юридические данные</h4>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-4">
+              <div className="space-y-4 p-4 bg-white/5 border border-brand-border rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] font-medium text-brand-muted uppercase">Юридический адрес и Студия</label>
+                  <label className="flex items-center cursor-pointer">
+                    <div className="relative">
+                      <input type="checkbox" className="sr-only" checked={localGeneralSettings.showContactsAddress !== false} onChange={e => setLocalGeneralSettings({...localGeneralSettings, showContactsAddress: e.target.checked})} />
+                      <div className={`block w-10 h-6 rounded-full transition-colors ${localGeneralSettings.showContactsAddress !== false ? 'bg-brand-accent' : 'bg-brand-muted/30'}`}></div>
+                      <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${localGeneralSettings.showContactsAddress !== false ? 'transform translate-x-4' : ''}`}></div>
+                    </div>
+                    <span className="ml-2 text-xs text-brand-muted">Отображать на стр. Контакты</span>
+                  </label>
+                </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] text-brand-muted uppercase px-1">Адрес (RU)</label>
-                  <input type="text" value={localGeneralSettings.address} onChange={e => setLocalGeneralSettings({...localGeneralSettings, address: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light" />
+                  <input type="text" value={localGeneralSettings.address} onChange={e => setLocalGeneralSettings({...localGeneralSettings, address: e.target.value})} className="w-full px-4 py-3 bg-brand-bg/50 border border-brand-border rounded-xl text-sm text-brand-light focus:border-brand-accent transition-colors" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] text-brand-muted uppercase px-1">Адрас (BE)</label>
-                  <input type="text" value={localGeneralSettings.address_be || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, address_be: e.target.value})} className="w-full px-4 py-3 bg-white/5 border border-brand-border rounded-xl text-sm text-brand-light" />
+                  <input type="text" value={localGeneralSettings.address_be || ''} onChange={e => setLocalGeneralSettings({...localGeneralSettings, address_be: e.target.value})} className="w-full px-4 py-3 bg-brand-bg/50 border border-brand-border rounded-xl text-sm text-brand-light focus:border-brand-accent transition-colors" />
                 </div>
               </div>
               <div className="space-y-4">
