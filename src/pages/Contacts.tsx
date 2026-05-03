@@ -16,6 +16,12 @@ export default function Contacts() {
       .catch(console.error);
   }, []);
 
+  const fadeIn = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, ease: "easeOut" }
+  };
+
   const orgData = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -34,12 +40,70 @@ export default function Contacts() {
     }
   };
 
+  const blocks = [];
+  
+  if (settings?.showContactsEmail !== false) {
+    blocks.push(
+      <motion.div 
+        key="email"
+        variants={fadeIn}
+        className="flex flex-col items-center text-center p-10 bg-brand-bg/50 backdrop-blur-sm rounded-3xl border border-brand-border hover:border-brand-accent/50 transition-colors group w-full md:flex-1 min-w-[280px] max-w-[400px]"
+      >
+        <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mb-6 group-hover:bg-brand-accent/20 transition-colors">
+          <Mail className="w-6 h-6 text-brand-accent" />
+        </div>
+        <h3 className="text-xl font-serif text-brand-light mb-3">Email</h3>
+        <a href={`mailto:${settings?.email || 'hello@arhetip.com'}`} className="text-lg text-brand-muted hover:text-brand-accent transition-colors break-words text-center w-full">
+          {settings?.email || 'hello@arhetip.com'}
+        </a>
+      </motion.div>
+    );
+  }
+
+  if (settings?.showContactsPhone !== false) {
+    blocks.push(
+      <motion.div 
+        key="phone"
+        variants={fadeIn}
+        className="flex flex-col items-center text-center p-10 bg-brand-bg/50 backdrop-blur-sm rounded-3xl border border-brand-border hover:border-brand-accent/50 transition-colors group w-full md:flex-1 min-w-[280px] max-w-[400px]"
+      >
+        <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mb-6 group-hover:bg-brand-accent/20 transition-colors">
+          <Phone className="w-6 h-6 text-brand-accent" />
+        </div>
+        <h3 className="text-xl font-serif text-brand-light mb-3">
+          {language === 'ru' ? 'Телефон' : 'Тэлефон'}
+        </h3>
+        <a href={`tel:${settings?.phone || '+375 (29) 123-45-67'}`} className="text-lg text-brand-muted hover:text-brand-accent transition-colors break-words text-center w-full">
+          {settings?.phone || '+375 (29) 123-45-67'}
+        </a>
+      </motion.div>
+    );
+  }
+
+  if (settings?.showContactsAddress !== false) {
+    blocks.push(
+      <motion.div 
+        key="address"
+        variants={fadeIn}
+        className="flex flex-col items-center text-center p-10 bg-brand-bg/50 backdrop-blur-sm rounded-3xl border border-brand-border hover:border-brand-accent/50 transition-colors group w-full md:flex-1 min-w-[280px] max-w-[400px]"
+      >
+        <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mb-6 group-hover:bg-brand-accent/20 transition-colors">
+          <MapPin className="w-6 h-6 text-brand-accent" />
+        </div>
+        <h3 className="text-xl font-serif text-brand-light mb-3">
+          {language === 'ru' ? 'Студия' : 'Студыя'}
+        </h3>
+        <p className="text-lg text-brand-muted max-w-[250px] mx-auto text-center w-full">
+          {language === 'ru' ? (settings?.address || 'ул. Парфюмерная 123, Гродно, Беларусь') : (settings?.address_be || 'вул. Парфумерная 123, Гродна, Беларусь')}
+        </p>
+      </motion.div>
+    );
+  }
+
+  const socialLinks = settings?.socialLinks?.filter(l => l.active) || [];
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl mx-auto space-y-12 px-4 sm:px-6 lg:px-8 py-12"
-    >
+    <div className="min-h-screen pt-16 pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <Helmet>
         <title>{language === 'ru' ? 'Контакты' : 'Кантакты'} | АРХЕТИП</title>
         <meta name="description" content={language === 'ru' ? 'Свяжитесь с нами для консультации по выбору аромата.' : 'Звяжыцеся з намі для кансультацыі па выбары водару.'} />
@@ -48,64 +112,54 @@ export default function Contacts() {
           {JSON.stringify(orgData)}
         </script>
       </Helmet>
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-serif text-brand-light">
+
+      <motion.div 
+        initial="initial" animate="animate" variants={fadeIn}
+        className="max-w-4xl mx-auto text-center mb-16 md:mb-24"
+      >
+        <span className="text-brand-accent text-sm font-medium tracking-[0.2em] uppercase mb-6 block">
+          {language === 'ru' ? 'Связь' : 'Сувязь'}
+        </span>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-brand-light leading-tight mb-8">
           {language === 'ru' 
             ? (settings?.contactsTitle || 'Свяжитесь с нами') 
             : (settings?.contactsTitle_be || 'Звяжыцеся з намі')}
         </h1>
-        <p className="text-brand-muted">
+        <p className="text-xl text-brand-muted font-light leading-relaxed max-w-2xl mx-auto">
           {language === 'ru' 
-            ? (settings?.contactsDescription || 'Мы будем рады ответить на ваши вопросы.') 
-            : (settings?.contactsDescription_be || 'Мы будзем рады адказаць на вашы пытанні.')}
+            ? (settings?.contactsDescription || 'Мы будем рады ответить на ваши вопросы и помочь с выбором.') 
+            : (settings?.contactsDescription_be || 'Мы будзем рады адказаць на вашы пытанні і дапамагчы з выбарам.')}
         </p>
-      </div>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {settings?.showContactsEmail !== false && (
-        <div className="flex flex-col items-center text-center p-6 bg-white/5 rounded-2xl border border-brand-border shadow-sm">
-          <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-4">
-            <Mail className="w-5 h-5 text-brand-light" />
+      <motion.div 
+        initial="initial"
+        animate="animate"
+        variants={{
+          animate: { transition: { staggerChildren: 0.1 } }
+        }}
+        className="flex flex-wrap justify-center gap-8 mb-24"
+      >
+        {blocks}
+      </motion.div>
+
+      {settings?.showContactsSocials !== false && socialLinks.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="max-w-4xl mx-auto"
+        >
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-serif text-brand-light mb-4">
+              {language === 'ru' ? 'Мы в соцсетях' : 'Мы ў сацсетках'}
+            </h2>
+            <div className="w-16 h-px bg-brand-accent/50 mx-auto" />
           </div>
-          <h3 className="font-medium text-brand-light mb-1">Email</h3>
-          <p className="text-sm text-brand-muted">{settings?.email || 'hello@arhetip.com'}</p>
-        </div>
-        )}
-
-        {settings?.showContactsPhone !== false && (
-        <div className="flex flex-col items-center text-center p-6 bg-white/5 rounded-2xl border border-brand-border shadow-sm">
-          <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-4">
-            <Phone className="w-5 h-5 text-brand-light" />
-          </div>
-          <h3 className="font-medium text-brand-light mb-1">
-            {language === 'ru' ? 'Телефон' : 'Тэлефон'}
-          </h3>
-          <p className="text-sm text-brand-muted">{settings?.phone || '+375 (29) 123-45-67'}</p>
-        </div>
-        )}
-
-        {settings?.showContactsAddress !== false && (
-        <div className="flex flex-col items-center text-center p-6 bg-white/5 rounded-2xl border border-brand-border shadow-sm">
-          <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-4">
-            <MapPin className="w-5 h-5 text-brand-light" />
-          </div>
-          <h3 className="font-medium text-brand-light mb-1">
-            {language === 'ru' ? 'Студия' : 'Студыя'}
-          </h3>
-          <p className="text-sm text-brand-muted">
-            {language === 'ru' ? (settings?.address || 'ул. Парфюмерная 123, Гродно, Беларусь') : (settings?.address_be || 'вул. Парфумерная 123, Гродна, Беларусь')}
-          </p>
-        </div>
-        )}
-      </div>
-
-      {settings?.showContactsSocials !== false && settings?.socialLinks && settings.socialLinks.filter(l => l.active).length > 0 && (
-        <div className="pt-12 border-t border-brand-border text-center">
-          <h2 className="text-2xl font-serif text-brand-light mb-6">
-            {language === 'ru' ? 'Мы в соцсетях' : 'Мы ў сацсетках'}
-          </h2>
-          <div className="flex justify-center gap-6">
-            {settings.socialLinks.filter(l => l.active).map((link, idx) => {
+          
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+            {socialLinks.map((link, idx) => {
               let Icon = Link2;
               switch (link.platform) {
                 case 'instagram': Icon = Instagram; break;
@@ -122,16 +176,16 @@ export default function Contacts() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer" 
-                  className="px-6 py-3 bg-white/5 border border-brand-border rounded-xl text-brand-light hover:bg-brand-hover hover:text-brand-accent transition-colors capitalize font-medium flex items-center justify-center gap-3"
+                  className="px-8 py-4 bg-brand-bg/50 backdrop-blur-sm border border-brand-border rounded-2xl text-brand-light hover:border-brand-accent hover:bg-brand-accent/5 transition-all duration-300 capitalize font-medium flex items-center justify-center gap-3 group min-w-[200px]"
                 >
-                  <Icon className="w-5 h-5 text-brand-accent" />
-                  <span>{link.platform}</span>
+                  <Icon className="w-5 h-5 text-brand-muted group-hover:text-brand-accent transition-colors" />
+                  <span className="text-lg tracking-wide">{link.platform}</span>
                 </a>
               );
             })}
           </div>
-        </div>
+        </motion.div>
       )}
-    </motion.div>
+    </div>
   );
 }
