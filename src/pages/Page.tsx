@@ -69,7 +69,7 @@ export default function Page() {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-24"
+      className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 overflow-hidden"
     >
       <Helmet>
         <title>{page.seoTitle || `${title} — Archetype`}</title>
@@ -85,7 +85,7 @@ export default function Page() {
           {language === 'be' ? 'На галоўную' : 'На главную'}
         </Link>
 
-        <h1 className="text-3xl sm:text-5xl font-serif text-brand-light uppercase tracking-widest leading-tight">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-brand-light uppercase tracking-widest leading-tight break-words hyphens-auto">
           {title}
         </h1>
         
@@ -97,7 +97,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="prose prose-invert max-w-none prose-brand prose-p:text-brand-muted prose-p:leading-relaxed prose-p:text-lg prose-headings:font-serif prose-headings:uppercase prose-headings:tracking-wider whitespace-pre-wrap">
+      <div className="prose prose-invert prose-brand max-w-none prose-p:text-brand-muted prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg prose-headings:font-serif prose-headings:uppercase prose-headings:tracking-wider whitespace-pre-wrap break-words prose-img:rounded-2xl prose-img:w-full prose-img:max-w-3xl prose-table:block prose-table:overflow-x-auto">
         <ReactMarkdown>{content}</ReactMarkdown>
       </div>
     </motion.div>
