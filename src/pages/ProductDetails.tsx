@@ -477,8 +477,8 @@ export default function ProductDetails() {
                 </div>
                 <p className="text-[10px] text-brand-muted leading-relaxed">
                   {language === 'be' 
-                    ? 'Дастаўка па Гродне — сёння. Дастаўка па Беларусі — 5 дзён. Бясплатна ад 150 BYN.' 
-                    : 'Доставка по Гродно — сегодня. Доставка по Беларуси — 5 дней. Бесплатно от 150 BYN.'}
+                    ? 'Дастаўка па Гродне — сёння. Дастаўка па Беларусі — 5 дзён. Бясплатна ад 100 BYN.' 
+                    : 'Доставка по Гродно — сегодня. Доставка по Беларуси — 5 дней. Бесплатно от 100 BYN.'}
                 </p>
               </div>
               <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
@@ -488,8 +488,8 @@ export default function ProductDetails() {
                 </div>
                 <p className="text-[10px] text-brand-muted leading-relaxed">
                   {language === 'be' 
-                    ? '100% арыгінальная прадукцыя. Маем усе неабходныя сертыфікаты якасці.' 
-                    : '100% оригинальная продукция. Имеем все необходимые сертификаты качества.'}
+                    ? 'Толькі арыгінальная прадукцыя' 
+                    : 'Только оригинальная продукция'}
                 </p>
               </div>
             </div>
@@ -498,7 +498,7 @@ export default function ProductDetails() {
       </div>
 
       <div className="mt-16 prose prose-invert max-w-none">
-        <p className="text-brand-muted leading-relaxed text-lg font-light mb-12 break-words [hyphens:auto]">
+        <p className="text-brand-muted leading-relaxed text-lg font-light mb-12 break-words [hyphens:auto] whitespace-pre-wrap">
           {language === 'be' && product.description_be ? product.description_be : product.description}
         </p>
       </div>

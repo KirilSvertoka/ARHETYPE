@@ -97,7 +97,7 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="prose prose-invert max-w-none prose-brand prose-p:text-brand-muted prose-p:leading-relaxed prose-p:text-lg prose-headings:font-serif prose-headings:uppercase prose-headings:tracking-wider">
+      <div className="prose prose-invert max-w-none prose-brand prose-p:text-brand-muted prose-p:leading-relaxed prose-p:text-lg prose-headings:font-serif prose-headings:uppercase prose-headings:tracking-wider whitespace-pre-wrap">
         <ReactMarkdown>{content}</ReactMarkdown>
       </div>
     </motion.div>
