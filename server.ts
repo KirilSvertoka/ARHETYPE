@@ -65,6 +65,17 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(uploadDir));
 
+// Explicit favicon handles for robots
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'favicon.png'));
+});
+app.get('/apple-touch-icon.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'favicon.png'));
+});
+app.get('/apple-touch-icon-precomposed.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'favicon.png'));
+});
+
 // Simple in-memory session store
 const activeTokens = new Set<string>();
 
@@ -1988,9 +1999,24 @@ async function startServer() {
               <meta property="og:type" content="website" />
               <meta property="og:url" content="${domain}${req.path}" />
               <link rel="canonical" href="${domain}${req.path}" />
+              <link rel="icon" href="${domain}/favicon.png" type="image/png" />
+              <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
+              <link rel="apple-touch-icon" href="${domain}/favicon.png" />
             `;
             html = html.replace('</head>', `${metaTags}</head>`);
           }
+        }
+      } else {
+        // For non-product pages, still ensure meta and favicon
+        const genSet = JSON.parse(db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}');
+        const defaultTitle = genSet.siteName || "АРХЕТИП | онлайн-магазин парфюмерии";
+        const metaTags = `
+          <link rel="icon" href="${domain}/favicon.png" type="image/png" />
+          <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
+          <link rel="apple-touch-icon" href="${domain}/favicon.png" />
+        `;
+        if (!html.includes('<link rel="icon"')) {
+           html = html.replace('</head>', `${metaTags}</head>`);
         }
       }
 
