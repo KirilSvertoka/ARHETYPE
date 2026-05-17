@@ -712,6 +712,7 @@ app.get('/api/feeds/yandex.xml', (req, res) => {
     const settings = JSON.parse(db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value || '{}');
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE yml_catalog SYSTEM "shops.dtd">
 <yml_catalog date="${new Date().toISOString()}">
   <shop>
     <name>Arhetip</name>
