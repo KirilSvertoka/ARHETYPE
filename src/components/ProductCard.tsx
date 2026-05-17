@@ -195,7 +195,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                       className="pointer-events-auto flex flex-col items-start gap-4 w-full"
                     >
                       {product.variants && product.variants.length > 0 && (
-                        <div className="flex flex-col gap-3 w-full max-h-32 overflow-y-auto custom-scrollbar pr-2">
+                        <div className="flex flex-col gap-3 w-full max-h-48 overflow-y-auto custom-scrollbar pr-1">
                           {Object.entries(
                             product.variants.reduce((acc, variant) => {
                               const type = getVariantType(variant, language);
