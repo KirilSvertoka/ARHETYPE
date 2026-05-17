@@ -1823,19 +1823,177 @@ app.post('/api/callback', async (req, res) => {
 async function startServer() {
   const PORT = 3000;
 
+  let vite: any;
   if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
+    vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: 'spa',
+      appType: 'custom', // change to custom so we can process HTML
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.join(__dirname, 'dist')));
+    app.use(express.static(path.join(__dirname, 'dist'), { index: false })); // disable index serving to intercept /
     app.use(express.static(path.join(__dirname, 'public')));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-    });
   }
+
+  app.get('*', async (req, res, next) => {
+    try {
+      if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+        return next();
+      }
+
+      let htmlPath = process.env.NODE_ENV !== 'production' 
+        ? path.join(__dirname, 'index.html') 
+        : path.join(__dirname, 'dist', 'index.html');
+        
+      if (!fs.existsSync(htmlPath)) {
+        return res.status(404).send('Not found');
+      }
+
+      let html = fs.readFileSync(htmlPath, 'utf-8');
+
+      const domain = `${req.protocol}://${req.get('host')}`;
+      let ldJson: any[] = [];
+      const genSetStr = db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}';
+      const genSet = JSON.parse(genSetStr);
+
+      const orgSchema = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "АРХЕТИП",
+        "url": domain,
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": genSet.phone || "+37529XXXXXXX",
+          "contactType": "customer service"
+        }
+      };
+
+      const websiteSchema = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "АРХЕТИП",
+        "url": domain,
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": `${domain}/catalog?search={search_term_string}`,
+          "query-input": "required name=search_term_string"
+        }
+      };
+      ldJson.push(orgSchema, websiteSchema);
+
+      if (req.path.startsWith('/catalog/')) {
+        const slug = req.path.split('/').pop();
+        if (slug) {
+          const product = db.prepare('SELECT * FROM products WHERE slug = ? OR id = ?').get(slug, slug) as any;
+          if (product) {
+            const pVariants = db.prepare('SELECT * FROM product_variants WHERE product_id = ?').all(product.id) as any[];
+            let lowestPrice = Infinity;
+            pVariants.forEach(v => {
+              if (v.price < lowestPrice) lowestPrice = v.price;
+            });
+            if (lowestPrice === Infinity) lowestPrice = product.price;
+
+            let inStock = pVariants.some(v => v.stock > 0);
+
+            const productSchema = {
+              "@context": "https://schema.org/",
+              "@type": "Product",
+              "name": `${product.brand} ${product.name}`,
+              "image": [
+                product.imageUrl.startsWith('http') ? product.imageUrl : domain + product.imageUrl
+              ],
+              "description": product.description,
+              "sku": product.id.toString(),
+              "offers": {
+                "@type": "Offer",
+                "url": `${domain}/catalog/${slug}`,
+                "priceCurrency": "BYN",
+                "price": lowestPrice,
+                "itemCondition": "https://schema.org/NewCondition",
+                "availability": inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+              }
+            };
+
+            // Helpers for notes reading
+            const parseNotes = (str: string) => {
+              if (!str) return [];
+              try {
+                const p = JSON.parse(str);
+                return Array.isArray(p) ? p : [];
+              } catch(e) {
+                return str.split(',').map(s => s.trim()).filter(Boolean);
+              }
+            };
+            const tn = parseNotes(product.topNotes);
+            const hn = parseNotes(product.heartNotes);
+            const bn = parseNotes(product.baseNotes);
+            const allIngredients = [...tn, ...hn, ...bn];
+
+            const recipeSchema = {
+              "@context": "https://schema.org/",
+              "@type": "Recipe",
+              "name": `${product.brand} ${product.name}`,
+              "image": [
+                product.imageUrl.startsWith('http') ? product.imageUrl : domain + product.imageUrl
+              ],
+              "author": {
+                "@type": "Organization",
+                "name": "АРХЕТИП"
+              },
+              "description": product.description,
+              "recipeIngredient": allIngredients.length > 0 ? allIngredients : ["Парфюмерная композиция", "Спирт"],
+              "recipeInstructions": [
+                { "@type": "HowToStep", "text": "1. Распылите парфюм на точки пульса: запястья, шею, за ушами." },
+                { "@type": "HowToStep", "text": "2. Дайте аромату раскрыться, не растирая его." }
+              ],
+              "recipeCategory": "Парфюмерия"
+            };
+
+            const breadcrumbSchema = {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Каталог",
+                  "item": `${domain}/catalog`
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": `${product.brand} ${product.name}`,
+                  "item": `${domain}/catalog/${slug}`
+                }
+              ]
+            };
+            ldJson.push(productSchema, recipeSchema, breadcrumbSchema);
+            
+            // Also inject some basic meta tags for safety
+            const metaTags = `
+              <title>${product.brand} ${product.name} | АРХЕТИП</title>
+              <meta name="description" content="${product.description.substring(0, 150)}..." />
+              <meta property="og:title" content="${product.brand} ${product.name} | АРХЕТИП" />
+              <meta property="og:description" content="${product.description.substring(0, 150)}..." />
+              <meta property="og:image" content="${product.imageUrl.startsWith('http') ? product.imageUrl : domain + product.imageUrl}" />
+            `;
+            html = html.replace('</head>', `${metaTags}</head>`);
+          }
+        }
+      }
+
+      const scriptTag = `<script type="application/ld+json">${JSON.stringify(ldJson)}</script>`;
+      html = html.replace('</head>', `${scriptTag}</head>`);
+
+      if (process.env.NODE_ENV !== 'production' && vite) {
+        html = await vite.transformIndexHtml(req.originalUrl, html);
+      }
+
+      res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+    } catch (e) {
+      next(e);
+    }
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
