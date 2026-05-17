@@ -27,7 +27,7 @@ export default function CartDrawer() {
     city: '',
     deliveryMethod: 'europost',
     address: '',
-    paymentMethod: 'upon_receipt',
+    paymentMethod: 'post_cash',
     comment: ''
   });
   const [officeSearch, setOfficeSearch] = useState('');
@@ -45,7 +45,13 @@ export default function CartDrawer() {
   }, []);
 
   useEffect(() => {
-    setCustomerData(prev => ({ ...prev, address: '' }));
+    setCustomerData(prev => ({ 
+      ...prev, 
+      address: '',
+      // Автоматически переключаем способ оплаты в зависимости от доставки для удобства,
+      // но оставляем возможность выбора
+      paymentMethod: prev.deliveryMethod === 'courier_grodno' ? 'cash_grodno' : 'post_cash'
+    }));
     setOfficeSearch('');
   }, [customerData.deliveryMethod]);
 
@@ -92,9 +98,9 @@ export default function CartDrawer() {
 
     let paymentMethodText = '';
     switch(customerData.paymentMethod) {
-      case 'upon_receipt': paymentMethodText = 'Оплата при получении'; break;
-      case 'card_online': paymentMethodText = 'Онлайн оплата картой'; break;
-      default: paymentMethodText = 'Оплата при получении';
+      case 'cash_grodno': paymentMethodText = 'Наличными курьеру (по Гродно)'; break;
+      case 'post_cash': paymentMethodText = 'Наложенный платеж'; break;
+      default: paymentMethodText = 'Наложенный платеж';
     }
 
     try {
@@ -410,35 +416,39 @@ export default function CartDrawer() {
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium uppercase tracking-widest text-brand-light border-b border-brand-border pb-2">3. Оплата</h3>
                     <div className="space-y-2">
-                      <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${customerData.paymentMethod === 'upon_receipt' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
-                          value="upon_receipt"
-                          checked={customerData.paymentMethod === 'upon_receipt'}
-                          onChange={e => setCustomerData({...customerData, paymentMethod: e.target.value})}
-                          className="w-4 h-4 text-brand-accent bg-brand-bg border-brand-border focus:ring-brand-accent focus:ring-offset-brand-bg"
-                        />
-                        <div className="ml-3 flex flex-col">
-                          <span className="text-sm text-brand-light font-medium">Оплата при получении</span>
-                          <span className="text-xs text-brand-muted mt-0.5">Наличными или картой</span>
-                        </div>
-                      </label>
+                      {customerData.deliveryMethod === 'courier_grodno' && (
+                        <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${customerData.paymentMethod === 'cash_grodno' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
+                          <input 
+                            type="radio" 
+                            name="paymentMethod" 
+                            value="cash_grodno"
+                            checked={customerData.paymentMethod === 'cash_grodno'}
+                            onChange={e => setCustomerData({...customerData, paymentMethod: e.target.value})}
+                            className="w-4 h-4 text-brand-accent bg-brand-bg border-brand-border focus:ring-brand-accent focus:ring-offset-brand-bg"
+                          />
+                          <div className="ml-3 flex flex-col">
+                            <span className="text-sm text-brand-light font-medium">Наличными при получении</span>
+                            <span className="text-xs text-brand-muted mt-0.5">Курьером по Гродно</span>
+                          </div>
+                        </label>
+                      )}
 
-                      <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${customerData.paymentMethod === 'card_online' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
-                        <input 
-                          type="radio" 
-                          name="paymentMethod" 
-                          value="card_online"
-                          checked={customerData.paymentMethod === 'card_online'}
-                          onChange={e => setCustomerData({...customerData, paymentMethod: e.target.value})}
-                          className="w-4 h-4 text-brand-accent bg-brand-bg border-brand-border focus:ring-brand-accent focus:ring-offset-brand-bg"
-                        />
-                        <div className="ml-3 flex flex-col">
-                          <span className="text-sm text-brand-light font-medium">Онлайн оплата картой</span>
-                          <span className="text-xs text-brand-muted mt-0.5">Безопасный платеж через интернет</span>
-                        </div>
-                      </label>
+                      {(customerData.deliveryMethod === 'europost' || customerData.deliveryMethod === 'belpost' || customerData.deliveryMethod === 'courier_grodno') && (
+                        <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${customerData.paymentMethod === 'post_cash' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
+                          <input 
+                            type="radio" 
+                            name="paymentMethod" 
+                            value="post_cash"
+                            checked={customerData.paymentMethod === 'post_cash'}
+                            onChange={e => setCustomerData({...customerData, paymentMethod: e.target.value})}
+                            className="w-4 h-4 text-brand-accent bg-brand-bg border-brand-border focus:ring-brand-accent focus:ring-offset-brand-bg"
+                          />
+                          <div className="ml-3 flex flex-col">
+                            <span className="text-sm text-brand-light font-medium">Наложенный платеж</span>
+                            <span className="text-xs text-brand-muted mt-0.5">Оплата при получении в отделении или курьеру</span>
+                          </div>
+                        </label>
+                      )}
                     </div>
                   </div>
 
