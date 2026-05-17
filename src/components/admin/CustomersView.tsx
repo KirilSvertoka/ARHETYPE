@@ -44,8 +44,8 @@ export default function CustomersView({ users, loading, pagination, onPageChange
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-brand-light">{user.orderCount || 0}</td>
-                <td className="px-6 py-4 text-sm font-medium text-brand-light">{user.ltv || 0} BYN</td>
-                <td className="px-6 py-4 text-sm text-brand-light">{user.avgOrderValue?.toFixed(2) || 0} BYN</td>
+                <td className="px-6 py-4 text-sm font-medium text-brand-light">{user.ltv?.toFixed(2) || '0.00'} BYN</td>
+                <td className="px-6 py-4 text-sm text-brand-light">{user.avgOrderValue?.toFixed(2) || '0.00'} BYN</td>
                 <td className="px-6 py-4 text-right text-xs text-brand-muted">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>

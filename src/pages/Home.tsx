@@ -108,10 +108,10 @@ export default function Home() {
       className="w-full"
     >
       <Helmet>
-        <title>{config.seoTitle || 'АРХЕТИП | онлайн-магазин парфюмерии'}</title>
-        <meta name="description" content={config.seoDescription || "Откройте для себя коллекцию эксклюзивных нишевых ароматов в АРХЕТИП. Минимализм, качество и уникальные композиции. Доставка по всей Беларуси."} />
-        <meta property="og:title" content={config.seoTitle || "АРХЕТИП | Элитная нишевая парфюмерия"} />
-        <meta property="og:description" content={config.seoDescription || "Эксклюзивные ароматы для ценителей. Найдите свой идеальный парфюм в нашей коллекции."} />
+        <title>Купить нишевую парфюмерию в Гродно с доставкой по РБ | Распив и Оригинал | АРХЕТИП</title>
+        <meta name="description" content="Эксклюзивные нишевые ароматы на распив и во флаконах. Оригинальная селективная парфюмерия с доставкой по Минску и всей Беларуси. Закажите подарочный aromabox!" />
+        <meta property="og:title" content="Купить нишевую парфюмерию в Гродно с доставкой по РБ | Распив и Оригинал | АРХЕТИП" />
+        <meta property="og:description" content="Эксклюзивные нишевые ароматы на распив и во флаконах. Оригинальная селективная парфюмерия с доставкой по Минску и всей Беларуси. Закажите подарочный aromabox!" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://archetype.by" />
         <meta property="og:image" content={config.hero.slides[0]?.image} />

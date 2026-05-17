@@ -302,8 +302,19 @@ export default function Storefront() {
     return isNaN(basePrice) ? [] : [basePrice];
   })) : 0;
 
-  const pageTitle = `${categoryName} — купить в Гродно/Беларуси цены в интернет-магазине АРХЕТИП`;
-  const pageDescription = `Предлагаем купить ${categoryName} оригинал. Большой выбор, гарантия качества, доставка по Гродно и Беларуси. ${minPrice > 0 ? `Цены от ${minPrice.toFixed(2)} руб.` : ''}`;
+  let pageTitle = `${categoryName} — купить в Гродно/Беларуси цены в интернет-магазине АРХЕТИП`;
+  let pageDescription = `Предлагаем купить ${categoryName} оригинал. Большой выбор, гарантия качества, доставка по Гродно и Беларуси. ${minPrice > 0 ? `Цены от ${minPrice.toFixed(2)} руб.` : ''}`;
+
+  if (activeCategory === 'decant' && activeBrand === 'All') {
+    pageTitle = 'Распив и отливанты нишевой парфюмерии в Гродно | Оригинал от 1 мл';
+    pageDescription = 'Каталог оригинальных отливантов селективной парфюмерии. Большой выбор атомайзеров от 1 до 10 мл. Доступные цены, быстрая доставка по Беларуси. Тестируйте дорогие ароматы выгодно!';
+  } else if (activeCategory === 'set' && activeBrand === 'All') {
+    pageTitle = 'Парфюмерные наборы и аромабоксы в РБ | Подарочные сеты';
+    pageDescription = 'Подарочные наборы нишевой парфюмерии и эксклюзивные аромабоксы. Купить сет оригиналов с распивом в Гродно с доставкой. Идеальный подарок!';
+  } else if (activeBrand !== 'All' && activeCategory === 'All' && activeGenderTab === 'All' && selectedFamilies.length === 0) {
+    pageTitle = `Парфюмерия ${activeBrand} купить в РБ | Распив и оригинальные флаконы`;
+    pageDescription = `Уникальные ароматы от ${activeBrand}. Только оригинальная селективная парфюмерия. Заказывайте на распив или покупайте полный флакон с доставкой по Гродно и Беларуси.`;
+  }
 
   const breadcrumbData = {
     "@context": "https://schema.org",

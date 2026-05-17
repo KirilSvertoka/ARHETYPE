@@ -164,8 +164,14 @@ export default function ProductDetails() {
   const baseNotesList = parseNotes(product.baseNotes);
   const notesStr = [...topNotesList.slice(0, 3), ...baseNotesList.slice(0, 2)].join(', ');
 
-  const pageTitle = `Купить ${product.brand} ${product.name} — цена в Гродно, оригинал`;
-  const pageDescription = `${getConcentrationLabel(product.concentration, language)} ${product.brand} ${product.name} в интернет-магазине Archetype. Только оригинал, доставка по Беларуси. Отзывы, описание, ноты.`;
+  const minVolume = product.variants?.reduce((min, v) => {
+    const sizeMatch = v.size.match(/(\d+)/);
+    return sizeMatch ? Math.min(min, parseInt(sizeMatch[1])) : min;
+  }, Infinity) || 1;
+  const isDecant = minVolume < 30; // rough heuristic
+  
+  const pageTitle = `Купить ${product.brand} ${product.name} (Оригинал) | ${isDecant ? `Отливант от ${minVolume === Infinity ? 1 : minVolume} мл или Флакон` : 'Распив и Флаконы'}`;
+  const pageDescription = `${product.brand} ${product.name} — ${notesStr || 'эксклюзивный селективный парфюм'}. Оригинал, распив в Гродно с доставкой по Беларуси. Гарантия подлинности, стойкость и шлейф.`;
 
   const structuredData = {
     "@context": "https://schema.org/",
@@ -473,23 +479,23 @@ export default function ProductDetails() {
               <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
                 <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
                   <Truck className="w-4 h-4 text-brand-accent" />
-                  <span>{language === 'be' ? 'Дастаўка' : 'Доставка'}</span>
+                  <span>{language === 'be' ? 'Дастаўка і Аплата' : 'Доставка и Распив'}</span>
                 </div>
                 <p className="text-[10px] text-brand-muted leading-relaxed">
                   {language === 'be' 
-                    ? 'Дастаўка па Гродне — сёння. Дастаўка па Беларусі — 5 дзён. Бясплатна ад 100 BYN.' 
-                    : 'Доставка по Гродно — сегодня. Доставка по Беларуси — 5 дней. Бесплатно от 100 BYN.'}
+                    ? 'Бяспечная ўпакоўка, якасныя атамайзеры. Дастаўка па Гродне і па ўсёй РБ.' 
+                    : 'Безопасная упаковка, надежные стеклянные атомайзеры для отливантов. Доставка по Гродно — сегодня. РБ — 5 дней.'}
                 </p>
               </div>
               <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
                 <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
                   <CheckCircle className="w-4 h-4 text-brand-accent" />
-                  <span>{language === 'be' ? 'Гарантыя' : 'Гарантия'}</span>
+                  <span>{language === 'be' ? '100% Арыгінал' : '100% Оригинал'}</span>
                 </div>
                 <p className="text-[10px] text-brand-muted leading-relaxed">
                   {language === 'be' 
-                    ? 'Толькі арыгінальная прадукцыя' 
-                    : 'Только оригинальная продукция'}
+                    ? 'Толькі сапраўдная парфума з гарантыяй. Высокая стойкасць і высакародны шлейф.' 
+                    : 'Мы гарантируем подлинность каждого аромата. Сохраненная база и ноты, оригинальная стойкость и шлейф парфюмера.'}
                 </p>
               </div>
             </div>

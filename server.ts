@@ -1236,7 +1236,9 @@ app.get('/api/admin/users', requireAuth, (req, res) => {
              SUM(o.total) as ltv,
              AVG(o.total) as avgOrderValue
       FROM users u
-      LEFT JOIN orders o ON u.id = o.user_id
+      LEFT JOIN orders o ON u.id = o.user_id 
+                         OR (u.phone != '' AND o.customer_phone = u.phone) 
+                         OR (u.email != '' AND o.customer_email = u.email)
       GROUP BY u.id
       ORDER BY u.created_at DESC
       LIMIT ? OFFSET ?
@@ -1244,7 +1246,10 @@ app.get('/api/admin/users', requireAuth, (req, res) => {
       ...u,
       createdAt: u.created_at,
       loyaltyStatus: u.loyalty_status,
-      notes: u.notes
+      notes: u.notes,
+      orderCount: u.orderCount || 0,
+      ltv: u.ltv || 0,
+      avgOrderValue: u.avgOrderValue || 0
     }));
     res.json({ data: users, total: total.count, page, limit });
   } catch (error) {
