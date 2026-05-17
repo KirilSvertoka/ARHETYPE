@@ -195,6 +195,37 @@ export default function ProductDetails() {
         : "https://schema.org/OutOfStock"
     }
   };
+  
+  const heartNotesList = parseNotes(product.heartNotes);
+  const allIngredients = [...topNotesList, ...heartNotesList, ...baseNotesList];
+
+  const recipeData = {
+    "@context": "https://schema.org/",
+    "@type": "Recipe",
+    "name": `${product.brand} ${product.name}`,
+    "image": [
+      product.imageUrl
+    ],
+    "author": {
+      "@type": "Organization",
+      "name": "АРХЕТИП"
+    },
+    "description": pageDescription,
+    "recipeYield": volumeStr || "1 флакон / отливант",
+    "recipeIngredient": allIngredients.length > 0 ? allIngredients : ["Парфюмерная композиция", "Спирт"],
+    "recipeInstructions": [
+      {
+        "@type": "HowToStep",
+        "text": "1. Распылите парфюм на точки пульса: запястья, шею, за ушами."
+      },
+      {
+        "@type": "HowToStep",
+        "text": "2. Дайте аромату раскрыться, не растирая его."
+      }
+    ],
+    "totalTime": "PT1M",
+    "recipeCategory": "Парфюмерия"
+  };
 
   const breadcrumbData = {
     "@context": "https://schema.org",
@@ -287,10 +318,7 @@ export default function ProductDetails() {
         <meta property="product:price:currency" content="BYN" />
         <link rel="canonical" href={`https://archetype.by/catalog/${product.slug}`} />
         <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
-        <script type="application/ld+json">
-          {JSON.stringify(breadcrumbData)}
+          {JSON.stringify([structuredData, breadcrumbData, recipeData])}
         </script>
       </Helmet>
 

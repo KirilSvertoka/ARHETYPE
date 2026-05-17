@@ -19,9 +19,10 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [configRes, productsRes] = await Promise.all([
+        const [configRes, productsRes, genRes] = await Promise.all([
           fetch('/api/settings/home'),
-          fetch('/api/products')
+          fetch('/api/products'),
+          fetch('/api/settings/general')
         ]);
 
         if (!configRes.ok) throw new Error(`Config fetch failed: ${configRes.status}`);
@@ -29,8 +30,9 @@ export default function Home() {
 
         const configData = await configRes.json();
         const productsData: Product[] = await productsRes.json();
+        const genData = genRes.ok ? await genRes.json() : {};
 
-        setConfig(configData);
+        setConfig({ ...configData, genData });
         
         setMaleProducts(productsData.filter(p => p.gender === 'Male').slice(0, 4));
         setFemaleProducts(productsData.filter(p => p.gender === 'Female').slice(0, 4));
@@ -95,8 +97,20 @@ export default function Home() {
     },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+37529XXXXXXX",
+      "telephone": (config as any).genData?.phone || "+37529XXXXXXX",
       "contactType": "customer service"
+    }
+  };
+
+  const webSiteData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "АРХЕТИП",
+    "url": "https://archetype.by",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://archetype.by/catalog?search={search_term_string}",
+      "query-input": "required name=search_term_string"
     }
   };
 
@@ -118,7 +132,7 @@ export default function Home() {
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="canonical" href="https://archetype.by" />
         <script type="application/ld+json">
-          {JSON.stringify(orgData)}
+          {JSON.stringify([orgData, webSiteData])}
         </script>
       </Helmet>
 
