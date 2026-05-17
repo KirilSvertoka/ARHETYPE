@@ -1872,6 +1872,14 @@ async function startServer() {
         "@type": "Organization",
         "name": "АРХЕТИП",
         "url": domain,
+        "logo": `${domain}/favicon.png`,
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Grodno",
+          "addressCountry": "BY",
+          "postalCode": "230005",
+          "streetAddress": "ул. Парфюмерная 123"
+        },
         "contactPoint": {
           "@type": "ContactPoint",
           "telephone": genSet.phone || "+37529XXXXXXX",

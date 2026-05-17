@@ -27,11 +27,13 @@ export default function Contacts() {
     "@type": "Organization",
     "name": "АРХЕТИП",
     "url": "https://archetype.by",
-    "logo": "https://archetype.by/favicon.svg",
+    "logo": "https://archetype.by/favicon.png",
     "address": {
       "@type": "PostalAddress",
       "addressLocality": "Grodno",
-      "addressCountry": "BY"
+      "addressCountry": "BY",
+      "postalCode": "230005",
+      "streetAddress": "ул. Парфюмерная 123"
     },
     "contactPoint": {
       "@type": "ContactPoint",
