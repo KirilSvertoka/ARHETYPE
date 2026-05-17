@@ -1904,13 +1904,18 @@ async function startServer() {
               ],
               "description": product.description,
               "sku": product.id.toString(),
+              "brand": {
+                "@type": "Brand",
+                "name": product.brand
+              },
               "offers": {
                 "@type": "Offer",
                 "url": `${domain}/catalog/${slug}`,
                 "priceCurrency": "BYN",
                 "price": lowestPrice,
                 "itemCondition": "https://schema.org/NewCondition",
-                "availability": inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+                "availability": inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                "priceValidUntil": "2027-12-31"
               }
             };
 
@@ -1976,6 +1981,9 @@ async function startServer() {
               <meta property="og:title" content="${product.brand} ${product.name} | АРХЕТИП" />
               <meta property="og:description" content="${product.description.substring(0, 150)}..." />
               <meta property="og:image" content="${product.imageUrl.startsWith('http') ? product.imageUrl : domain + product.imageUrl}" />
+              <meta property="og:type" content="website" />
+              <meta property="og:url" content="${domain}${req.path}" />
+              <link rel="canonical" href="${domain}${req.path}" />
             `;
             html = html.replace('</head>', `${metaTags}</head>`);
           }
