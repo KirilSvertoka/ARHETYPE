@@ -1875,8 +1875,7 @@ async function startServer() {
         "url": domain,
         "potentialAction": {
           "@type": "SearchAction",
-          "target": `${domain}/catalog?search={search_term_string}`,
-          "queryInput": "required name=search_term_string"
+          "target": `${domain}/catalog?search={search_term_string}`
         }
       };
       ldJson.push(orgSchema, websiteSchema);
@@ -1932,9 +1931,10 @@ async function startServer() {
             const tn = parseNotes(product.topNotes);
             const hn = parseNotes(product.heartNotes);
             const bn = parseNotes(product.baseNotes);
+            
             const allIngredients = [...tn, ...hn, ...bn].map(ing => {
               if (typeof ing === 'string') return ing;
-              if (ing && typeof ing === 'object' && ing.name) return ing.name;
+              if (ing && typeof ing === 'object' && (ing as any).name) return (ing as any).name;
               return null;
             }).filter(Boolean) as string[];
 
