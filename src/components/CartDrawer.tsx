@@ -21,11 +21,13 @@ export default function CartDrawer() {
     }
   }, [isCheckingOut, isSuccess]);
   const [customerData, setCustomerData] = useState({ 
+    lastName: '',
     name: '', 
     phone: '',
     city: '',
     deliveryMethod: 'europost',
     address: '',
+    paymentMethod: 'upon_receipt',
     comment: ''
   });
   const [officeSearch, setOfficeSearch] = useState('');
@@ -88,15 +90,23 @@ export default function CartDrawer() {
 
     const fullAddress = customerData.city ? `${customerData.city}, ${customerData.address}` : customerData.address;
 
+    let paymentMethodText = '';
+    switch(customerData.paymentMethod) {
+      case 'upon_receipt': paymentMethodText = 'Оплата при получении'; break;
+      case 'card_online': paymentMethodText = 'Онлайн оплата картой'; break;
+      default: paymentMethodText = 'Оплата при получении';
+    }
+
     try {
       // Simulate processing delay
       await new Promise(resolve => setTimeout(resolve, 1500));
 
       const orderPayload = {
-        customer_name: customerData.name,
+        customer_name: `${customerData.lastName} ${customerData.name}`.trim(),
         customer_phone: customerData.phone,
         delivery_method: deliveryMethodText,
         delivery_address: fullAddress,
+        payment_method: paymentMethodText,
         comment: customerData.comment,
         items: items.map(item => ({
           id: item.id,
@@ -142,7 +152,7 @@ export default function CartDrawer() {
     setTimeout(() => {
       setIsCheckingOut(false);
       setIsSuccess(false);
-      setCustomerData({ name: '', phone: '', city: '', deliveryMethod: 'europost', address: '', comment: '' });
+      setCustomerData({ lastName: '', name: '', phone: '', city: '', deliveryMethod: 'europost', address: '', paymentMethod: 'upon_receipt', comment: '' });
     }, 300);
   };
 
@@ -209,6 +219,19 @@ export default function CartDrawer() {
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium uppercase tracking-widest text-brand-light border-b border-brand-border pb-2">1. Контактные данные</h3>
                     <div className="space-y-3">
+                      <div>
+                        <label className="text-[10px] font-medium uppercase tracking-wider text-brand-muted ml-1">Фамилия *</label>
+                        <input 
+                          required
+                          type="text" 
+                          minLength={2}
+                          maxLength={100}
+                          value={customerData.lastName}
+                          onChange={e => setCustomerData({...customerData, lastName: e.target.value})}
+                          className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm mb-3"
+                          placeholder="Иванов"
+                        />
+                      </div>
                       <div>
                         <label className="text-[10px] font-medium uppercase tracking-wider text-brand-muted ml-1">{t('name')} *</label>
                         <input 
@@ -386,12 +409,36 @@ export default function CartDrawer() {
                   {/* Оплата */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium uppercase tracking-widest text-brand-light border-b border-brand-border pb-2">3. Оплата</h3>
-                    <div className="bg-brand-hover border border-brand-border rounded-xl p-4 flex items-start gap-3">
-                      <CreditCard className="w-5 h-5 text-brand-accent shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-brand-light">Оплата при получении</p>
-                        <p className="text-xs text-brand-muted mt-1">Оплата производится наличными или картой при получении заказа.</p>
-                      </div>
+                    <div className="space-y-2">
+                      <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${customerData.paymentMethod === 'upon_receipt' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
+                        <input 
+                          type="radio" 
+                          name="paymentMethod" 
+                          value="upon_receipt"
+                          checked={customerData.paymentMethod === 'upon_receipt'}
+                          onChange={e => setCustomerData({...customerData, paymentMethod: e.target.value})}
+                          className="w-4 h-4 text-brand-accent bg-brand-bg border-brand-border focus:ring-brand-accent focus:ring-offset-brand-bg"
+                        />
+                        <div className="ml-3 flex flex-col">
+                          <span className="text-sm text-brand-light font-medium">Оплата при получении</span>
+                          <span className="text-xs text-brand-muted mt-0.5">Наличными или картой</span>
+                        </div>
+                      </label>
+
+                      <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${customerData.paymentMethod === 'card_online' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
+                        <input 
+                          type="radio" 
+                          name="paymentMethod" 
+                          value="card_online"
+                          checked={customerData.paymentMethod === 'card_online'}
+                          onChange={e => setCustomerData({...customerData, paymentMethod: e.target.value})}
+                          className="w-4 h-4 text-brand-accent bg-brand-bg border-brand-border focus:ring-brand-accent focus:ring-offset-brand-bg"
+                        />
+                        <div className="ml-3 flex flex-col">
+                          <span className="text-sm text-brand-light font-medium">Онлайн оплата картой</span>
+                          <span className="text-xs text-brand-muted mt-0.5">Безопасный платеж через интернет</span>
+                        </div>
+                      </label>
                     </div>
                   </div>
 

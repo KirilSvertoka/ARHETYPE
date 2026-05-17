@@ -1714,7 +1714,7 @@ app.get('/api/admin/export/:type', requireAuth, (req, res) => {
 });
 
 app.post('/api/orders', async (req, res) => {
-    const { customer_name, customer_phone, items, total, delivery_method, delivery_address, comment } = req.body;
+    const { customer_name, customer_phone, items, total, delivery_method, delivery_address, comment, payment_method } = req.body;
     
     // Update popularity for products in the order
     if (items && Array.isArray(items)) {
@@ -1728,11 +1728,11 @@ app.post('/api/orders', async (req, res) => {
 
     try {
     const insertOrder = db.prepare(`
-      INSERT INTO orders (customer_name, customer_email, customer_phone, customer_region, total, status, delivery_method, delivery_address, comment)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO orders (customer_name, customer_email, customer_phone, customer_region, total, status, delivery_method, delivery_address, comment, payment_method)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
-    const result = insertOrder.run(customer_name, '', customer_phone, '', total, 'New', delivery_method || '', delivery_address || '', comment || '');
+    const result = insertOrder.run(customer_name, '', customer_phone, '', total, 'New', delivery_method || '', delivery_address || '', comment || '', payment_method || 'При получении');
     const orderId = result.lastInsertRowid;
     
     const insertOrderItem = db.prepare(`
@@ -1765,6 +1765,7 @@ app.post('/api/orders', async (req, res) => {
       let text = `🛍 *Новый заказ #${orderId}*\n\n👤 *Клиент:* ${customer_name}\n📞 *Телефон:* ${customer_phone}\n`;
       if (delivery_method) text += `🚚 *Доставка:* ${delivery_method}\n`;
       if (delivery_address) text += `📍 *Адрес:* ${delivery_address}\n`;
+      if (payment_method) text += `💳 *Оплата:* ${payment_method}\n`;
       if (comment) text += `💬 *Комментарий:* ${comment}\n`;
       text += `\n📦 *Товары:*\n${itemsText}\n\n💰 *Итого:* ${total} BYN`;
       
