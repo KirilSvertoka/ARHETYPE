@@ -650,17 +650,6 @@ db.prepare(`
 `).run();
 
 // SEO Endpoints
-app.get('/robots.txt', (req, res) => {
-  const domain = req.protocol + '://' + req.get('host');
-  res.type('text/plain');
-  res.send(`User-agent: *
-Disallow: /admin
-Allow: /
-
-Sitemap: ${domain}/sitemap.xml
-Sitemap: ${domain}/api/feeds/yandex.xml
-Sitemap: ${domain}/api/feeds/google.xml`);
-});
 
 app.get('/sitemap.xml', (req, res) => {
   try {
@@ -1828,37 +1817,7 @@ app.post('/api/callback', async (req, res) => {
   }
 });
 
-// SiteMap generation rules
-app.get('/sitemap.xml', (req, res) => {
-  try {
-    const products = db.prepare('SELECT slug, updated_at FROM products').all() as any[];
-    
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- static pages -->
-  <url><loc>https://archetype.by/</loc><priority>1.0</priority></url>
-  <url><loc>https://archetype.by/catalog</loc><priority>0.9</priority></url>
-  <url><loc>https://archetype.by/about</loc><priority>0.8</priority></url>
-  <url><loc>https://archetype.by/contacts</loc><priority>0.8</priority></url>
-  
-  <!-- dynamic products -->
-`;
-
-    products.forEach(p => {
-      xml += `  <url>
-    <loc>https://archetype.by/catalog/${p.slug}</loc>
-    <priority>0.7</priority>
-  </url>\n`;
-    });
-
-    xml += `</urlset>`;
-
-    res.header('Content-Type', 'application/xml');
-    res.send(xml);
-  } catch (error) {
-    res.status(500).send('Error generating sitemap');
-  }
-});
+// SiteMap generation rules should be top-level routes
 
 async function startServer() {
   const PORT = 3000;
