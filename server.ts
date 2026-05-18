@@ -906,6 +906,12 @@ app.get('/api/feeds/google.xml', (req, res) => {
       <g:condition>new</g:condition>
       <g:google_product_category>Health &amp; Beauty &gt; Personal Care &gt; Cosmetics &gt; Perfume &amp; Cologne</g:google_product_category>
       <g:gender>${p.gender === 'Male' ? 'male' : p.gender === 'Female' ? 'female' : 'unisex'}</g:gender>
+      <g:shipping>
+        <g:country>BY</g:country>
+        <g:service>Standard</g:service>
+        <g:price>5.00 BYN</g:price>
+      </g:shipping>
+      <g:return_policy_label>unconditional_14_days</g:return_policy_label>
     </item>`;
       });
     });
@@ -2033,7 +2039,43 @@ async function startServer() {
                 "price": lowestPrice,
                 "itemCondition": "https://schema.org/NewCondition",
                 "availability": inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-                "priceValidUntil": "2027-12-31"
+                "priceValidUntil": "2027-12-31",
+                "shippingDetails": {
+                  "@type": "OfferShippingDetails",
+                  "shippingRate": {
+                    "@type": "MonetaryAmount",
+                    "value": 5,
+                    "currency": "BYN"
+                  },
+                  "shippingDestination": {
+                    "@type": "DefinedRegion",
+                    "addressCountry": "BY"
+                  },
+                  "deliveryTime": {
+                    "@type": "ShippingDeliveryTime",
+                    "handlingTime": {
+                      "@type": "QuantitativeValue",
+                      "minValue": 0,
+                      "maxValue": 1,
+                      "unitCode": "DAY"
+                    },
+                    "transitTime": {
+                      "@type": "QuantitativeValue",
+                      "minValue": 1,
+                      "maxValue": 5,
+                      "unitCode": "DAY"
+                    }
+                  }
+                },
+                "hasMerchantReturnPolicy": {
+                  "@type": "MerchantReturnPolicy",
+                  "applicableCountry": "BY",
+                  "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+                  "merchantReturnDays": 14,
+                  "returnMethod": "https://schema.org/ReturnByMail",
+                  "returnFees": "https://schema.org/FreeReturn",
+                  "merchantReturnLink": `${domain}/page/returns`
+                }
               }
             };
 
