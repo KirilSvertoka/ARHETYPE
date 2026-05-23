@@ -160,6 +160,15 @@ export interface CMSPage {
   created_at?: string;
 }
 
+export interface BrandCard {
+  name: string;
+  name_be?: string;
+  image: string;
+  desc: string;
+  desc_be?: string;
+  active?: boolean;
+}
+
 export interface HomeConfig {
   announcement: { text: string; text_be?: string; active: boolean };
   hero: { 
@@ -171,6 +180,7 @@ export interface HomeConfig {
   featuredProductIds: number[];
   promoImages: string[];
   dynamicBlocks: { type: 'New' | 'BestSellers' | 'Recommended'; title: string; title_be?: string; active: boolean }[];
+  popularBrands?: BrandCard[];
   seoTitle?: string;
   seoDescription?: string;
 }

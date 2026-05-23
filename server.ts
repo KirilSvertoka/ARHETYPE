@@ -262,6 +262,56 @@ const defaultHomeConfig = {
     { type: 'BestSellers', title: 'Хиты продаж', title_be: 'Хіты продажаў', active: true },
     { type: 'Recommended', title: 'Рекомендуем', title_be: 'Рэкамендуем', active: true }
   ],
+  popularBrands: [
+    {
+      name: 'Byredo',
+      name_be: 'Byredo',
+      image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop',
+      desc: 'Шведский авангард и поэзия',
+      desc_be: 'Швэдскі авангард і паэзія',
+      active: true
+    },
+    {
+      name: 'Le Labo',
+      name_be: 'Le Labo',
+      image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=800&auto=format&fit=crop',
+      desc: 'Индустриальная эстетика Нью-Йорка',
+      desc_be: 'Індустрыяльная эстэтыка Нью-Ёрка',
+      active: true
+    },
+    {
+      name: 'Tom Ford',
+      name_be: 'Tom Ford',
+      image: 'https://images.unsplash.com/photo-1508746829417-e6f548d8d6ed?q=80&w=800&auto=format&fit=crop',
+      desc: 'Роскошь, смелость и чувственность',
+      desc_be: 'Раскоша, смеласць і пачуццёвасць',
+      active: true
+    },
+    {
+      name: 'Creed',
+      name_be: 'Creed',
+      image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop',
+      desc: 'Монархическое величие и классика',
+      desc_be: 'Манархічная веліч і класіка',
+      active: true
+    },
+    {
+      name: 'Kilian',
+      name_be: 'Kilian',
+      image: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop',
+      desc: 'Ночные тайны и парижский шик',
+      desc_be: 'Начныя тайны і парыжскі шык',
+      active: true
+    },
+    {
+      name: 'Maison Francis Kurkdjian',
+      name_be: 'Maison Francis Kurkdjian',
+      image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop',
+      desc: 'Ювелирная точность ароматов',
+      desc_be: 'Ювелірная дакладнасць водараў',
+      active: true
+    }
+  ],
   seoTitle: "АРХЕТИП | Элитная парфюмерия и отливанты в Беларуси",
   seoDescription: "Оригинальная нишевая и селективная парфюмерия. Распив (отливанты) в Гродно и с доставкой по Беларуси. Честные цены, только оригинал."
 };
@@ -972,7 +1022,11 @@ app.get('/api/settings/home', (req, res) => {
   try {
     const row = db.prepare('SELECT value FROM settings WHERE key = ?').get('home_config') as { value: string };
     if (row) {
-      res.json(JSON.parse(row.value));
+      const config = JSON.parse(row.value);
+      if (!config.popularBrands) {
+        config.popularBrands = defaultHomeConfig.popularBrands;
+      }
+      res.json(config);
     } else {
       res.status(404).json({ error: 'Config not found' });
     }

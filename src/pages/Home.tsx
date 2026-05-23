@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { HomeConfig, Product } from '../types';
+import { HomeConfig, Product, BrandCard } from '../types';
 import ProductCard from '../components/ProductCard';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../components/LanguageProvider';
@@ -120,36 +120,48 @@ export default function Home() {
   };
 
   // Luxury Popular Brands list
-  const POPULAR_BRANDS = [
+  const POPULAR_BRANDS: BrandCard[] = [
     {
       name: 'Byredo',
+      name_be: 'Byredo',
       image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop',
-      desc: language === 'be' ? 'Швэдскі авангард і паэзія' : 'Шведский авангард и поэзия'
+      desc: 'Шведский авангард и поэзия',
+      desc_be: 'Швэдскі авангард і паэзія'
     },
     {
       name: 'Le Labo',
+      name_be: 'Le Labo',
       image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=800&auto=format&fit=crop',
-      desc: language === 'be' ? 'Індустрыяльная эстэтыка Нью-Ёрка' : 'Индустриальная эстетика Нью-Йорка'
+      desc: 'Индустриальная эстетика Нью-Йорка',
+      desc_be: 'Індустрыяльная эстэтыка Нью-Ёрка'
     },
     {
       name: 'Tom Ford',
+      name_be: 'Tom Ford',
       image: 'https://images.unsplash.com/photo-1508746829417-e6f548d8d6ed?q=80&w=800&auto=format&fit=crop',
-      desc: language === 'be' ? 'Раскоша, смеласць і пачуццёвасць' : 'Роскошь, смелость и чувственность'
+      desc: 'Роскошь, смелость и чувственность',
+      desc_be: 'Раскоша, смеласць і пачуццёвасць'
     },
     {
       name: 'Creed',
+      name_be: 'Creed',
       image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop',
-      desc: language === 'be' ? 'Манархічная веліч і класіка' : 'Монархическое величие и классика'
+      desc: 'Монархическое величие и классика',
+      desc_be: 'Манархічная веліч і класіка'
     },
     {
       name: 'Kilian',
+      name_be: 'Kilian',
       image: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop',
-      desc: language === 'be' ? 'Начныя тайны і парыжскі шык' : 'Ночные тайны и парижский шик'
+      desc: 'Ночные тайны и парижский шик',
+      desc_be: 'Начныя тайны і парыжскі шык'
     },
     {
       name: 'Maison Francis Kurkdjian',
+      name_be: 'Maison Francis Kurkdjian',
       image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop',
-      desc: language === 'be' ? 'Ювелірная дакладнасць водараў' : 'Ювелирная точность ароматов'
+      desc: 'Ювелирная точность ароматов',
+      desc_be: 'Ювелірная дакладнасць водараў'
     },
   ];
 
@@ -199,16 +211,17 @@ export default function Home() {
             {activeSlide?.image && (
               <>
                 <motion.img 
-                  initial={{ scale: 1.05, filter: "brightness(0.8)" }}
-                  animate={{ scale: 1.15, filter: "brightness(0.65)" }}
-                  transition={{ duration: 8, ease: "linear" }}
+                  initial={{ scale: 1.05, filter: "brightness(0.95)" }}
+                  animate={{ scale: 1.10, filter: "brightness(0.88)" }}
+                  transition={{ duration: 10, ease: "linear" }}
                   src={(isMobile && activeSlide.mobileImage) ? activeSlide.mobileImage : activeSlide.image} 
                   alt={activeSlide.title || "Hero Banner"} 
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-1000"
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-[#111111]/90" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/30" />
+                {/* Micro-soft, very smooth overlays to remove sharp contrast */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/20 transition-all duration-1000" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/5 transition-all duration-1000" />
               </>
             )}
             
@@ -251,21 +264,6 @@ export default function Home() {
                     </motion.p>
                   </>
                 )}
-                
-                <motion.div
-                  initial={{ y: 30, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.7, duration: 0.8 }}
-                  className="pt-6"
-                >
-                  <Link 
-                    to={activeSlide.link || "/catalog"} 
-                    className="inline-flex items-center gap-3 bg-brand-accent text-white px-10 py-5 rounded-none text-xs font-semibold uppercase tracking-[0.25em] hover:bg-brand-accent-hover transition-all duration-300 hover:scale-[1.02]"
-                  >
-                    <span>{t('shopCollection')}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </motion.div>
               </div>
 
               {/* Slider Dots Indicator */}
@@ -281,6 +279,23 @@ export default function Home() {
                   />
                 ))}
               </div>
+            </div>
+
+            {/* Catalog Button at 4/5 height (absolute bottom-[22%] or bottom-[18%]) */}
+            <div className="absolute bottom-[24%] sm:bottom-[20%] left-1/2 -translate-x-1/2 z-25">
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.8 }}
+              >
+                <Link 
+                  to={activeSlide.link || "/catalog"} 
+                  className="inline-flex items-center gap-3 bg-brand-accent text-white px-10 py-5 rounded-none text-xs font-semibold uppercase tracking-[0.25em] hover:bg-brand-accent-hover transition-all duration-300 hover:scale-[1.02]"
+                >
+                  <span>{t('shopCollection')}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </motion.div>
             </div>
           </motion.div>
         </AnimatePresence>
@@ -333,9 +348,12 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {POPULAR_BRANDS.map((brand, bIdx) => (
+          {(config.popularBrands && config.popularBrands.length > 0
+            ? config.popularBrands.filter((b: any) => b.active !== false)
+            : POPULAR_BRANDS
+          ).map((brand, bIdx) => (
             <motion.div
-              key={brand.name}
+              key={brand.name + '-' + bIdx}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
@@ -363,10 +381,10 @@ export default function Home() {
                     {language === 'be' ? 'Калекцыя' : 'Коллекция'}
                   </span>
                   <h3 className="font-serif text-2xl tracking-[0.05em] uppercase border-b border-white/20 pb-2 mb-2 w-fit">
-                    {brand.name}
+                    {language === 'be' && brand.name_be ? brand.name_be : brand.name}
                   </h3>
                   <p className="text-xs font-sans text-white/60 uppercase tracking-widest max-w-xs transition-opacity duration-300 opacity-60 group-hover:opacity-100">
-                    {brand.desc}
+                    {language === 'be' && brand.desc_be ? brand.desc_be : brand.desc}
                   </p>
                 </div>
               </Link>

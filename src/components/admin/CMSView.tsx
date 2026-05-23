@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { CMSPage, HomeConfig, GeneralSettings } from '../../types';
-import { XCircle, Plus, Trash2, GripVertical, Image as ImageIcon, UploadCloud } from 'lucide-react';
+import { XCircle, Plus, Trash2, GripVertical, Image as ImageIcon, UploadCloud, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import { uploadImageChunks } from '../../utils/uploadUtils';
 
 interface CMSViewProps {
@@ -241,6 +241,153 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
     setLocalHomeConfig({
       ...localHomeConfig,
       dynamicBlocks: newBlocks
+    });
+  };
+
+  const addPopularBrand = () => {
+    if (!localHomeConfig) return;
+    const currentBrands = localHomeConfig.popularBrands || [
+      {
+        name: 'Byredo',
+        name_be: 'Byredo',
+        image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop',
+        desc: 'Шведский авангард и поэзия',
+        desc_be: 'Швэдскі авангард і паэзія',
+        active: true
+      },
+      {
+        name: 'Le Labo',
+        name_be: 'Le Labo',
+        image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=800&auto=format&fit=crop',
+        desc: 'Индустриальная эстетика Нью-Йорка',
+        desc_be: 'Індустрыяльная эстэтыка Нью-Ёрка',
+        active: true
+      },
+      {
+        name: 'Tom Ford',
+        name_be: 'Tom Ford',
+        image: 'https://images.unsplash.com/photo-1508746829417-e6f548d8d6ed?q=80&w=800&auto=format&fit=crop',
+        desc: 'Роскошь, смелость и чувственность',
+        desc_be: 'Раскоша, смеласць і пачуццёвасць',
+        active: true
+      },
+      {
+        name: 'Creed',
+        name_be: 'Creed',
+        image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop',
+        desc: 'Монархическое величие и классика',
+        desc_be: 'Манархічная веліч і класіка',
+        active: true
+      },
+      {
+        name: 'Kilian',
+        name_be: 'Kilian',
+        image: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop',
+        desc: 'Ночные тайны и парижский шик',
+        desc_be: 'Начныя тайны і парыжскі шык',
+        active: true
+      },
+      {
+        name: 'Maison Francis Kurkdjian',
+        name_be: 'Maison Francis Kurkdjian',
+        image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop',
+        desc: 'Ювелирная точность ароматов',
+        desc_be: 'Ювелірная дакладнасць водараў',
+        active: true
+      }
+    ];
+    setLocalHomeConfig({
+      ...localHomeConfig,
+      popularBrands: [
+        ...currentBrands,
+        { name: 'Новый бренд', name_be: 'Новы брэнд', image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop', desc: 'Описание бренда', desc_be: 'Апісанне брэнда', active: true }
+      ]
+    });
+  };
+
+  const updatePopularBrand = (index: number, field: string, value: any) => {
+    if (!localHomeConfig) return;
+    const currentBrands = localHomeConfig.popularBrands || [
+      {
+        name: 'Byredo',
+        name_be: 'Byredo',
+        image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop',
+        desc: 'Шведский авангард и поэзия',
+        desc_be: 'Швэдскі авангард і паэзія',
+        active: true
+      },
+      {
+        name: 'Le Labo',
+        name_be: 'Le Labo',
+        image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=800&auto=format&fit=crop',
+        desc: 'Индустриальная эстетика Нью-Йорка',
+        desc_be: 'Індустрыяльная эстэтыка Нью-Ёрка',
+        active: true
+      },
+      {
+        name: 'Tom Ford',
+        name_be: 'Tom Ford',
+        image: 'https://images.unsplash.com/photo-1508746829417-e6f548d8d6ed?q=80&w=800&auto=format&fit=crop',
+        desc: 'Роскошь, смелость и чувственность',
+        desc_be: 'Раскоша, смеласць і пачуццёвасць',
+        active: true
+      },
+      {
+        name: 'Creed',
+        name_be: 'Creed',
+        image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop',
+        desc: 'Монархическое величие и классика',
+        desc_be: 'Манархічная веліч і класіка',
+        active: true
+      },
+      {
+        name: 'Kilian',
+        name_be: 'Kilian',
+        image: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop',
+        desc: 'Ночные тайны и парижский шик',
+        desc_be: 'Начныя тайны і парыжскі шык',
+        active: true
+      },
+      {
+        name: 'Maison Francis Kurkdjian',
+        name_be: 'Maison Francis Kurkdjian',
+        image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop',
+        desc: 'Ювелирная точность ароматов',
+        desc_be: 'Ювелірная дакладнасць водараў',
+        active: true
+      }
+    ];
+    const newBrands = [...currentBrands];
+    newBrands[index] = { ...newBrands[index], [field]: value };
+    setLocalHomeConfig({
+      ...localHomeConfig,
+      popularBrands: newBrands
+    });
+  };
+
+  const removePopularBrand = (index: number) => {
+    if (!localHomeConfig) return;
+    const currentBrands = localHomeConfig.popularBrands || [];
+    const newBrands = currentBrands.filter((_, i) => i !== index);
+    setLocalHomeConfig({
+      ...localHomeConfig,
+      popularBrands: newBrands
+    });
+  };
+
+  const movePopularBrand = (index: number, direction: 'up' | 'down') => {
+    if (!localHomeConfig) return;
+    const currentBrands = localHomeConfig.popularBrands || [];
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === currentBrands.length - 1) return;
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    const newBrands = [...currentBrands];
+    const temp = newBrands[index];
+    newBrands[index] = newBrands[targetIdx];
+    newBrands[targetIdx] = temp;
+    setLocalHomeConfig({
+      ...localHomeConfig,
+      popularBrands: newBrands
     });
   };
 
@@ -768,6 +915,200 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                       className="w-full px-3 py-2 bg-transparent border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted"
                       placeholder="Заголовок блока (BE)..."
                     />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Popular Brands (Collections) Controller */}
+          <div className="space-y-4 pt-6 border-t border-brand-border">
+            <div className="flex justify-between items-center">
+              <h4 className="font-medium text-brand-light flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-brand-accent"></span>
+                Карточки селективных брендов / Коллекций
+              </h4>
+              <button
+                type="button"
+                onClick={addPopularBrand}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-brand-accent/10 border border-brand-accent/30 text-brand-accent hover:bg-brand-accent hover:text-white transition-all text-xs font-semibold uppercase tracking-wider"
+              >
+                <Plus className="w-4 h-4" />
+                Добавить бренд
+              </button>
+            </div>
+            
+            <p className="text-xs text-brand-muted leading-relaxed">
+              Здесь вы можете полностью контролировать отображение плитки брендов (коллекций) на главной странице. Меняйте порядок стрелками, включайте/выключайте, редактируйте тексты на русском и белорусском языках и загружайте изображения.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-3">
+              {((localHomeConfig.popularBrands && localHomeConfig.popularBrands.length > 0)
+                ? localHomeConfig.popularBrands
+                : [
+                    { name: 'Byredo', name_be: 'Byredo', image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop', desc: 'Шведский авангард и поэзия', desc_be: 'Швэдскі авангард і паэзія', active: true },
+                    { name: 'Le Labo', name_be: 'Le Labo', image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=800&auto=format&fit=crop', desc: 'Индустриальная эстетика Нью-Йорка', desc_be: 'Індустрыяльная эстэтыка Нью-Ёрка', active: true },
+                    { name: 'Tom Ford', name_be: 'Tom Ford', image: 'https://images.unsplash.com/photo-1508746829417-e6f548d8d6ed?q=80&w=800&auto=format&fit=crop', desc: 'Роскошь, смелость и чувственность', desc_be: 'Раскоша, смеласць і пачуццёвасць', active: true },
+                    { name: 'Creed', name_be: 'Creed', image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop', desc: 'Монархическое величие и классика', desc_be: 'Манархічная веліч і класіка', active: true },
+                    { name: 'Kilian', name_be: 'Kilian', image: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop', desc: 'Ночные тайны и парижский шик', desc_be: 'Начныя тайны і парыжскі шык', active: true },
+                    { name: 'Maison Francis Kurkdjian', name_be: 'Maison Francis Kurkdjian', image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop', desc: 'Ювелирная точность ароматов', desc_be: 'Ювелірная дакладнасць водараў', active: true }
+                  ]
+              ).map((brand, bIdx) => (
+                <div key={bIdx} className="bg-white/5 border border-brand-border rounded-2xl p-5 flex flex-col gap-4 relative group/item">
+                  {/* Top bar control buttons */}
+                  <div className="flex justify-between items-center pb-3 border-b border-brand-border/40">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-brand-muted uppercase bg-brand-light/5 px-2.5 py-1">
+                        Бренд #{bIdx + 1}
+                      </span>
+                      {brand.active === false ? (
+                        <span className="text-[9px] bg-red-950/40 border border-red-900/40 text-red-400 px-2 py-0.5 font-medium rounded">
+                          Выключен
+                        </span>
+                      ) : (
+                        <span className="text-[9px] bg-green-950/40 border border-green-900/40 text-green-400 px-2 py-0.5 font-medium rounded">
+                          Активен
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      {/* Move Up */}
+                      <button
+                        type="button"
+                        onClick={() => movePopularBrand(bIdx, 'up')}
+                        disabled={bIdx === 0}
+                        className="p-1.5 hover:bg-white/10 text-brand-light disabled:opacity-30 rounded transition-colors"
+                        title="Переместить выше"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      {/* Move Down */}
+                      <button
+                        type="button"
+                        onClick={() => movePopularBrand(bIdx, 'down')}
+                        disabled={bIdx === (((localHomeConfig.popularBrands || []).length || 6) - 1)}
+                        className="p-1.5 hover:bg-white/10 text-brand-light disabled:opacity-30 rounded transition-colors"
+                        title="Переместить ниже"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+                      {/* Active Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => updatePopularBrand(bIdx, 'active', brand.active === false ? true : false)}
+                        className={`p-1.5 rounded transition-colors ${brand.active === false ? 'hover:bg-red-900/20 text-red-400' : 'hover:bg-green-900/20 text-green-400'}`}
+                        title={brand.active === false ? "Включить отображение" : "Выключить отображение"}
+                      >
+                        {brand.active === false ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                      {/* Delete */}
+                      <button
+                        type="button"
+                        onClick={() => removePopularBrand(bIdx)}
+                        className="p-1.5 hover:bg-red-900/30 text-red-400 rounded transition-colors"
+                        title="Удалить карточку"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Brand Grid Layout: Image preview left, fields right */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                    {/* Left: Image with Mini Uploader */}
+                    <div className="sm:col-span-4 flex flex-col gap-2">
+                      <div className="aspect-[4/3] w-full bg-black/40 border border-brand-border/60 overflow-hidden relative">
+                        {brand.image ? (
+                          <img
+                            src={brand.image}
+                            alt="Brand Preview"
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-xs text-brand-muted">
+                            <ImageIcon className="w-6 h-6 mb-1 text-brand-muted/40" />
+                            Нет фото
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Upload Input Overlay Button */}
+                      <label className="cursor-pointer text-center bg-white/5 border border-brand-border/60 hover:border-brand-accent/40 hover:bg-brand-accent/5 py-1.5 text-[10px] uppercase font-bold tracking-wider text-brand-light transition-all flex items-center justify-center gap-1.5 hover:text-brand-accent">
+                        <UploadCloud className="w-3.5 h-3.5" />
+                        Загрузить
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleFileUpload(e.target.files[0], (url) => updatePopularBrand(bIdx, 'image', url));
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Right: Fields */}
+                    <div className="sm:col-span-8 space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-[9px] uppercase font-bold text-brand-muted">Название (RU)</label>
+                          <input
+                            type="text"
+                            value={brand.name}
+                            onChange={(e) => updatePopularBrand(bIdx, 'name', e.target.value)}
+                            className="w-full px-2.5 py-1.5 bg-brand-bg/40 border border-brand-border rounded-lg text-xs text-brand-light"
+                            placeholder="например, Byredo"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] uppercase font-bold text-brand-muted">Название (BE)</label>
+                          <input
+                            type="text"
+                            value={brand.name_be || ''}
+                            onChange={(e) => updatePopularBrand(bIdx, 'name_be', e.target.value)}
+                            className="w-full px-2.5 py-1.5 bg-brand-bg/40 border border-brand-border rounded-lg text-xs text-brand-light"
+                            placeholder="например, Byredo"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase font-bold text-brand-muted">Описание (RU)</label>
+                        <input
+                          type="text"
+                          value={brand.desc}
+                          onChange={(e) => updatePopularBrand(bIdx, 'desc', e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-brand-bg/40 border border-brand-border rounded-lg text-xs text-brand-light"
+                          placeholder="Шведский авангард и поэзия"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase font-bold text-brand-muted">Описание (BE)</label>
+                        <input
+                          type="text"
+                          value={brand.desc_be || ''}
+                          onChange={(e) => updatePopularBrand(bIdx, 'desc_be', e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-brand-bg/40 border border-brand-border rounded-lg text-xs text-brand-light"
+                          placeholder="Швэдскі авангард і паэзія"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase font-bold text-brand-muted">Ссылка на изображение URL</label>
+                        <input
+                          type="text"
+                          value={brand.image}
+                          onChange={(e) => updatePopularBrand(bIdx, 'image', e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-brand-bg/40 border border-brand-border rounded-lg text-[10px] text-brand-light/70 font-mono text-ellipsis overflow-hidden"
+                          placeholder="https://..."
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
