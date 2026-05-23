@@ -116,7 +116,7 @@ export default function Storefront() {
     if (newSearchQuery !== searchQuery) setSearchQuery(newSearchQuery);
     
     if (familiesParam) {
-      const fams = familiesParam.split(',');
+      const fams = familiesParam.split(',').map(f => f.startsWith('family') ? f : `family${f}`);
       if (JSON.stringify(fams) !== JSON.stringify(selectedFamilies)) setSelectedFamilies(fams);
     } else if (selectedFamilies.length > 0) {
       setSelectedFamilies([]);

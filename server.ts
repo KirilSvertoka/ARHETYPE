@@ -1301,9 +1301,10 @@ app.get('/api/products', (req, res) => {
     // In-memory filtering for scent families
     if (families) {
       const familyList = (families as string).split(',');
+      const normalizedFamilyList = familyList.map(f => f.startsWith('family') ? f : `family${f}`);
       products = products.filter((p: any) => {
         const pFamilies = JSON.parse(p.scentFamilies || '[]');
-        return pFamilies.some((f: string) => familyList.includes(f));
+        return pFamilies.some((f: string) => normalizedFamilyList.includes(f));
       });
     }
 
