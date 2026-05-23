@@ -248,7 +248,7 @@ export default function Home() {
                       initial={{ y: 15, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.3, duration: 0.8 }}
-                      className="text-3xl sm:text-5xl md:text-7xl text-white font-serif tracking-tight leading-tight uppercase"
+                      className="text-lg sm:text-3xl md:text-4xl lg:text-5xl text-white font-sans font-light tracking-[0.18em] leading-snug uppercase break-keep whitespace-nowrap md:whitespace-normal px-2"
                     >
                       {language === 'be' ? (activeSlide.title_be || activeSlide.title) : activeSlide.title}
                     </motion.h1>
