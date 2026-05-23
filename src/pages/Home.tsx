@@ -225,54 +225,56 @@ export default function Home() {
               </>
             )}
             
-            {/* Direct Content Frame */}
-            <div className="absolute inset-0 flex flex-col justify-between items-center py-20 px-4 md:px-12 z-10">
-              {/* Invisible anchor spacer */}
-              <div />
-
-              {/* Main Titles */}
-              <div className="text-center max-w-4xl space-y-6">
-                {!config.hero.hideTitles && (
-                  <>
+            {/* Direct Content Frame positioned elegantly at the bottom */}
+            <div className="absolute inset-x-0 bottom-[18%] sm:bottom-[15%] px-4 sm:px-6 z-10 flex flex-col items-center justify-end text-center">
+              
+              {/* Main Titles / Inscriptions (Only if administrator has written titles and titles are not hidden) */}
+              {!config.hero.hideTitles && (
+                <div className="text-center max-w-4xl space-y-3 mb-6 sm:mb-8">
+                  {/* Subtitle - only if entered by admin */}
+                  {((language === 'be' ? (activeSlide.subtitle_be || activeSlide.subtitle) : activeSlide.subtitle)) && (
                     <motion.p
-                      initial={{ y: -15, opacity: 0 }}
+                      initial={{ y: -10, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.3 }}
+                      transition={{ delay: 0.2 }}
                       className="text-xs font-semibold tracking-[0.4em] text-brand-accent uppercase"
                     >
-                      {activeSlide.subtitle || (language === 'be' ? 'ЭКСКЛЮЗІЎНЫЯ АРОМАТЫ' : 'ЭКСКЛЮЗИВНЫЕ АРОМАТЫ')}
+                      {language === 'be' ? (activeSlide.subtitle_be || activeSlide.subtitle) : activeSlide.subtitle}
                     </motion.p>
+                  )}
+                  {/* Title - only if entered by admin */}
+                  {((language === 'be' ? (activeSlide.title_be || activeSlide.title) : activeSlide.title)) && (
                     <motion.h1 
-                      initial={{ y: 30, opacity: 0 }}
+                      initial={{ y: 15, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.4, duration: 0.9 }}
-                      className="text-4xl sm:text-6xl md:text-8xl text-white font-serif tracking-tight leading-tight uppercase"
+                      transition={{ delay: 0.3, duration: 0.8 }}
+                      className="text-3xl sm:text-5xl md:text-7xl text-white font-serif tracking-tight leading-tight uppercase"
                     >
-                      {activeSlide.title ? activeSlide.title : (
-                        language === 'be' ? 'АРХЕТЫП СТЫЛЮ' : 'АРХЕТИП СТИЛЯ'
-                      )}
+                      {language === 'be' ? (activeSlide.title_be || activeSlide.title) : activeSlide.title}
                     </motion.h1>
-                    <motion.p 
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.6 }}
-                      className="text-sm md:text-lg text-white/80 max-w-2xl mx-auto font-light tracking-wide leading-relaxed font-sans"
-                    >
-                      {language === 'be' 
-                        ? 'Адкрыйце для сябе сапраўдныя селектыўныя парфумы і эксклюзіўныя адліванты (распіў) у Гродна і з хуткай дастаўкай па Беларусі.' 
-                        : 'Откройте для себя подлинные селективные парфюмы и эксклюзивные отливанты (распив) в Гродно и с быстрой доставкой по Беларуси.'}
-                    </motion.p>
-                  </>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
-              {/* Invisible anchor spacer to keep titles perfectly centered vertically */}
-              <div />
+              {/* Catalog Button physically slightly below the titles */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.8 }}
+              >
+                <Link 
+                  to={activeSlide.link || "/catalog"} 
+                  className="inline-flex items-center gap-3 bg-brand-accent text-white px-10 py-5 rounded-none text-xs font-semibold uppercase tracking-[0.25em] hover:bg-brand-accent-hover transition-all duration-300 hover:scale-[1.02]"
+                >
+                  <span>{t('shopCollection')}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </motion.div>
             </div>
 
             {/* Slider Dots Indicator */}
             {config.hero.slides.length > 1 && (
-              <div className="absolute bottom-[14%] sm:bottom-[12%] left-1/2 -translate-x-1/2 z-25 flex gap-2.5 items-center">
+              <div className="absolute bottom-[10%] sm:bottom-[8%] left-1/2 -translate-x-1/2 z-25 flex gap-2.5 items-center">
                 {config.hero.slides.map((_, idx) => (
                   <button
                     key={idx}
@@ -285,23 +287,6 @@ export default function Home() {
                 ))}
               </div>
             )}
-
-            {/* Catalog Button at 4/5 height (absolute bottom-[22%] or bottom-[18%]) */}
-            <div className="absolute bottom-[24%] sm:bottom-[20%] left-1/2 -translate-x-1/2 z-25">
-              <motion.div
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.7, duration: 0.8 }}
-              >
-                <Link 
-                  to={activeSlide.link || "/catalog"} 
-                  className="inline-flex items-center gap-3 bg-brand-accent text-white px-10 py-5 rounded-none text-xs font-semibold uppercase tracking-[0.25em] hover:bg-brand-accent-hover transition-all duration-300 hover:scale-[1.02]"
-                >
-                  <span>{t('shopCollection')}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </motion.div>
-            </div>
           </motion.div>
         </AnimatePresence>
 
