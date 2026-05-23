@@ -9,6 +9,7 @@ import { useWishlist } from './WishlistProvider';
 import CartDrawer from './CartDrawer';
 import Newsletter from './Newsletter';
 import Loader from './Loader';
+import SearchOverlay from './SearchOverlay';
 import { motion, AnimatePresence } from 'motion/react';
 import { trackGoal } from '../utils/analytics';
 
@@ -20,6 +21,7 @@ export default function Layout() {
   const { items, setIsCartOpen } = useCart();
   const { wishlist } = useWishlist();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(location.pathname === '/');
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
@@ -115,9 +117,15 @@ export default function Layout() {
     if (links.length === 0) {
       return (
         <div className={`flex items-center ${isFooter ? 'gap-4' : 'gap-4 mr-2 border-r border-brand-border pr-6'}`}>
-          <Link to="/catalog" className="text-brand-muted hover:text-brand-accent transition-colors" title={t('search')}>
-            <Search className="w-4 h-4" />
-          </Link>
+          {!isFooter && (
+            <button 
+              onClick={() => setIsSearchOpen(true)} 
+              className="text-brand-muted hover:text-brand-accent transition-colors cursor-pointer border-none bg-transparent" 
+              title={t('search')}
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          )}
           {settings?.instagram && (
             <a 
               href={settings.instagram} 
@@ -147,9 +155,13 @@ export default function Layout() {
     return (
       <div className={`flex items-center ${isFooter ? 'gap-4' : 'gap-4 mr-2 border-r border-brand-border pr-6'}`}>
         {!isFooter && (
-          <Link to="/catalog" className="text-brand-muted hover:text-brand-accent transition-colors" title={t('search')}>
+          <button 
+            onClick={() => setIsSearchOpen(true)} 
+            className="text-brand-muted hover:text-brand-accent transition-colors cursor-pointer border-none bg-transparent" 
+            title={t('search')}
+          >
             <Search className="w-4 h-4" />
-          </Link>
+          </button>
         )}
         {links.map((link, idx) => (
           <a
@@ -285,6 +297,14 @@ export default function Layout() {
                     
                     <div className="flex items-center gap-1 sm:gap-2">
                       <button
+                        onClick={() => setIsSearchOpen(true)}
+                        className="md:hidden p-2 text-brand-muted hover:text-brand-light transition-colors group"
+                        title={t('search')}
+                      >
+                        <Search className="w-4.5 h-4.5 text-brand-muted group-hover:text-brand-light group-hover:scale-110 transition-all duration-200" />
+                      </button>
+
+                      <button
                         onClick={() => setLanguage(language === 'ru' ? 'be' : 'ru')}
                         className="text-[10px] font-semibold text-brand-muted hover:text-brand-light transition-colors uppercase tracking-[0.2em] px-2 py-1"
                         title={t('toggleLanguage')}
@@ -413,6 +433,7 @@ export default function Layout() {
       </AnimatePresence>
 
       <CartDrawer />
+      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       <main className="min-h-[80vh]">
         <Outlet />

@@ -266,8 +266,13 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Slider Dots Indicator */}
-              <div className="flex gap-2.5 items-center">
+              {/* Invisible anchor spacer to keep titles perfectly centered vertically */}
+              <div />
+            </div>
+
+            {/* Slider Dots Indicator */}
+            {config.hero.slides.length > 1 && (
+              <div className="absolute bottom-[14%] sm:bottom-[12%] left-1/2 -translate-x-1/2 z-25 flex gap-2.5 items-center">
                 {config.hero.slides.map((_, idx) => (
                   <button
                     key={idx}
@@ -279,7 +284,7 @@ export default function Home() {
                   />
                 ))}
               </div>
-            </div>
+            )}
 
             {/* Catalog Button at 4/5 height (absolute bottom-[22%] or bottom-[18%]) */}
             <div className="absolute bottom-[24%] sm:bottom-[20%] left-1/2 -translate-x-1/2 z-25">
