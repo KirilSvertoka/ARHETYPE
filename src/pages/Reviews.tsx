@@ -49,7 +49,7 @@ export default function Reviews() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white/5 p-8 rounded-3xl border border-brand-border shadow-sm h-48 animate-pulse" />
+            <div key={i} className="bg-brand-hover p-8 rounded-none border border-brand-border h-48 animate-pulse" />
           ))}
         </div>
       ) : reviews.length > 0 ? (
@@ -60,7 +60,7 @@ export default function Reviews() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="bg-white/5 p-8 rounded-3xl border border-brand-border shadow-sm flex flex-col h-full"
+              className="bg-brand-hover p-8 rounded-none border border-brand-border flex flex-col h-full"
             >
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (

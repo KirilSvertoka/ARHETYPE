@@ -55,7 +55,7 @@ export default function CallbackForm({ isOpen, onClose, productName }: CallbackF
   };
 
   const formContent = (
-    <div className={onClose ? "bg-brand-bg p-8 rounded-3xl border border-brand-border shadow-2xl w-full max-w-md relative overflow-hidden" : ""}>
+    <div className={onClose ? "bg-brand-bg p-8 rounded-none border border-brand-border shadow-2xl w-full max-w-md relative overflow-hidden" : ""}>
       {onClose && (
         <button 
           onClick={onClose}
@@ -82,7 +82,7 @@ export default function CallbackForm({ isOpen, onClose, productName }: CallbackF
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center justify-center py-12 text-center text-brand-accent space-y-4 bg-brand-accent/5 rounded-2xl border border-brand-accent/20"
+          className="flex flex-col items-center justify-center py-12 text-center text-brand-accent space-y-4 bg-brand-accent/5 rounded-none border border-brand-accent/20"
         >
           <CheckCircle2 className="w-12 h-12" />
           <div>
@@ -102,7 +102,7 @@ export default function CallbackForm({ isOpen, onClose, productName }: CallbackF
               maxLength={100}
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all placeholder:text-brand-muted text-brand-light"
+              className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-none focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all placeholder:text-brand-muted/50 text-brand-light"
               placeholder={t('placeholderName')}
             />
           </div>
@@ -122,7 +122,7 @@ export default function CallbackForm({ isOpen, onClose, productName }: CallbackF
                   setFormData({ ...formData, phone: val });
                 }
               }}
-              className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all placeholder:text-brand-muted text-brand-light"
+              className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-none focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all placeholder:text-brand-muted/50 text-brand-light"
               placeholder={t('placeholderPhone')}
             />
           </div>
@@ -137,14 +137,14 @@ export default function CallbackForm({ isOpen, onClose, productName }: CallbackF
                 maxLength={1000}
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all resize-none placeholder:text-brand-muted text-brand-light"
+                className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-none focus:outline-none focus:ring-1 focus:ring-brand-accent transition-all resize-none placeholder:text-brand-muted/50 text-brand-light"
                 placeholder={t('placeholderMessage')}
               />
             </div>
           )}
 
           {status === 'error' && (
-            <p className="text-red-400 text-sm text-center py-2 bg-red-900/20 rounded-lg">
+            <p className="text-red-400 text-sm text-center py-2 bg-red-900/20 rounded-none">
               {t('failedToSend')}
             </p>
           )}
@@ -152,7 +152,7 @@ export default function CallbackForm({ isOpen, onClose, productName }: CallbackF
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="w-full py-4 bg-brand-accent text-white rounded-xl font-medium tracking-wide hover:bg-brand-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-accent focus:ring-offset-brand-bg transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-4 bg-brand-accent text-white rounded-none text-xs font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover focus:outline-none focus:ring-1 focus:ring-brand-accent focus:ring-offset-1 focus:ring-offset-brand-bg transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {status === 'loading' ? (
               <Loader2 className="w-5 h-5 animate-spin" />

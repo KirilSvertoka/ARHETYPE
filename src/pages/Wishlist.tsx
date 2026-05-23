@@ -34,15 +34,15 @@ export default function Wishlist() {
     return (
       <div className="min-h-screen pt-24 flex justify-center items-center">
         <div className="animate-pulse flex space-x-4">
-          <div className="rounded-full bg-white/20 h-10 w-10"></div>
+          <div className="bg-brand-accent/20 h-10 w-10 border border-brand-accent/30"></div>
           <div className="flex-1 space-y-6 py-1">
-            <div className="h-2 bg-white/20 rounded w-48"></div>
+            <div className="h-2 bg-white/10 rounded-none w-48"></div>
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-4">
-                <div className="h-2 bg-white/20 rounded col-span-2"></div>
-                <div className="h-2 bg-white/20 rounded col-span-1"></div>
+                <div className="h-2 bg-white/10 rounded-none col-span-2"></div>
+                <div className="h-2 bg-white/10 rounded-none col-span-1"></div>
               </div>
-              <div className="h-2 bg-white/20 rounded"></div>
+              <div className="h-2 bg-white/10 rounded-none"></div>
             </div>
           </div>
         </div>
@@ -68,13 +68,13 @@ export default function Wishlist() {
             </p>
             <Link 
               to="/catalog" 
-              className="inline-block px-8 py-3 bg-brand-accent text-white rounded-xl font-medium hover:bg-brand-accent-hover transition-colors"
+              className="inline-block px-8 py-3 bg-brand-accent text-white rounded-none text-xs font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-colors"
             >
               {t('shopCollection')}
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 bg-brand-border overflow-hidden rounded-2xl border border-brand-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 bg-brand-border overflow-hidden border border-brand-border">
             {products.map((product, index) => (
               <div key={product.id} className="bg-brand-bg">
                 <motion.div

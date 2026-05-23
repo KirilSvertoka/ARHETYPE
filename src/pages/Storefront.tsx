@@ -373,25 +373,33 @@ export default function Storefront() {
         />
       </div>
 
-      <section className="text-center max-w-3xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 pt-4 mb-8">
-        <h1 className="text-5xl md:text-6xl font-serif tracking-tight text-brand-light leading-tight">
+      <section className="text-center max-w-3xl mx-auto space-y-4 px-4 sm:px-6 lg:px-8 pt-6 mb-12">
+        <span className="text-[10px] uppercase tracking-[0.25em] font-sans font-semibold text-brand-accent/80 block">
+          Archetype Parfum | Selectives
+        </span>
+        <h1 className="text-4xl md:text-5xl font-serif tracking-tight text-brand-light leading-tight">
           {categoryName}
         </h1>
-        <p className="text-lg text-brand-muted font-light leading-relaxed">
+        <p className="text-sm text-brand-muted font-light max-w-xl mx-auto leading-relaxed">
           {t('exploreCatalog')}
         </p>
+        <div className="pt-2">
+          <span className="inline-block text-[10px] font-mono tracking-widest text-brand-muted/70 uppercase">
+            [ {products.length} {language === 'be' ? 'ароматаў' : 'ароматов'} ]
+          </span>
+        </div>
       </section>
 
-      <div className="sticky top-[96px] z-40 bg-brand-bg border-b border-brand-border mb-8 sm:mb-12 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="sticky top-14 sm:top-16 z-40 bg-brand-bg/95 backdrop-blur-md border-b border-brand-border/40 mb-8 sm:mb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
           <div className="flex items-center gap-4">
             <div className="relative flex-1" ref={searchRef}>
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-brand-muted" />
+              <div className="absolute inset-y-0 left-0 pl-1 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-brand-muted/60" />
               </div>
               <input
                 type="text"
-                className="block w-full pl-10 pr-4 py-2.5 bg-white border border-brand-border rounded-xl text-brand-light placeholder-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all shadow-sm text-sm"
+                className="block w-full pl-8 pr-4 py-2 bg-transparent border-t-0 border-x-0 border-b border-brand-border/50 rounded-none text-brand-light placeholder-brand-muted/50 focus:outline-none focus:ring-0 focus:border-brand-accent transition-all text-sm font-light"
                 placeholder={t('search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -405,7 +413,7 @@ export default function Storefront() {
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-brand-bg border border-brand-border rounded-xl shadow-xl overflow-hidden z-50"
+                    className="absolute top-full left-0 right-0 mt-2 bg-brand-bg border border-brand-border rounded-none shadow-xl overflow-hidden z-50"
                   >
                     <ul>
                       {suggestions.map((sugg, idx) => (
@@ -434,7 +442,7 @@ export default function Storefront() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setMobileGridCols(prev => prev === 1 ? 2 : 1)}
-                className="sm:hidden p-2.5 text-brand-muted hover:text-brand-accent transition-colors border border-brand-border rounded-xl hover:bg-brand-hover bg-white"
+                className="sm:hidden p-2.5 text-brand-muted hover:text-brand-accent transition-colors border border-brand-border rounded-none hover:bg-brand-hover bg-brand-hover/10"
                 title="Изменить вид сетки"
               >
                 {mobileGridCols === 1 ? <Grid2X2 className="w-5 h-5" /> : <Square className="w-5 h-5" />}
@@ -442,239 +450,22 @@ export default function Storefront() {
 
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-none text-xs font-semibold uppercase tracking-[0.15em] transition-all border ${
                   isFilterOpen || activeFiltersCount > 0
-                    ? 'bg-brand-accent text-white border-brand-accent'
+                    ? 'bg-brand-accent text-white border-brand-accent font-semibold'
                     : 'bg-brand-hover text-brand-muted border-brand-border hover:border-brand-accent/40'
                 }`}
               >
-                <SlidersHorizontal className="w-4 h-4" />
+                <SlidersHorizontal className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{t('filters')}</span>
                 {activeFiltersCount > 0 && (
-                  <span className="bg-brand-bg text-brand-accent text-xs rounded-full w-5 h-5 flex items-center justify-center border border-brand-accent/20">
-                    {activeFiltersCount}
+                  <span className="text-xs font-mono ml-1">
+                    ({activeFiltersCount})
                   </span>
                 )}
               </button>
             </div>
           </div>
-
-          <AnimatePresence>
-            {isFilterOpen && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setIsFilterOpen(false)}
-                  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
-                />
-                <motion.div
-                  initial={{ x: '-100%' }}
-                  animate={{ x: 0 }}
-                  exit={{ x: '-100%' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                  className="fixed top-0 left-0 bottom-0 w-full max-w-md bg-brand-bg z-[70] shadow-2xl flex flex-col border-r border-brand-border"
-                >
-                  <div className="p-6 border-b border-brand-border flex justify-between items-center bg-brand-bg">
-                    <h2 className="text-2xl font-serif text-brand-light flex items-center gap-2">
-                      <Filter className="w-6 h-6 text-brand-accent" />
-                      {t('filters')}
-                    </h2>
-                    <button onClick={() => setIsFilterOpen(false)} className="p-2 text-brand-muted hover:text-brand-accent transition-colors rounded-full hover:bg-brand-hover">
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto p-8 space-y-10 bg-brand-bg">
-                    {/* Category Filter */}
-                    <div className="space-y-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
-                        {t('categories')}
-                      </h3>
-                      <div className="relative">
-                        <select
-                          value={activeCategory}
-                          onChange={(e) => setActiveCategory(e.target.value)}
-                          className="w-full appearance-none bg-white border border-brand-border rounded-xl px-4 py-3 text-sm text-brand-light focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all cursor-pointer shadow-sm"
-                        >
-                          <option value="All">{t('allFamilies')}</option>
-                          <option value="perfume">{t('perfume')}</option>
-                          <option value="eau_de_toilette">{t('eauDeToilette')}</option>
-                          <option value="cologne">{t('cologne')}</option>
-                          <option value="decant">{language === 'be' ? 'Адліванты' : 'Отливанты'}</option>
-                          <option value="set">{language === 'be' ? 'Наборы' : 'Наборы'}</option>
-                          <option value="oil">{t('oil')}</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-brand-muted">
-                          <ChevronDown className="w-4 h-4" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Brand Filter */}
-                    <div className="space-y-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
-                        {t('brand')}
-                      </h3>
-                      <div className="relative">
-                        <select
-                          value={activeBrand}
-                          onChange={(e) => setActiveBrand(e.target.value)}
-                          className="w-full appearance-none bg-white border border-brand-border rounded-xl px-4 py-3 text-sm text-brand-light focus:outline-none focus:ring-2 focus:ring-brand-accent focus:border-transparent transition-all cursor-pointer"
-                        >
-                          {brands.map(brand => (
-                            <option key={brand} value={brand}>
-                              {brand === 'All' ? t('allBrands') : brand}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-brand-muted">
-                          <ChevronDown className="w-4 h-4" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Gender Filter */}
-                    <div className="space-y-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
-                        {t('gender')}
-                      </h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: 'All', label: t('genderAll') },
-                          { id: 'Female', label: t('genderFemale') },
-                          { id: 'Male', label: t('genderMale') },
-                          { id: 'Unisex', label: t('genderUnisex') }
-                        ].map(tab => (
-                            <button
-                              key={tab.id}
-                              onClick={() => setActiveGenderTab(tab.id as any)}
-                              className={`px-4 py-2.5 rounded-xl text-sm transition-all border ${
-                                activeGenderTab === tab.id
-                                  ? 'bg-brand-accent text-white border-brand-accent font-medium'
-                                  : 'bg-white text-brand-muted border-brand-border hover:border-brand-accent/40 hover:text-brand-accent'
-                              }`}
-                            >
-                            {tab.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Sort Options */}
-                    <div className="space-y-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
-                        {t('sortBy')}
-                      </h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: 'name-asc', label: t('sortNameAsc') },
-                          { id: 'name-desc', label: t('sortNameDesc') },
-                          { id: 'price-asc', label: t('sortPriceAsc') },
-                          { id: 'price-desc', label: t('sortPriceDesc') },
-                          { id: 'popularity', label: language === 'be' ? 'Папулярнасць' : 'Популярность' }
-                        ].map(option => (
-                          <button
-                            key={option.id}
-                            onClick={() => setSortBy(option.id)}
-                            className={`px-4 py-2.5 rounded-xl text-sm transition-all border ${
-                              sortBy === option.id
-                                ? 'bg-brand-accent text-white border-brand-accent font-medium'
-                                : 'bg-white text-brand-muted border-brand-border hover:border-brand-accent/40 hover:text-brand-accent'
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Scent Families */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
-                          {t('scentFamilies')}
-                        </h3>
-                        {selectedFamilies.length > 0 && (
-                          <button 
-                            onClick={() => setSelectedFamilies([])}
-                            className="text-xs text-brand-accent hover:underline font-medium"
-                          >
-                            {t('reset')}
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {scentFamilies.map(family => (
-                          <button
-                            key={family.id}
-                            onClick={() => toggleFamily(family.id)}
-                            className={`px-4 py-2 rounded-full text-xs font-medium uppercase tracking-wider transition-all border ${
-                              selectedFamilies.includes(family.id)
-                                ? 'bg-brand-accent text-white border-brand-accent'
-                                : 'bg-white text-brand-muted border-brand-border hover:border-brand-accent/40 hover:text-brand-accent'
-                            }`}
-                          >
-                            {family.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Accords Filter */}
-                    {accordsList.length > 0 && (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
-                            {language === 'be' ? 'Акорды' : 'Аккорды'}
-                          </h3>
-                          {selectedAccords.length > 0 && (
-                            <button 
-                              onClick={() => setSelectedAccords([])}
-                              className="text-xs text-brand-accent hover:underline font-medium"
-                            >
-                              {t('reset')}
-                            </button>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {accordsList.map(accord => (
-                            <button
-                              key={accord}
-                              onClick={() => toggleAccord(accord)}
-                              className={`px-4 py-2 rounded-full text-xs font-medium uppercase tracking-wider transition-all border ${
-                                selectedAccords.includes(accord)
-                                  ? 'bg-brand-accent text-white border-brand-accent'
-                                  : 'bg-white text-brand-muted border-brand-border hover:border-brand-accent/40 hover:text-brand-accent'
-                              }`}
-                            >
-                              {accord}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-6 border-t border-brand-border flex gap-4 bg-brand-bg">
-                    <button
-                      onClick={resetFilters}
-                      className="flex-1 px-4 py-3.5 text-sm font-medium text-brand-muted hover:text-brand-accent transition-colors border border-brand-border rounded-xl hover:bg-brand-hover"
-                    >
-                      {t('reset')}
-                    </button>
-                    <button
-                      onClick={() => setIsFilterOpen(false)}
-                      className="flex-1 px-6 py-3.5 bg-brand-accent text-white rounded-xl text-sm font-medium hover:bg-brand-accent-hover transition-all shadow-md active:scale-[0.98]"
-                    >
-                      {t('apply')}
-                    </button>
-                  </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
         </div>
       </div>
 
@@ -696,38 +487,40 @@ export default function Storefront() {
           </div>
         )}
         
-        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid ${mobileGridCols === 1 ? 'grid-cols-1' : 'grid-cols-2'} sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
-          {products.map((product, index) => {
-            return (
-              <div key={product.id} className="bg-brand-bg">
-                <motion.div
-                  initial={{ opacity: 0, y: 60 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ 
-                    duration: 1, 
-                    ease: [0.21, 1, 0.36, 1],
-                    delay: (index % 3) * 0.1 
-                  }}
-                  className="h-full"
-                >
-                  <ProductCard product={product} />
-                </motion.div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={`grid ${mobileGridCols === 1 ? 'grid-cols-1' : 'grid-cols-2'} sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-[1px] bg-brand-border/45 border border-brand-border/45 overflow-hidden transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
+            {products.map((product, index) => {
+              return (
+                <div key={product.id} className="bg-brand-bg relative h-full">
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ 
+                      duration: 0.8, 
+                      ease: [0.21, 1, 0.36, 1],
+                      delay: (index % 3) * 0.05
+                    }}
+                    className="h-full"
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                </div>
+              );
+            })}
+            {!loading && products.length === 0 && (
+              <div className="col-span-full text-center py-24 text-brand-muted bg-brand-bg text-sm font-light">
+                {t('noProductsFound')} "{searchQuery}".
               </div>
-            );
-          })}
-          {!loading && products.length === 0 && (
-            <div className="col-span-full text-center py-24 text-brand-muted bg-brand-bg">
-              {t('noProductsFound')} "{searchQuery}".
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </section>
 
-      <section id="callback-section" className="max-w-xl mx-auto bg-brand-bg/50 p-8 md:p-12 rounded-3xl shadow-sm border border-brand-border mx-4 sm:mx-auto mb-12">
+      <section id="callback-section" className="max-w-xl mx-auto bg-brand-bg/40 p-8 md:p-12 rounded-none border border-brand-border mx-4 sm:mx-auto mb-12 shadow-none">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-serif mb-2 text-brand-light">{t('needAssistance')}</h2>
-          <p className="text-brand-muted text-sm">
+          <p className="text-brand-muted text-sm font-light">
             {t('leaveDetails')}
           </p>
         </div>
@@ -736,15 +529,238 @@ export default function Storefront() {
 
       {/* Floating Action Button */}
       <motion.button
-        initial={{ scale: 0, opacity: 0 }}
+        initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 1, duration: 0.3 }}
+        transition={{ delay: 0.8, duration: 0.3 }}
         onClick={scrollToCallback}
-        className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 p-4 bg-brand-accent text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+        className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 px-4 py-3 bg-brand-accent text-white rounded-none shadow-lg hover:bg-brand-accent-hover transition-all flex items-center gap-2.5 border border-brand-accent/20"
         aria-label={t('contactUs')}
       >
-        <MessageCircle className="w-6 h-6" />
+        <MessageCircle className="w-4 h-4" />
+        <span className="text-[10px] uppercase tracking-[0.2em] font-semibold hidden sm:inline">{t('contactUs')}</span>
       </motion.button>
+
+      {/* Top-level Filters Sidebar Overlay (Moved out of sticky container to prevent viewport cropping / nesting bugs) */}
+      <AnimatePresence>
+        {isFilterOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsFilterOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 bottom-0 h-full w-full max-w-md bg-brand-bg z-[70] shadow-2xl flex flex-col border-r border-brand-border"
+            >
+              <div className="p-6 border-b border-brand-border flex justify-between items-center bg-brand-bg shrink-0">
+                <h2 className="text-2xl font-serif text-brand-light flex items-center gap-2">
+                  <Filter className="w-6 h-6 text-brand-accent" />
+                  {t('filters')}
+                </h2>
+                <button 
+                  onClick={() => setIsFilterOpen(false)} 
+                  className="p-2 text-brand-muted hover:text-brand-accent transition-colors cursor-pointer"
+                  aria-label="Close filters"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 space-y-10 bg-brand-bg custom-scrollbar">
+                {/* Category Filter */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
+                    {t('categories')}
+                  </h3>
+                  <div className="relative">
+                    <select
+                      value={activeCategory}
+                      onChange={(e) => setActiveCategory(e.target.value)}
+                      className="w-full appearance-none bg-brand-hover/25 border border-brand-border/60 rounded-none pl-4 pr-10 py-3 text-xs uppercase tracking-wider text-brand-light focus:outline-none focus:border-brand-accent transition-all cursor-pointer font-medium"
+                    >
+                      <option value="All" className="bg-brand-bg text-brand-light">{t('allFamilies')}</option>
+                      <option value="perfume" className="bg-brand-bg text-brand-light">{t('perfume')}</option>
+                      <option value="eau_de_toilette" className="bg-brand-bg text-brand-light">{t('eauDeToilette')}</option>
+                      <option value="cologne" className="bg-brand-bg text-brand-light">{t('cologne')}</option>
+                      <option value="decant" className="bg-brand-bg text-brand-light">{language === 'be' ? 'Адліванты' : 'Отливанты'}</option>
+                      <option value="set" className="bg-brand-bg text-brand-light">{language === 'be' ? 'Наборы' : 'Наборы'}</option>
+                      <option value="oil" className="bg-brand-bg text-brand-light">{t('oil')}</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-brand-muted">
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Brand Filter */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
+                    {t('brand')}
+                  </h3>
+                  <div className="relative">
+                    <select
+                      value={activeBrand}
+                      onChange={(e) => setActiveBrand(e.target.value)}
+                      className="w-full appearance-none bg-brand-hover/25 border border-brand-border/60 rounded-none pl-4 pr-10 py-3 text-xs uppercase tracking-wider text-brand-light focus:outline-none focus:border-brand-accent transition-all cursor-pointer font-medium"
+                    >
+                      {brands.map(brand => (
+                        <option key={brand} value={brand} className="bg-brand-bg text-brand-light">
+                          {brand === 'All' ? t('allBrands') : brand}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-brand-muted">
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gender Filter */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
+                    {t('gender')}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'All', label: t('genderAll') },
+                      { id: 'Female', label: t('genderFemale') },
+                      { id: 'Male', label: t('genderMale') },
+                      { id: 'Unisex', label: t('genderUnisex') }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveGenderTab(tab.id as any)}
+                        className={`px-4 py-2.5 rounded-none text-xs font-semibold uppercase tracking-[0.1em] transition-all border ${
+                          activeGenderTab === tab.id
+                            ? 'bg-brand-accent text-white border-brand-accent font-semibold'
+                            : 'bg-brand-hover/10 text-brand-muted border-brand-border/60 hover:border-brand-accent/40 hover:text-brand-accent hover:bg-brand-hover/30'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sort Options */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
+                    {t('sortBy')}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'name-asc', label: t('sortNameAsc') },
+                      { id: 'name-desc', label: t('sortNameDesc') },
+                      { id: 'price-asc', label: t('sortPriceAsc') },
+                      { id: 'price-desc', label: t('sortPriceDesc') },
+                      { id: 'popularity', label: language === 'be' ? 'Папулярнасць' : 'Популярность' }
+                    ].map(option => (
+                      <button
+                        key={option.id}
+                        onClick={() => setSortBy(option.id)}
+                        className={`px-4 py-2.5 rounded-none text-xs font-semibold uppercase tracking-[0.1em] transition-all border ${
+                          sortBy === option.id
+                            ? 'bg-brand-accent text-white border-brand-accent font-semibold'
+                            : 'bg-brand-hover/10 text-brand-muted border-brand-border/60 hover:border-brand-accent/40 hover:text-brand-accent hover:bg-brand-hover/30'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Scent Families */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
+                      {t('scentFamilies')}
+                    </h3>
+                    {selectedFamilies.length > 0 && (
+                      <button 
+                        onClick={() => setSelectedFamilies([])}
+                        className="text-xs text-brand-accent hover:underline font-medium"
+                      >
+                        {t('reset')}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {scentFamilies.map(family => (
+                      <button
+                        key={family.id}
+                        onClick={() => toggleFamily(family.id)}
+                        className={`px-4 py-2 rounded-none text-[10px] font-semibold uppercase tracking-[0.12em] transition-all border ${
+                          selectedFamilies.includes(family.id)
+                            ? 'bg-brand-accent text-white border-brand-accent font-semibold'
+                            : 'bg-brand-hover/10 text-brand-muted border-brand-border/60 hover:border-brand-accent/40 hover:text-brand-accent hover:bg-brand-hover/30'
+                        }`}
+                      >
+                        {family.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Accords Filter */}
+                {accordsList.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
+                        {language === 'be' ? 'Акорды' : 'Аккорды'}
+                      </h3>
+                      {selectedAccords.length > 0 && (
+                        <button 
+                          onClick={() => setSelectedAccords([])}
+                          className="text-xs text-brand-accent hover:underline font-medium"
+                        >
+                          {t('reset')}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {accordsList.map(accord => (
+                        <button
+                          key={accord}
+                          onClick={() => toggleAccord(accord)}
+                          className={`px-4 py-2 rounded-none text-[10px] font-semibold uppercase tracking-[0.12em] transition-all border ${
+                            selectedAccords.includes(accord)
+                              ? 'bg-brand-accent text-white border-brand-accent font-semibold'
+                              : 'bg-brand-hover/10 text-brand-muted border-brand-border/60 hover:border-brand-accent/40 hover:text-brand-accent hover:bg-brand-hover/30'
+                          }`}
+                        >
+                          {accord}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 border-t border-brand-border flex gap-4 bg-brand-bg shrink-0">
+                <button
+                  onClick={resetFilters}
+                  className="flex-1 px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-brand-muted hover:text-brand-accent hover:bg-brand-hover/20 transition-all border border-brand-border rounded-none cursor-pointer"
+                >
+                  {t('reset')}
+                </button>
+                <button
+                  onClick={() => setIsFilterOpen(false)}
+                  className="flex-1 px-6 py-3.5 bg-brand-accent text-white rounded-none text-xs font-semibold uppercase tracking-wider hover:bg-brand-accent-hover transition-all shadow-md active:scale-[0.98] cursor-pointer"
+                >
+                  {t('apply')}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

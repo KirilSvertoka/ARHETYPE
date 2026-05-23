@@ -2,10 +2,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Product, getVariantType, GeneralSettings, getConcentrationLabel } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle, Send } from 'lucide-react';
+import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle, Send, Star, ChevronDown } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import NoteDiagram from '../components/NoteDiagram';
-import ScentProfileBlock from '../components/ScentProfileBlock';
 import { useCart } from '../components/CartProvider';
 import { useLanguage } from '../components/LanguageProvider';
 import RelatedProducts from '../components/RelatedProducts';
@@ -35,6 +34,55 @@ export default function ProductDetails() {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const [quantity, setQuantity] = useState(1);
+  const [activeNotesAccordion, setActiveNotesAccordion] = useState<'top' | 'heart' | 'base' | null>('top');
+
+  const [newReviewName, setNewReviewName] = useState('');
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
+  const [reviewSubmitError, setReviewSubmitError] = useState('');
+
+  const submitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product) return;
+    if (!newReviewName.trim() || !newReviewComment.trim()) {
+      setReviewSubmitError(language === 'be' ? 'Калі ласка, запоўніце ўсе палі' : 'Пожалуйста, заполните все поля');
+      return;
+    }
+    
+    setIsSubmittingReview(true);
+    setReviewSubmitError('');
+    setReviewSubmitSuccess(false);
+
+    try {
+      const response = await fetch(`/api/products/${product.id}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_name: newReviewName,
+          rating: newReviewRating,
+          comment: newReviewComment,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit');
+      }
+
+      setReviewSubmitSuccess(true);
+      setNewReviewName('');
+      setNewReviewComment('');
+      setNewReviewRating(5);
+    } catch (err) {
+      console.error(err);
+      setReviewSubmitError(language === 'be' ? 'Памылка пры адпраўцы водгуку' : 'Ошибка при отправке отзыва');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   const allImages = product ? [product.imageUrl, ...(product.images || [])] : [];
 
@@ -169,7 +217,15 @@ export default function ProductDetails() {
 
   const topNotesList = parseNotes(product.topNotes);
   const baseNotesList = parseNotes(product.baseNotes);
-  const notesStr = [...topNotesList.slice(0, 3), ...baseNotesList.slice(0, 2)].join(', ');
+  const getNoteStringVal = (n: any) => {
+    if (!n) return '';
+    if (typeof n === 'string') return n;
+    return language === 'be' && n.name_be ? n.name_be : n.name;
+  };
+  const notesStr = [
+    ...topNotesList.slice(0, 3).map(getNoteStringVal),
+    ...baseNotesList.slice(0, 2).map(getNoteStringVal)
+  ].filter(Boolean).join(', ');
 
   const minVolume = product.variants?.reduce((min, v) => {
     const sizeMatch = v.size.match(/(\d+)/);
@@ -311,7 +367,7 @@ export default function ProductDetails() {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in"
     >
       <Breadcrumbs 
         items={[
@@ -351,8 +407,8 @@ export default function ProductDetails() {
               }}
               className="fixed top-0 left-0 z-[9999] pointer-events-none"
             >
-              <div className="w-6 h-6 bg-brand-accent rounded-full flex items-center justify-center shadow-lg">
-                <ShoppingBag className="w-3 h-3 text-white" />
+              <div className="w-4 h-4 bg-brand-accent flex items-center justify-center">
+                <ShoppingBag className="w-2.5 h-2.5 text-white" />
               </div>
             </motion.div>
           );
@@ -382,29 +438,33 @@ export default function ProductDetails() {
         <span className="text-sm font-medium uppercase tracking-wider">{t('backToCatalog')}</span>
       </Link>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 items-stretch">
-        <div className="space-y-4" id="product-gallery">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        <div className="lg:col-span-7 space-y-6" id="product-gallery">
           <div 
-            className="aspect-[4/5] rounded-3xl overflow-hidden bg-brand-bg cursor-pointer group"
+            className="relative aspect-[3/4] sm:aspect-[4/5] rounded-none overflow-hidden bg-brand-hover/5 cursor-zoom-in border border-brand-border/80 group shadow-[0_8px_30px_rgb(0,0,0,0.15)]"
             onClick={() => openFullscreen(allImages.indexOf(activeImage) !== -1 ? allImages.indexOf(activeImage) : 0)}
           >
+            {/* Elegant Luxury Badge Overlay */}
+            <div className="absolute top-4 left-4 z-10 px-3.5 py-1.5 bg-brand-bg/95 backdrop-blur-md border border-brand-border/60 text-[9px] uppercase tracking-[0.2em] text-brand-light font-semibold select-none">
+              {product.brand} • {language === 'be' ? 'Калекцыя' : 'Коллекция'}
+            </div>
             <img 
               src={activeImage} 
               alt={product.name} 
-              className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-[1.03]"
               referrerPolicy="no-referrer"
               loading="lazy"
               decoding="async"
             />
           </div>
           {product.images && product.images.length > 0 && (
-            <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
               <button
                 onClick={() => setActiveImage(product.imageUrl)}
-                className={`flex-shrink-0 w-20 h-24 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                className={`flex-shrink-0 w-16 h-20 rounded-none overflow-hidden border transition-all duration-300 ${
                   activeImage === product.imageUrl 
-                    ? 'border-brand-accent opacity-100 scale-105 shadow-lg shadow-brand-accent/20' 
-                    : 'border-transparent opacity-50 hover:opacity-100 hover:border-brand-accent/30'
+                    ? 'border-brand-accent bg-brand-hover/10 scale-102 shadow-sm' 
+                    : 'border-brand-border/60 opacity-60 hover:opacity-100 hover:border-brand-accent/30'
                 }`}
               >
                 <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
@@ -413,10 +473,10 @@ export default function ProductDetails() {
                 <button
                   key={idx}
                   onClick={() => setActiveImage(img)}
-                  className={`flex-shrink-0 w-20 h-24 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                  className={`flex-shrink-0 w-16 h-20 rounded-none overflow-hidden border transition-all duration-300 ${
                     activeImage === img 
-                      ? 'border-brand-accent opacity-100 scale-105 shadow-lg shadow-brand-accent/20' 
-                      : 'border-transparent opacity-50 hover:opacity-100 hover:border-brand-accent/30'
+                      ? 'border-brand-accent bg-brand-hover/10 scale-102 shadow-sm' 
+                      : 'border-brand-border/60 opacity-60 hover:opacity-100 hover:border-brand-accent/30'
                   }`}
                 >
                   <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
@@ -426,7 +486,7 @@ export default function ProductDetails() {
           )}
         </div>
 
-        <div className="flex flex-col h-full md:min-h-[calc(100%-2rem)] justify-between py-2">
+        <div className="lg:col-span-5 flex flex-col justify-between py-1 space-y-8 lg:sticky lg:top-24">
           <div className="space-y-8">
             <div>
               <Link 
@@ -467,9 +527,9 @@ export default function ProductDetails() {
                               key={variant.id}
                               onClick={() => setSelectedVariantId(variant.id)}
                               disabled={variant.stock === 0 && variant.variant_type !== 'remainder'}
-                              className={`px-4 py-3 rounded-lg border text-sm font-medium transition-all duration-300 ${
+                              className={`px-4 py-3 rounded-none border text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
                                 selectedVariantId === variant.id
-                                  ? 'bg-brand-light text-brand-bg border-brand-light shadow-lg'
+                                  ? 'bg-brand-light text-brand-bg border-brand-light'
                                   : 'border-brand-border text-brand-light hover:border-brand-accent/60'
                               } ${variant.stock === 0 && variant.variant_type !== 'remainder' ? 'opacity-40 cursor-not-allowed grayscale' : ''} whitespace-nowrap`}
                             >
@@ -486,8 +546,8 @@ export default function ProductDetails() {
 
           {selectedVariant?.variant_type === 'remainder' ? (
             <div className="mt-8 pt-8 border-t border-brand-border space-y-6">
-              <div className="p-6 rounded-2xl bg-brand-hover border border-brand-border flex flex-col items-center text-center gap-4">
-                <p className="text-sm font-medium text-brand-muted">
+              <div className="p-6 rounded-none bg-brand-hover border border-brand-border flex flex-col items-center text-center gap-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-brand-muted">
                   {language === 'be' 
                     ? 'Цану і бягучы аб\'ём удакладняйце ў мэнэджэра' 
                     : 'Ценник и текущий объём уточняется у менеджера'}
@@ -497,9 +557,9 @@ export default function ProductDetails() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackGoal('messenger_click', 'remainder_manager')}
-                  className="w-full flex items-center justify-center gap-3 px-8 py-3 bg-brand-accent text-white rounded-xl font-medium uppercase tracking-widest hover:bg-brand-accent-hover transition-all"
+                  className="w-full flex items-center justify-center gap-3 px-8 py-3 bg-brand-accent text-white rounded-none text-xs font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-all"
                 >
-                  <Send className="w-5 h-5" />
+                  <Send className="w-4 h-4" />
                   <span>{language === 'be' ? 'Напісаць мэнэджэру' : 'Написать менеджеру'}</span>
                 </a>
               </div>
@@ -516,13 +576,13 @@ export default function ProductDetails() {
                   })()} {t('currency')}
                 </span>
                 {selectedVariantId && product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 && (
-                  <span className="text-xs font-bold text-red-500 uppercase tracking-widest">
+                  <span className="text-xs font-bold text-red-500 uppercase tracking-[0.15em]">
                     {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
                   </span>
                 )}
               </div>
               <div className="flex flex-row items-center gap-2 sm:gap-3 mt-6">
-                <div className="flex items-center bg-brand-hover border border-brand-border rounded-xl overflow-hidden shrink-0 h-10 sm:h-12">
+                <div className="flex items-center bg-brand-hover border border-brand-border rounded-none overflow-hidden shrink-0 h-10 sm:h-12">
                   <button 
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     className="w-8 sm:w-10 h-full flex items-center justify-center text-brand-light hover:bg-brand-accent/10 transition-colors"
@@ -532,8 +592,8 @@ export default function ProductDetails() {
                   <input 
                     type="number" 
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-8 sm:w-10 text-center bg-transparent border-none focus:ring-0 text-brand-light font-medium text-xs sm:text-sm p-0"
+                    readOnly
+                    className="w-8 sm:w-10 text-center bg-transparent border-none focus:ring-0 text-brand-light font-semibold text-xs sm:text-sm p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none select-none pointer-events-none"
                   />
                   <button 
                     onClick={() => setQuantity(quantity + 1)}
@@ -548,9 +608,9 @@ export default function ProductDetails() {
                   whileTap={{ scale: 0.95 }}
                   onClick={handleAddToCart}
                   disabled={selectedVariantId ? product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 : false}
-                  className="flex-1 px-3 sm:px-8 h-10 sm:h-12 bg-brand-accent text-white rounded-xl font-medium uppercase tracking-tighter sm:tracking-widest hover:bg-brand-accent-hover transition-all shadow-xl shadow-brand-accent/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 text-[10px] sm:text-sm whitespace-nowrap"
+                  className="flex-1 px-3 sm:px-8 h-10 sm:h-12 bg-brand-accent text-white rounded-none font-semibold uppercase tracking-[0.15em] hover:bg-brand-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 text-xs whitespace-nowrap"
                 >
-                  <ShoppingBag className="w-3.5 h-3.5 sm:w-5 h-5" />
+                  <ShoppingBag className="w-3.5 h-3.5 sm:w-4 h-4" />
                   <span>{t('addToCart')}</span>
                 </motion.button>
               </div>
@@ -559,8 +619,8 @@ export default function ProductDetails() {
 
           <div className="mt-8 space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
-                <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
+              <div className="p-4 rounded-none bg-brand-hover border border-brand-border">
+                <div className="flex items-center gap-2 mb-2 text-brand-light font-semibold text-xs uppercase tracking-wider">
                   <Truck className="w-4 h-4 text-brand-accent" />
                   <span>{language === 'be' ? 'Дастаўка і Аплата' : 'Доставка и Распив'}</span>
                 </div>
@@ -570,8 +630,8 @@ export default function ProductDetails() {
                     : 'Безопасная упаковка, надежные стеклянные атомайзеры для отливантов. Доставка по Гродно — сегодня. РБ — 5 дней.'}
                 </p>
               </div>
-              <div className="p-4 rounded-xl bg-brand-hover border border-brand-border">
-                <div className="flex items-center gap-2 mb-2 text-brand-light font-medium text-xs uppercase tracking-wider">
+              <div className="p-4 rounded-none bg-brand-hover border border-brand-border">
+                <div className="flex items-center gap-2 mb-2 text-brand-light font-semibold text-xs uppercase tracking-wider">
                   <CheckCircle className="w-4 h-4 text-brand-accent" />
                   <span>{language === 'be' ? '100% Арыгінал' : '100% Оригинал'}</span>
                 </div>
@@ -586,13 +646,364 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      <div className="mt-16 prose prose-invert max-w-none">
-        <p className="text-brand-muted leading-relaxed text-lg font-light mb-12 break-words [hyphens:auto] whitespace-pre-wrap">
-          {language === 'be' && product.description_be ? product.description_be : product.description}
-        </p>
+      <div className="mt-16 grid grid-cols-1 lg:grid-cols-12 gap-12 border-t border-brand-border pt-16">
+        <div className="lg:col-span-7 space-y-8">
+          <h2 className="text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-muted">
+            {language === 'be' ? 'Пра аромат' : 'Об аромате'}
+          </h2>
+          <p className="text-brand-light leading-relaxed text-base sm:text-lg font-light break-words [hyphens:auto] whitespace-pre-wrap font-serif opacity-90">
+            {language === 'be' && product.description_be ? product.description_be : product.description}
+          </p>
+        </div>
+        
+        {/* Accordions */}
+        <div className="lg:col-span-5 space-y-4">
+          <h2 className="text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-muted mb-4">
+            {language === 'be' ? 'Парфумерныя ноты' : 'Парфюмерные ноты'}
+          </h2>
+          
+          {/* Top Notes Accordion */}
+          <div className="border border-brand-border/60 bg-brand-hover/5 rounded-none overflow-hidden hover:border-brand-accent/30 transition-all">
+            <button
+              onClick={() => setActiveNotesAccordion(activeNotesAccordion === 'top' ? null : 'top')}
+              className="w-full flex justify-between items-center p-5 text-left text-brand-light hover:text-brand-accent transition-colors"
+            >
+              <span className="text-xs font-semibold uppercase tracking-[0.15em] flex items-center gap-2">
+                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${activeNotesAccordion === 'top' ? 'bg-brand-accent animate-pulse' : 'bg-brand-muted'}`} />
+                {language === 'be' ? 'Верхнія ноты' : 'Верхние ноты'}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-brand-muted transition-transform duration-300 ${activeNotesAccordion === 'top' ? 'rotate-180 text-brand-accent' : ''}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {activeNotesAccordion === 'top' && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden border-t border-brand-border/40"
+                >
+                  <div className="p-5 space-y-4 bg-brand-hover/10">
+                    <p className="text-[11px] text-brand-muted leading-relaxed">
+                      {language === 'be' 
+                        ? 'Стварюць першае ўражанне. Раскрываюцца адразу пры нанясенні і гучаць на працягу першых 10-15 хвілін.' 
+                        : 'Создают первое впечатление об аромате. Легкие, летучие акценты раскрываются сразу при нанесении и звучат на протяжении первых 10-15 минут.'}
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {topNotesList.map((note: any, idx: number) => (
+                        <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-brand-bg border border-brand-border/60 text-brand-light text-[10px] font-medium uppercase tracking-[0.1em] rounded-none animate-fade-in">
+                          {getNoteStringVal(note)}
+                        </span>
+                      ))}
+                      {topNotesList.length === 0 && (
+                        <span className="text-xs text-brand-muted italic">{language === 'be' ? 'Няма звестак' : 'Нет данных'}</span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Heart Notes Accordion */}
+          <div className="border border-brand-border/60 bg-brand-hover/5 rounded-none overflow-hidden hover:border-brand-accent/30 transition-all">
+            <button
+              onClick={() => setActiveNotesAccordion(activeNotesAccordion === 'heart' ? null : 'heart')}
+              className="w-full flex justify-between items-center p-5 text-left text-brand-light hover:text-brand-accent transition-colors"
+            >
+              <span className="text-xs font-semibold uppercase tracking-[0.15em] flex items-center gap-2">
+                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${activeNotesAccordion === 'heart' ? 'bg-brand-accent animate-pulse' : 'bg-brand-muted'}`} />
+                {language === 'be' ? 'Сярэднія ноты' : 'Средние ноты'}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-brand-muted transition-transform duration-300 ${activeNotesAccordion === 'heart' ? 'rotate-180 text-brand-accent' : ''}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {activeNotesAccordion === 'heart' && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden border-t border-brand-border/40"
+                >
+                  <div className="p-5 space-y-4 bg-brand-hover/10">
+                    <p className="text-[11px] text-brand-muted leading-relaxed">
+                      {language === 'be' 
+                        ? 'Сэрца водару. Раскрываюцца пасля верхніх нот і вызначаюць праўдзівы кірунак, тэмперамент і характар кампазіцыі.' 
+                        : 'Ядро и сердце композиции. Раскрываются вслед за верхними нотами, звучат от 2 до 4 часов и определяют истинный характер.'}
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {heartNotesList.map((note: any, idx: number) => (
+                        <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-brand-bg border border-brand-border/60 text-brand-light text-[10px] font-medium uppercase tracking-[0.1em] rounded-none animate-fade-in">
+                          {getNoteStringVal(note)}
+                        </span>
+                      ))}
+                      {heartNotesList.length === 0 && (
+                        <span className="text-xs text-brand-muted italic">{language === 'be' ? 'Няма звестак' : 'Нет данных'}</span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Base Notes Accordion */}
+          <div className="border border-brand-border/60 bg-brand-hover/5 rounded-none overflow-hidden hover:border-brand-accent/30 transition-all">
+            <button
+              onClick={() => setActiveNotesAccordion(activeNotesAccordion === 'base' ? null : 'base')}
+              className="w-full flex justify-between items-center p-5 text-left text-brand-light hover:text-brand-accent transition-colors"
+            >
+              <span className="text-xs font-semibold uppercase tracking-[0.15em] flex items-center gap-2">
+                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${activeNotesAccordion === 'base' ? 'bg-brand-accent animate-pulse' : 'bg-brand-muted'}`} />
+                {language === 'be' ? 'Базавыя ноты' : 'Базовые ноты'}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-brand-muted transition-transform duration-300 ${activeNotesAccordion === 'base' ? 'rotate-180 text-brand-accent' : ''}`} />
+            </button>
+            <AnimatePresence initial={false}>
+              {activeNotesAccordion === 'base' && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden border-t border-brand-border/40"
+                >
+                  <div className="p-5 space-y-4 bg-brand-hover/10">
+                    <p className="text-[11px] text-brand-muted leading-relaxed">
+                      {language === 'be' 
+                        ? 'Шлейф водару. Глыбокія і стойкія інтэнсіўныя кампаненты, якія замацоўваюць гучанне на скуры да 10-12 гадзін.' 
+                        : 'Глубокие и стойкие аккорды фиксируют парфюм на коже до 10-12 часов, оставляя за собой благородный шлейф.'}
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {baseNotesList.map((note: any, idx: number) => (
+                        <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-brand-bg border border-brand-border/60 text-brand-light text-[10px] font-medium uppercase tracking-[0.1em] rounded-none animate-fade-in">
+                          {getNoteStringVal(note)}
+                        </span>
+                      ))}
+                      {baseNotesList.length === 0 && (
+                        <span className="text-xs text-brand-muted italic">{language === 'be' ? 'Няма звестак' : 'Нет данных'}</span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Scent Profiles (Longevity and Sillage) */}
+          <div className="mt-8 pt-6 border-t border-brand-border/40 grid grid-cols-2 gap-6 bg-brand-hover/5 p-5 border border-brand-border/45">
+            <div>
+              <span className="text-[10px] uppercase tracking-[0.12em] text-brand-muted font-medium mb-1.5 block">
+                {language === 'be' ? 'стойкасць' : 'стойкость'}
+              </span>
+              <span className="text-2xl font-serif text-brand-light leading-none block">
+                {product.longevity || 70}%
+              </span>
+              <div className="w-full h-[3px] bg-brand-border/30 rounded-full mt-2.5 overflow-hidden relative">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${product.longevity || 70}%` }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, ease: "circOut" }}
+                  className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
+                />
+              </div>
+            </div>
+
+            <div className="pl-6 border-l border-brand-border/30">
+              <span className="text-[10px] uppercase tracking-[0.12em] text-brand-muted font-medium mb-1.5 block">
+                {language === 'be' ? 'шлейф' : 'шлейф'}
+              </span>
+              <span className="text-2xl font-serif text-brand-light leading-none block">
+                {product.sillage || 60}%
+              </span>
+              <div className="w-full h-[3px] bg-brand-border/30 rounded-full mt-2.5 overflow-hidden relative">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${product.sillage || 60}%` }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, ease: "circOut" }}
+                  className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
+                />
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
 
-      <ScentProfileBlock product={product} />
+      {/* Clean & Minimalist Reviews Block */}
+      <div className="mt-20 border-t border-brand-border pt-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          
+          {/* Reviews Info & Submission Form */}
+          <div className="lg:col-span-5 space-y-8">
+            <div className="space-y-3">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-muted font-mono">
+                {language === 'be' ? 'Водгукі кліентаў' : 'Отзывы о товаре'}
+              </h2>
+              <div className="flex items-center gap-4">
+                <span className="text-5xl font-serif text-brand-light">
+                  {reviews.length > 0 
+                    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) 
+                    : "5.0"}
+                </span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => {
+                      const avg = reviews.length > 0 
+                        ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) 
+                        : 5;
+                      return (
+                        <Star key={i} className={`w-4 h-4 ${i < Math.round(avg) ? 'text-brand-accent fill-brand-accent' : 'text-brand-border'}`} />
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-brand-muted font-medium">
+                    {reviews.length} {language === 'be' ? 'водгук(аў)' : 'отзывов'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Subtle submission form */}
+            <form onSubmit={submitReview} className="p-6 border border-brand-border/60 bg-brand-hover/10 rounded-none space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-brand-light">
+                {language === 'be' ? 'Пакінуць водгук' : 'Оставить свой отзыв'}
+              </h3>
+              
+              {reviewSubmitSuccess && (
+                <div className="text-xs p-3.5 bg-green-950/20 border border-green-500/30 text-green-400">
+                  {language === 'be' 
+                    ? 'Дзякуй! Ваш водгук паспяхова адпраўлены і будзе апублікаваны пасля мадэрацыі.' 
+                    : 'Спасибо! Ваш отзыв успешно отправлен и будет опубликован после модерации.'}
+                </div>
+              )}
+
+              {reviewSubmitError && (
+                <div className="text-xs p-3.5 bg-red-950/20 border border-red-500/30 text-red-400">
+                  {reviewSubmitError}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-wider text-brand-muted font-semibold">
+                  {language === 'be' ? 'Ваша імя' : 'Ваше имя'}
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={newReviewName}
+                  onChange={(e) => setNewReviewName(e.target.value)}
+                  placeholder={language === 'be' ? 'Увядзіце імя' : 'Введите ваше имя'}
+                  className="w-full bg-brand-bg text-xs border border-brand-border/60 rounded-none px-3.5 py-2.5 text-brand-light focus:outline-none focus:border-brand-accent transition-colors block font-medium"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-wider text-brand-muted font-semibold block">
+                  {language === 'be' ? 'Адзнака' : 'Ваша оценка'}
+                </label>
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((starVal) => (
+                    <button
+                      key={starVal}
+                      type="button"
+                      onClick={() => setNewReviewRating(starVal)}
+                      className="p-0.5 text-brand-muted hover:text-brand-accent transition-colors focus:outline-none focus:ring-0"
+                    >
+                      <Star 
+                        className={`w-6 h-6 transition-all duration-150 ${starVal <= newReviewRating ? 'text-brand-accent fill-brand-accent' : 'text-brand-border hover:scale-105'}`} 
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase tracking-wider text-brand-muted font-semibold">
+                  {language === 'be' ? 'Каментарый' : 'Комментарий'}
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={newReviewComment}
+                  onChange={(e) => setNewReviewComment(e.target.value)}
+                  placeholder={language === 'be' ? 'Падзяліцеся ўражаннямі аб водары...' : 'Поделитесь впечатлениями об аромате...'}
+                  className="w-full bg-brand-bg text-xs border border-brand-border/60 rounded-none px-3.5 py-2.5 text-brand-light focus:outline-none focus:border-brand-accent transition-colors block font-medium animate-fade-in"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmittingReview}
+                className="w-full py-2.5 bg-brand-accent text-white text-[10px] font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-colors disabled:opacity-50"
+              >
+                {isSubmittingReview 
+                  ? (language === 'be' ? 'Адпраўка...' : 'Отправка...') 
+                  : (language === 'be' ? 'Адправіць водгук' : 'Отправить отзыв')}
+              </button>
+            </form>
+          </div>
+
+          {/* Clean minimal lists */}
+          <div className="lg:col-span-7 space-y-6">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-brand-muted mb-6">
+              {language === 'be' ? 'Мнініі і ўражанні' : 'Мнения покупателей'}
+            </h2>
+            
+            {reviews.length > 0 ? (
+              <div className="divide-y divide-brand-border/40">
+                {reviews.map((review, idx) => (
+                  <div key={idx} className="py-6 first:pt-0 last:pb-0 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-none bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center text-[10px] font-semibold text-brand-accent select-none">
+                          {review.user_name ? review.user_name[0].toUpperCase() : review.userName ? review.userName[0].toUpperCase() : 'C'}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-brand-light">
+                            {review.user_name || review.userName || 'Аноним'}
+                          </p>
+                          <p className="text-[10px] text-brand-muted font-medium uppercase tracking-wider">
+                            {language === 'be' ? 'Правэраны пакупнік' : 'Проверенный покупатель'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'text-brand-accent fill-brand-accent' : 'text-brand-border/40'}`} />
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-brand-light font-light leading-relaxed pl-9 break-words whitespace-pre-wrap font-serif italic text-brand-light/90">
+                      "{review.comment}"
+                    </p>
+                    
+                    {review.createdAt && (
+                      <p className="text-[9px] text-brand-muted pl-9">
+                        {new Date(review.createdAt).toLocaleDateString(language === 'be' ? 'be-BY' : 'ru-RU', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-12 border border-dashed border-brand-border/40 text-center rounded-none bg-brand-hover/5">
+                <p className="text-xs text-brand-muted italic font-medium">
+                  {language === 'be' 
+                    ? 'Пакуль няма водгукаў на гэты тавар. Вы будзеце першым!' 
+                    : 'Пока нет отзывов на этот товар. Поделитесь своим мнением первым!'}
+                </p>
+              </div>
+            )}
+          </div>
+          
+        </div>
+      </div>
 
       {product && (
         <>
@@ -613,25 +1024,25 @@ export default function ProductDetails() {
             onClick={() => setIsFullscreenGalleryOpen(false)}
           >
             <button 
-              className="absolute top-6 right-6 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-colors z-50"
+              className="absolute top-6 right-6 p-2 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-none transition-colors z-50 animate-fade-in"
               onClick={() => setIsFullscreenGalleryOpen(false)}
             >
-              <X className="w-8 h-8" />
+              <X className="w-6 h-6" />
             </button>
             
             {allImages.length > 1 && (
               <>
                 <button 
-                  className="absolute left-6 top-1/2 -translate-y-1/2 p-4 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-colors z-50"
+                  className="absolute left-6 top-1/2 -translate-y-1/2 p-4 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-none transition-colors z-50"
                   onClick={prevImage}
                 >
-                  <ChevronLeft className="w-8 h-8" />
+                  <ChevronLeft className="w-6 h-6" />
                 </button>
                 <button 
-                  className="absolute right-6 top-1/2 -translate-y-1/2 p-4 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-colors z-50"
+                  className="absolute right-6 top-1/2 -translate-y-1/2 p-4 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-none transition-colors z-50"
                   onClick={nextImage}
                 >
-                  <ChevronRight className="w-8 h-8" />
+                  <ChevronRight className="w-6 h-6" />
                 </button>
               </>
             )}
@@ -639,13 +1050,13 @@ export default function ProductDetails() {
             <div className="w-full h-full p-4 md:p-12 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
               <motion.img 
                 key={fullscreenImageIndex}
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.3 }}
                 src={allImages[fullscreenImageIndex]} 
                 alt={`${product.name} gallery image ${fullscreenImageIndex + 1}`}
-                className="max-w-full max-h-full object-contain rounded-xl"
+                className="max-w-full max-h-full object-contain rounded-none border border-white/5"
                 referrerPolicy="no-referrer"
                 loading="lazy"
                 decoding="async"

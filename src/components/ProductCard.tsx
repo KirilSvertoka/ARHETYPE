@@ -9,6 +9,7 @@ import { ShoppingBag, Heart } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
+  variant?: 'standard' | 'overlay' | 'interactive';
 }
 
 interface FlyingItem {
@@ -17,7 +18,7 @@ interface FlyingItem {
   y: number;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, variant = 'interactive' }: ProductCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { t, language } = useLanguage();
@@ -69,12 +70,22 @@ export default function ProductCard({ product }: ProductCardProps) {
     navigate(`/catalog?brand=${encodeURIComponent(product.brand)}`);
   };
 
+  const formattedPrice = product.variants && product.variants.length > 0 
+    ? `${language === 'be' ? 'ад' : 'от'} ${(() => {
+        const prices = product.variants.map(v => typeof v.price === 'number' ? v.price : parseFloat(v.price as string));
+        const minPrice = Math.min(...prices.filter(p => !isNaN(p)));
+        return isFinite(minPrice) ? minPrice.toFixed(2) : product.variants[0].price;
+      })()}` 
+    : (typeof product.price === 'number' ? product.price.toFixed(2) : product.price);
+
+  const isOutOfStock = product.variants && product.variants.every(v => v.stock === 0);
+
   return (
     <motion.div 
       ref={ref} 
       initial="initial"
       whileHover="hover"
-      className="block w-full h-full group overflow-hidden bg-brand-bg relative"
+      className="block w-full h-full group overflow-hidden bg-brand-bg relative flex flex-col"
     >
       <AnimatePresence>
         {flyingItems.map(item => {
@@ -114,11 +125,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         })}
       </AnimatePresence>
 
+      {/* Image Container */}
       <div className="relative w-full aspect-[3/4] overflow-hidden">
-        {/* Wishlist Button - Outside Link to be valid HTML */}
+        {/* Wishlist Button */}
         <button
           onClick={handleWishlistToggle}
-          className="absolute top-4 right-4 z-30 p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors cursor-pointer"
+          className="absolute top-4 right-4 z-30 p-2 rounded-none bg-black/15 backdrop-blur-sm border border-white/10 hover:bg-black/30 transition-all cursor-pointer"
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
           <Heart
@@ -129,127 +141,177 @@ export default function ProductCard({ product }: ProductCardProps) {
         </button>
 
         <Link to={productUrl} className="block w-full h-full">
-          {/* Image with scale down on hover */}
+          {/* Image with zoom on hover */}
           <motion.img 
             initial={{ scale: 1.1 }}
             variants={{
-              hover: { scale: 1, opacity: 0.8 }
+              hover: { scale: 1, opacity: 0.85 }
             }}
             transition={{ duration: 0.4, ease: "easeOut" }}
             src={product.imageUrl} 
             alt={product.name} 
-            className="absolute inset-0 object-cover w-full h-full bg-brand-bg relative z-0 before:absolute before:inset-0 before:-z-10 before:bg-brand-bg"
+            className="absolute inset-0 object-cover w-full h-full bg-brand-bg relative z-0"
             referrerPolicy="no-referrer"
             loading="lazy"
             decoding="async"
           />
-          
-          {/* Dark overlay on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-300" />
 
-          {/* Content */}
-          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 md:p-6 flex flex-col justify-end text-white z-10 pointer-events-none">
-            <div className="transform transition-transform duration-300 translate-y-4 group-hover:translate-y-0">
+          {/* GRADIENT OVERLAY (only for overlay or interactive styles) */}
+          {variant !== 'standard' && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent opacity-75 group-hover:opacity-90 transition-opacity duration-300" />
+          )}
+
+          {/* OVERLAY VARIANT CONTENT */}
+          {variant === 'overlay' && (
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 flex flex-col justify-end text-white z-10 pointer-events-none">
               <button 
                 onClick={handleBrandClick}
-                className="pointer-events-auto text-[10px] md:text-xs font-medium uppercase tracking-widest text-white/90 mb-1 hover:text-brand-accent transition-colors relative z-20 cursor-pointer" 
-                style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
+                className="pointer-events-auto text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-white/80 hover:text-brand-accent transition-colors relative z-20 cursor-pointer text-left w-fit mb-1" 
               >
                 {product.brand}
               </button>
-              <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-0.5 md:gap-4">
-                <h3 className="font-serif text-lg sm:text-xl md:text-2xl leading-tight" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{product.name}</h3>
-                <div className="flex flex-col items-start md:items-end shrink-0">
-                  <span className="text-[11px] sm:text-base md:text-lg font-light whitespace-nowrap" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
-                    {product.variants && product.variants.length > 0 
-                      ? `${language === 'be' ? 'ад' : 'от'} ${(() => {
-                          const prices = product.variants.map(v => typeof v.price === 'number' ? v.price : parseFloat(v.price as string));
-                          const minPrice = Math.min(...prices.filter(p => !isNaN(p)));
-                          return isFinite(minPrice) ? minPrice.toFixed(2) : product.variants[0].price;
-                        })()}` 
-                      : (typeof product.price === 'number' ? product.price.toFixed(2) : product.price)} {t('currency')}
+              <div className="flex justify-between items-end gap-3 w-full">
+                <h3 className="font-serif text-base sm:text-lg md:text-xl leading-tight text-white/95">{product.name}</h3>
+                <div className="flex flex-col items-end shrink-0">
+                  <span className="text-xs sm:text-sm md:text-base font-light font-mono whitespace-nowrap text-white">
+                    {formattedPrice} {t('currency')}
                   </span>
-                  {product.variants && product.variants.every(v => v.stock === 0) && (
-                    <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-red-400 font-bold" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+                  {isOutOfStock && (
+                    <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-red-500 font-bold mt-0.5">
                       {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
                     </span>
                   )}
                 </div>
               </div>
-              
-              {/* Description (hidden by default, appears on hover) */}
-              <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300">
-                <div className="overflow-hidden">
-                  <div className="pt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75">
-                    <p className="text-white/80 text-sm leading-relaxed line-clamp-2 mb-4">
-                      {language === 'be' && product.description_be ? product.description_be : product.description}
-                    </p>
-                    
-                    {/* Add to Cart Section */}
-                    <motion.div 
-                      variants={{
-                        initial: { opacity: 0 },
-                        hover: { opacity: 1 }
-                      }}
-                      transition={{ duration: 0.3 }}
-                      className="pointer-events-auto flex flex-col items-start gap-4 w-full"
-                    >
-                      {product.variants && product.variants.length > 0 && (
-                        <div className="flex flex-col gap-3 w-full max-h-48 overflow-y-auto custom-scrollbar pr-1">
-                          {Object.entries(
-                            product.variants.reduce((acc, variant) => {
-                              const type = getVariantType(variant, language);
-                              if (!acc[type]) acc[type] = [];
-                              acc[type].push(variant);
-                              return acc;
-                            }, {} as Record<string, typeof product.variants>)
-                          ).map(([type, variants]) => (
-                            <div key={type} className="space-y-1.5">
-                              <span className="text-[10px] uppercase tracking-widest text-white/80 font-medium">{type}</span>
-                              <div className="flex flex-wrap gap-2">
-                                  {variants.map((variant) => (
-                                    <button
-                                      key={variant.id}
-                                      onClick={(e) => handleVariantSelect(e, variant.id)}
-                                      className={`flex items-center justify-center px-3 py-1.5 rounded-lg border transition-all duration-300 ${
-                                        selectedVariantId === variant.id
-                                          ? 'bg-white text-brand-accent border-white scale-105 shadow-lg'
-                                          : 'bg-black/40 text-white border-white/30 hover:bg-white/20 hover:border-white/60'
-                                      }`}
-                                    >
-                                      <div className="flex flex-col items-center">
-                                        <span className="text-xs font-bold">{variant.size}</span>
-                                        {variant.stock === 0 && (
-                                          <span className="text-[8px] opacity-70 uppercase leading-none mt-0.5">
-                                            {language === 'be' ? 'Няма' : 'Нет'}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </button>
-                                  ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <motion.button
-                        ref={buttonRef}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={handleAddToCart}
-                        disabled={product.variants && product.variants.length > 0 && !selectedVariantId}
-                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-accent text-white rounded-xl font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 sm:py-2.5"
+            </div>
+          )}
+
+          {/* INTERACTIVE VARIANT CONTENT (The original hover details) */}
+          {variant === 'interactive' && (
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 md:p-6 flex flex-col justify-end text-white z-10 pointer-events-none">
+              <div className="transform transition-transform duration-300 translate-y-4 group-hover:translate-y-0">
+                <button 
+                  onClick={handleBrandClick}
+                  className="pointer-events-auto text-[10px] md:text-xs font-medium uppercase tracking-widest text-white/90 mb-1 hover:text-brand-accent transition-colors relative z-20 cursor-pointer" 
+                  style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}
+                >
+                  {product.brand}
+                </button>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-0.5 md:gap-4">
+                  <h3 className="font-serif text-lg sm:text-xl md:text-2xl leading-tight" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{product.name}</h3>
+                  <div className="flex flex-col items-start md:items-end shrink-0">
+                    <span className="text-[11px] sm:text-base md:text-lg font-light whitespace-nowrap" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+                      {formattedPrice} {t('currency')}
+                    </span>
+                    {isOutOfStock && (
+                      <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-red-400 font-bold" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+                        {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Description and Add to Cart on hover */}
+                <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300">
+                  <div className="overflow-hidden">
+                    <div className="pt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75">
+                      <p className="text-white/80 text-sm leading-relaxed line-clamp-2 mb-4">
+                        {language === 'be' && product.description_be ? product.description_be : product.description}
+                      </p>
+                      
+                      {/* Add to Cart Section */}
+                      <motion.div 
+                        variants={{
+                          initial: { opacity: 0 },
+                          hover: { opacity: 1 }
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className="pointer-events-auto flex flex-col items-start gap-4 w-full"
                       >
-                        <ShoppingBag className="w-4 h-4" />
-                        <span>{t('addToCart')}</span>
-                      </motion.button>
-                    </motion.div>
+                        {product.variants && product.variants.length > 0 && (
+                          <div className="flex flex-col gap-3 w-full max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                            {Object.entries(
+                              product.variants.reduce((acc, variant) => {
+                                const type = getVariantType(variant, language);
+                                if (!acc[type]) acc[type] = [];
+                                acc[type].push(variant);
+                                return acc;
+                              }, {} as Record<string, typeof product.variants>)
+                            ).map(([type, variants]) => (
+                              <div key={type} className="space-y-1.5">
+                                <span className="text-[10px] uppercase tracking-widest text-white/80 font-medium">{type}</span>
+                                <div className="flex flex-wrap gap-2">
+                                    {variants.map((variant) => (
+                                      <button
+                                        key={variant.id}
+                                        onClick={(e) => handleVariantSelect(e, variant.id)}
+                                        className={`flex items-center justify-center px-3 py-1.5 rounded-none border transition-all duration-300 ${
+                                          selectedVariantId === variant.id
+                                            ? 'bg-white text-brand-accent border-white scale-105'
+                                            : 'bg-black/40 text-white border-white/30 hover:bg-white/20 hover:border-white/60'
+                                        }`}
+                                      >
+                                        <div className="flex flex-col items-center">
+                                          <span className="text-xs font-bold">{variant.size}</span>
+                                          {variant.stock === 0 && (
+                                            <span className="text-[8px] opacity-70 uppercase leading-none mt-0.5">
+                                              {language === 'be' ? 'Няма' : 'Нет'}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </button>
+                                    ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <motion.button
+                          ref={buttonRef}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={handleAddToCart}
+                          disabled={product.variants && product.variants.length > 0 && !selectedVariantId}
+                          className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-accent text-white rounded-none text-xs font-semibold uppercase tracking-[0.15em] hover:bg-brand-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 sm:py-2.5"
+                        >
+                          <ShoppingBag className="w-4 h-4" />
+                          <span>{t('addToCart')}</span>
+                        </motion.button>
+                      </motion.div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </Link>
       </div>
+
+      {/* STANDARD VARIANT CONTENT (Text positioned underneath, clean and stable) */}
+      {variant === 'standard' && (
+        <div className="pt-3 pb-1 px-1 flex flex-col flex-1 justify-between bg-transparent">
+          <div>
+            <button 
+              onClick={handleBrandClick}
+              className="text-[10px] sm:text-xs font-medium uppercase tracking-[0.18em] text-brand-muted hover:text-brand-accent transition-colors relative z-20 cursor-pointer text-left w-fit block" 
+            >
+              {product.brand}
+            </button>
+            <Link to={productUrl} className="block mt-1 hover:opacity-80 transition-opacity">
+              <h3 className="font-serif text-base sm:text-lg leading-snug text-brand-light/95">{product.name}</h3>
+            </Link>
+          </div>
+          <div className="flex justify-between items-end mt-2 pt-1 border-t border-brand-border/20 w-full">
+            <span className="text-xs sm:text-sm font-light font-mono text-brand-light">
+              {formattedPrice} {t('currency')}
+            </span>
+            {isOutOfStock && (
+              <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-red-500 font-bold">
+                {language === 'be' ? 'Няма' : 'Нет в наличии'}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

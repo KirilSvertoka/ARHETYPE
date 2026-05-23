@@ -49,10 +49,10 @@ export default function Contacts() {
       <motion.div 
         key="email"
         variants={fadeIn}
-        className="flex flex-col items-center text-center p-10 bg-brand-bg/50 backdrop-blur-sm rounded-3xl border border-brand-border hover:border-brand-accent/50 transition-colors group w-full md:flex-1 min-w-[280px] max-w-[400px]"
+        className="flex flex-col items-center text-center p-10 bg-brand-bg/50 backdrop-blur-sm rounded-none border border-brand-border hover:border-brand-accent/50 transition-colors group w-full md:flex-1 min-w-[280px] max-w-[400px]"
       >
-        <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mb-6 group-hover:bg-brand-accent/20 transition-colors">
-          <Mail className="w-6 h-6 text-brand-accent" />
+        <div className="w-16 h-16 bg-brand-accent/5 border border-brand-accent/20 rounded-none flex items-center justify-center mb-6 group-hover:bg-brand-accent/10 transition-colors">
+          <Mail className="w-5 h-5 text-brand-accent" />
         </div>
         <h3 className="text-xl font-serif text-brand-light mb-3">Email</h3>
         <a href={`mailto:${settings?.email || 'hello@arhetip.com'}`} className="text-lg text-brand-muted hover:text-brand-accent transition-colors break-words text-center w-full">
@@ -67,10 +67,10 @@ export default function Contacts() {
       <motion.div 
         key="phone"
         variants={fadeIn}
-        className="flex flex-col items-center text-center p-10 bg-brand-bg/50 backdrop-blur-sm rounded-3xl border border-brand-border hover:border-brand-accent/50 transition-colors group w-full md:flex-1 min-w-[280px] max-w-[400px]"
+        className="flex flex-col items-center text-center p-10 bg-brand-bg/50 backdrop-blur-sm rounded-none border border-brand-border hover:border-brand-accent/50 transition-colors group w-full md:flex-1 min-w-[280px] max-w-[400px]"
       >
-        <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mb-6 group-hover:bg-brand-accent/20 transition-colors">
-          <Phone className="w-6 h-6 text-brand-accent" />
+        <div className="w-16 h-16 bg-brand-accent/5 border border-brand-accent/20 rounded-none flex items-center justify-center mb-6 group-hover:bg-brand-accent/10 transition-colors">
+          <Phone className="w-5 h-5 text-brand-accent" />
         </div>
         <h3 className="text-xl font-serif text-brand-light mb-3">
           {language === 'ru' ? 'Телефон' : 'Тэлефон'}
@@ -87,10 +87,10 @@ export default function Contacts() {
       <motion.div 
         key="address"
         variants={fadeIn}
-        className="flex flex-col items-center text-center p-10 bg-brand-bg/50 backdrop-blur-sm rounded-3xl border border-brand-border hover:border-brand-accent/50 transition-colors group w-full md:flex-1 min-w-[280px] max-w-[400px]"
+        className="flex flex-col items-center text-center p-10 bg-brand-bg/50 backdrop-blur-sm rounded-none border border-brand-border hover:border-brand-accent/50 transition-colors group w-full md:flex-1 min-w-[280px] max-w-[400px]"
       >
-        <div className="w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center mb-6 group-hover:bg-brand-accent/20 transition-colors">
-          <MapPin className="w-6 h-6 text-brand-accent" />
+        <div className="w-16 h-16 bg-brand-accent/5 border border-brand-accent/20 rounded-none flex items-center justify-center mb-6 group-hover:bg-brand-accent/10 transition-colors">
+          <MapPin className="w-5 h-5 text-brand-accent" />
         </div>
         <h3 className="text-xl font-serif text-brand-light mb-3">
           {language === 'ru' ? 'Студия' : 'Студыя'}
@@ -178,10 +178,10 @@ export default function Contacts() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer" 
-                  className="px-8 py-4 bg-brand-bg/50 backdrop-blur-sm border border-brand-border rounded-2xl text-brand-light hover:border-brand-accent hover:bg-brand-accent/5 transition-all duration-300 capitalize font-medium flex items-center justify-center gap-3 group min-w-[200px]"
+                  className="px-8 py-3.5 bg-brand-bg/50 backdrop-blur-sm border border-brand-border rounded-none text-brand-light hover:border-brand-accent hover:bg-brand-accent/5 transition-all duration-300 font-semibold flex items-center justify-center gap-3 group min-w-[200px]"
                 >
-                  <Icon className="w-5 h-5 text-brand-muted group-hover:text-brand-accent transition-colors" />
-                  <span className="text-lg tracking-wide">{link.platform}</span>
+                  <Icon className="w-4 h-4 text-brand-muted group-hover:text-brand-accent transition-colors" />
+                  <span className="text-xs uppercase tracking-[0.15em]">{link.platform}</span>
                 </a>
               );
             })}

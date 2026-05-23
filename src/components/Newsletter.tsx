@@ -35,7 +35,7 @@ export default function Newsletter() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="flex items-center gap-2 text-emerald-400 dark:text-emerald-600 font-medium p-4 bg-emerald-500/10 dark:bg-emerald-500/10 rounded-xl"
+                className="flex items-center gap-2 text-emerald-600 font-medium p-4 bg-emerald-500/10 rounded-none text-xs uppercase tracking-wider"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 <span>{t('newsletterSuccess')}</span>
@@ -48,25 +48,27 @@ export default function Newsletter() {
                 onSubmit={handleSubmit}
                 className="relative"
               >
-                <input
-                  type="email"
-                  required
-                  placeholder={t('emailPlaceholder')}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-4 pr-32 py-4 bg-brand-hover border border-brand-border rounded-xl text-brand-light placeholder:text-brand-muted focus:outline-none focus:ring-2 focus:ring-brand-accent transition-all"
-                />
-                <button
-                  type="submit"
-                  disabled={status === 'loading'}
-                  className="absolute right-2 top-2 bottom-2 px-6 bg-brand-accent text-white rounded-lg font-medium text-sm uppercase tracking-wider hover:bg-brand-accent-hover transition-colors disabled:opacity-70"
-                >
-                  {status === 'loading' ? (
-                    <div className="w-4 h-4 border-2 border-brand-bg/30 border-t-brand-bg rounded-full animate-spin" />
-                  ) : (
-                    t('subscribe')
-                  )}
-                </button>
+                <div className="flex border border-brand-border bg-white rounded-none">
+                  <input
+                    type="email"
+                    required
+                    placeholder={t('emailPlaceholder')}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="flex-1 w-full pl-4 py-4 bg-transparent text-brand-light placeholder:text-brand-muted focus:outline-none text-xs uppercase tracking-wider"
+                  />
+                  <button
+                    type="submit"
+                    disabled={status === 'loading'}
+                    className="px-8 bg-brand-accent text-white rounded-none font-semibold text-xs uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-colors disabled:opacity-70"
+                  >
+                    {status === 'loading' ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      t('subscribe')
+                    )}
+                  </button>
+                </div>
               </motion.form>
             )}
           </AnimatePresence>

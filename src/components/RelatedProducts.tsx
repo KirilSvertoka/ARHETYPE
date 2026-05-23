@@ -77,7 +77,7 @@ export default function RelatedProducts({ product }: RelatedProductsProps) {
               transition={{ delay: index * 0.1 }}
               className="h-full"
             >
-              <ProductCard product={product} />
+              <ProductCard product={product} variant="overlay" />
             </motion.div>
           </div>
         ))}

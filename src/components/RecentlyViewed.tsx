@@ -9,7 +9,15 @@ export default function RecentlyViewed({ currentProductId }: { currentProductId:
   const { t } = useLanguage();
 
   useEffect(() => {
-    const viewedIds = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+    let viewedIds: number[] = [];
+    try {
+      const parsed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+      if (Array.isArray(parsed)) {
+        viewedIds = parsed;
+      }
+    } catch (e) {
+      console.error('Failed to parse recentlyViewed', e);
+    }
     // Filter out current product to avoid duplication if it's in history
     const filteredIds = viewedIds.filter((id: number) => id !== currentProductId).slice(0, 3);
 
@@ -33,7 +41,15 @@ export default function RecentlyViewed({ currentProductId }: { currentProductId:
   useEffect(() => {
     if (!currentProductId) return;
     
-    const viewedIds = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+    let viewedIds: number[] = [];
+    try {
+      const parsed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+      if (Array.isArray(parsed)) {
+        viewedIds = parsed;
+      }
+    } catch (e) {
+      console.error('Failed to parse recentlyViewed', e);
+    }
     // Remove current if exists, add to front
     const newIds = [currentProductId, ...viewedIds.filter((id: number) => id !== currentProductId)].slice(0, 10);
     
@@ -45,7 +61,7 @@ export default function RecentlyViewed({ currentProductId }: { currentProductId:
   return (
     <div className="mt-12 border-t border-brand-border pt-16">
       <h2 className="text-2xl font-serif text-brand-light mb-8">{t('recentlyViewed')}</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-1 bg-brand-border overflow-hidden rounded-2xl border border-brand-border">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-1 bg-brand-border overflow-hidden border border-brand-border">
         {products.map((product, index) => (
           <div key={product.id} className="bg-brand-bg">
             <motion.div
@@ -55,7 +71,7 @@ export default function RecentlyViewed({ currentProductId }: { currentProductId:
               transition={{ delay: index * 0.1 }}
               className="h-full"
             >
-              <ProductCard product={product} />
+              <ProductCard product={product} variant="standard" />
             </motion.div>
           </div>
         ))}

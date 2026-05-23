@@ -171,50 +171,53 @@ export default function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={closeDrawer}
-            className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm"
+            className="fixed inset-0 bg-brand-light/30 backdrop-blur-md z-[80] transition-all duration-300"
           />
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-full max-w-md bg-brand-bg shadow-2xl z-50 flex flex-col border-l border-brand-border"
+            initial={{ x: '100%', opacity: 0.95 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: '100%', opacity: 0.95 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 220 }}
+            className="fixed top-0 right-0 h-full w-full max-w-md bg-brand-bg shadow-2xl z-[90] flex flex-col border-l border-brand-border/40"
           >
-            <div className="p-6 border-b border-brand-border flex justify-between items-center">
+            <div className="p-6 border-b border-brand-border flex justify-between items-center bg-brand-hover/5">
               <div className="flex items-center gap-3">
                 {isCheckingOut && !isSuccess && (
                   <button 
                     onClick={() => setIsCheckingOut(false)}
-                    className="p-2 -ml-2 text-brand-muted hover:text-brand-accent transition-colors"
+                    className="p-2 -ml-2 text-brand-muted hover:text-brand-light hover:-translate-x-0.5 transition-all duration-200"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
                 )}
                 <h2 className="text-2xl font-serif text-brand-light flex items-center gap-2">
-                  <ShoppingBag className="w-6 h-6" />
+                  <ShoppingBag className="w-5 h-5 text-brand-accent shrink-0" />
                   {isSuccess ? t('orderSuccess') : (isCheckingOut ? t('checkoutTitle') : t('cart'))}
                 </h2>
               </div>
-              <button onClick={closeDrawer} className="p-2 text-brand-muted hover:text-brand-accent transition-colors">
-                <X className="w-6 h-6" />
+              <button 
+                onClick={closeDrawer} 
+                className="p-2 text-brand-muted hover:text-brand-light hover:rotate-90 transition-all duration-300"
+              >
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
               {isSuccess ? (
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex flex-col items-center justify-center h-full text-center space-y-4"
                 >
-                  <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mb-4">
-                    <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                  <div className="w-20 h-20 bg-emerald-500/[0.06] border border-emerald-500/20 flex items-center justify-center mb-4 rounded-full">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-600 animate-pulse" />
                   </div>
                   <h3 className="text-2xl font-serif text-brand-light">{t('orderSuccess')}</h3>
-                  <p className="text-brand-muted">{t('orderSuccessDesc')}</p>
+                  <p className="text-brand-muted text-sm">{t('orderSuccessDesc')}</p>
                   <button 
                     onClick={closeDrawer}
-                    className="mt-8 px-8 py-3 bg-brand-accent text-white rounded-xl font-medium hover:bg-brand-accent-hover transition-colors"
+                    className="mt-8 px-8 py-3 bg-brand-accent text-white rounded-none text-xs font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-colors"
                   >
                     {t('backToCatalog')}
                   </button>
@@ -226,7 +229,7 @@ export default function CartDrawer() {
                     <h3 className="text-sm font-medium uppercase tracking-widest text-brand-light border-b border-brand-border pb-2">1. Контактные данные</h3>
                     <div className="space-y-3">
                       <div>
-                        <label className="text-[10px] font-medium uppercase tracking-wider text-brand-muted ml-1">Фамилия *</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-brand-muted ml-1">Фамилия *</label>
                         <input 
                           required
                           type="text" 
@@ -234,12 +237,12 @@ export default function CartDrawer() {
                           maxLength={100}
                           value={customerData.lastName}
                           onChange={e => setCustomerData({...customerData, lastName: e.target.value})}
-                          className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm mb-3"
+                          className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-none focus:ring-1 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm mb-3"
                           placeholder="Иванов"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-medium uppercase tracking-wider text-brand-muted ml-1">{t('name')} *</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-brand-muted ml-1">{t('name')} *</label>
                         <input 
                           required
                           type="text" 
@@ -247,12 +250,12 @@ export default function CartDrawer() {
                           maxLength={100}
                           value={customerData.name}
                           onChange={e => setCustomerData({...customerData, name: e.target.value})}
-                          className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm"
+                          className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-none focus:ring-1 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm"
                           placeholder={t('placeholderName')}
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-medium uppercase tracking-wider text-brand-muted ml-1">{t('phoneNumber')} *</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-brand-muted ml-1">{t('phoneNumber')} *</label>
                         <input 
                           required
                           type="tel" 
@@ -260,7 +263,7 @@ export default function CartDrawer() {
                           title="Введите корректный номер телефона"
                           value={customerData.phone}
                           onChange={e => setCustomerData({...customerData, phone: e.target.value})}
-                          className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm"
+                          className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-none focus:ring-1 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm"
                           placeholder={t('placeholderPhone')}
                         />
                       </div>
@@ -278,20 +281,20 @@ export default function CartDrawer() {
                           type="text" 
                           value={customerData.city}
                           onChange={e => setCustomerData({...customerData, city: e.target.value})}
-                          className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm"
+                          className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-none focus:ring-1 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm"
                           placeholder="Гродно"
                         />
                       </div>
                       
                       <div>
-                        <label className="text-[10px] font-medium uppercase tracking-wider text-brand-muted ml-1 mb-2 block">Способ доставки *</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-brand-muted ml-1 mb-2 block">Способ доставки *</label>
                         <div className="space-y-2">
                           {[
                             { id: 'europost', label: 'Европочта (до отделения)' },
                             { id: 'belpost', label: 'Белпочта' },
                             { id: 'courier_grodno', label: 'Курьер по Гродно' }
                           ].map(method => (
-                            <label key={method.id} className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${customerData.deliveryMethod === method.id ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
+                            <label key={method.id} className={`flex items-center p-3 border rounded-none cursor-pointer transition-colors ${customerData.deliveryMethod === method.id ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
                               <input 
                                 type="radio" 
                                 name="deliveryMethod" 
@@ -337,7 +340,7 @@ export default function CartDrawer() {
                                     setShowOfficeDropdown(true);
                                   }}
                                   onFocus={() => setShowOfficeDropdown(true)}
-                                  className="w-full pl-10 pr-10 py-3 bg-brand-hover border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm"
+                                  className="w-full pl-10 pr-10 py-3 bg-brand-hover border border-brand-border rounded-none focus:ring-1 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm"
                                   placeholder="Начните вводить адрес или номер отделения"
                                 />
                                 {customerData.address && (
@@ -360,7 +363,7 @@ export default function CartDrawer() {
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
-                                    className="absolute left-0 right-0 top-full mt-2 bg-brand-bg border border-brand-border rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto no-scrollbar"
+                                    className="absolute left-0 right-0 top-full mt-2 bg-brand-bg border border-brand-border rounded-none shadow-xl z-50 max-h-60 overflow-y-auto no-scrollbar"
                                   >
                                     {filteredOffices.map((office, idx) => (
                                       <button
@@ -389,7 +392,7 @@ export default function CartDrawer() {
                                 <motion.div 
                                   initial={{ opacity: 0, y: -10 }}
                                   animate={{ opacity: 1, y: 0 }}
-                                  className="absolute left-0 right-0 top-full mt-2 p-4 bg-brand-bg border border-brand-border rounded-xl shadow-2xl z-50 text-center"
+                                  className="absolute left-0 right-0 top-full mt-2 p-4 bg-brand-bg border border-brand-border rounded-none shadow-xl z-50 text-center"
                                 >
                                   <p className="text-sm text-brand-muted">Отделения не найдены</p>
                                   {customerData.city && (
@@ -404,7 +407,7 @@ export default function CartDrawer() {
                               type="text" 
                               value={customerData.address}
                               onChange={e => setCustomerData({...customerData, address: e.target.value})}
-                              className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm mt-1"
+                              className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-none focus:ring-1 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm mt-1"
                               placeholder={customerData.deliveryMethod === 'courier_grodno' ? 'ул. Ленина, д. 1, кв. 1' : 'Отделение №123 или полный адрес'}
                             />
                           )}
@@ -417,7 +420,7 @@ export default function CartDrawer() {
                     <h3 className="text-sm font-medium uppercase tracking-widest text-brand-light border-b border-brand-border pb-2">3. Оплата</h3>
                     <div className="space-y-2">
                       {customerData.deliveryMethod === 'courier_grodno' && (
-                        <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${customerData.paymentMethod === 'cash_grodno' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
+                        <label className={`flex items-center p-3 border rounded-none cursor-pointer transition-colors ${customerData.paymentMethod === 'cash_grodno' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
                           <input 
                             type="radio" 
                             name="paymentMethod" 
@@ -434,7 +437,7 @@ export default function CartDrawer() {
                       )}
 
                       {(customerData.deliveryMethod === 'europost' || customerData.deliveryMethod === 'belpost' || customerData.deliveryMethod === 'courier_grodno') && (
-                        <label className={`flex items-center p-3 border rounded-xl cursor-pointer transition-colors ${customerData.paymentMethod === 'post_cash' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
+                        <label className={`flex items-center p-3 border rounded-none cursor-pointer transition-colors ${customerData.paymentMethod === 'post_cash' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
                           <input 
                             type="radio" 
                             name="paymentMethod" 
@@ -454,61 +457,92 @@ export default function CartDrawer() {
 
                   {/* Комментарий */}
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium uppercase tracking-widest text-brand-light border-b border-brand-border pb-2">4. Комментарий к заказу</h3>
+                    <h3 className="text-sm font-semibold uppercase tracking-widest text-brand-light border-b border-brand-border pb-2">4. Комментарий к заказу</h3>
                     <textarea 
                       rows={3}
                       value={customerData.comment}
                       onChange={e => setCustomerData({...customerData, comment: e.target.value})}
-                      className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm resize-none"
+                      className="w-full px-4 py-3 bg-brand-hover border border-brand-border rounded-none focus:ring-1 focus:ring-brand-accent outline-none text-brand-light placeholder:text-brand-muted/50 text-sm resize-none"
                       placeholder="Дополнительная информация (необязательно)"
                     />
                   </div>
                 </form>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {items.length === 0 ? (
-                    <div className="text-center text-brand-muted mt-12">
+                    <div className="text-center text-brand-muted mt-12 py-12 font-serif text-lg opacity-80">
                       {t('emptyCart')}
                     </div>
                   ) : (
-                    items.map(item => {
-                      const cartItemId = item.selectedVariantId ? `${item.id}-${item.selectedVariantId}` : `${item.id}`;
-                      return (
-                        <div key={cartItemId} className="flex gap-4">
-                          <img src={item.imageUrl} alt={item.name} className="w-20 h-24 object-cover rounded-lg" referrerPolicy="no-referrer" />
-                          <div className="flex-1 flex flex-col justify-between">
-                            <div>
-                              <h3 className="font-medium text-brand-light">{item.name}</h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <p className="text-sm text-brand-muted">{item.brand}</p>
-                                {item.selectedVariantSize && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-white/10 text-brand-muted rounded uppercase tracking-wider font-medium">
-                                    {getVariantType({ variant_type: item.variant_type as any } as any, language)} {item.selectedVariantSize}
-                                  </span>
-                                )}
+                    <AnimatePresence initial={false}>
+                      {items.map((item, index) => {
+                        const cartItemId = item.selectedVariantId ? `${item.id}-${item.selectedVariantId}` : `${item.id}`;
+                        return (
+                          <motion.div 
+                            layout
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, x: 25 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 220, delay: index * 0.03 }}
+                            key={cartItemId} 
+                            className="flex gap-4 p-3.5 border border-brand-border/40 hover:border-brand-border/80 bg-brand-hover/10 hover:bg-brand-hover/20 transition-all duration-300 relative group"
+                          >
+                            <div className="w-20 h-24 overflow-hidden bg-brand-hover shrink-0 border border-brand-border/30">
+                              <img 
+                                src={item.imageUrl} 
+                                alt={item.name} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                referrerPolicy="no-referrer" 
+                              />
+                            </div>
+                            <div className="flex-1 flex flex-col justify-between py-0.5">
+                              <div>
+                                <h3 className="font-medium text-brand-light text-sm line-clamp-1 group-hover:text-brand-accent transition-colors">{item.name}</h3>
+                                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                  <p className="text-xs text-brand-muted">{item.brand}</p>
+                                  {item.selectedVariantSize && (
+                                    <span className="text-[9px] px-2 py-0.5 bg-brand-light/[0.04] border border-brand-border/40 text-brand-muted rounded-none uppercase tracking-wider font-semibold">
+                                      {getVariantType({ variant_type: item.variant_type as any } as any, language)} {item.selectedVariantSize}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex justify-between items-center mt-3">
+                                <div className="flex items-center gap-3 border border-brand-border/60 rounded-none px-2 py-0.5 bg-brand-bg">
+                                  <button 
+                                    type="button"
+                                    onClick={() => updateQuantity(cartItemId, item.quantity - 1)} 
+                                    className="text-brand-muted hover:text-brand-light p-1 transition-colors"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-xs font-semibold text-brand-light w-4 text-center select-none">{item.quantity}</span>
+                                  <button 
+                                    type="button"
+                                    onClick={() => updateQuantity(cartItemId, item.quantity + 1)} 
+                                    className="text-brand-muted hover:text-brand-light p-1 transition-colors"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+                                <span className="font-serif text-[13px] font-medium text-brand-light">
+                                  {typeof item.price === 'number' ? item.price.toFixed(2) : item.price} {t('currency')}
+                                </span>
                               </div>
                             </div>
-                            <div className="flex justify-between items-center mt-2">
-                              <div className="flex items-center gap-3 border border-brand-border rounded-lg px-2 py-1">
-                                <button onClick={() => updateQuantity(cartItemId, item.quantity - 1)} className="text-brand-muted hover:text-brand-accent"><Minus className="w-4 h-4" /></button>
-                                <span className="text-sm font-medium text-brand-light w-4 text-center">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(cartItemId, item.quantity + 1)} className="text-brand-muted hover:text-brand-accent"><Plus className="w-4 h-4" /></button>
-                              </div>
-                              <span className="font-medium text-brand-light">{typeof item.price === 'number' ? item.price.toFixed(2) : item.price} {t('currency')}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
                   )}
                 </div>
               )}
             </div>
 
             {items.length > 0 && !isSuccess && (
-              <div className="p-6 border-t border-brand-border bg-brand-bg/95 backdrop-blur-sm shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-10">
+              <div className="p-6 border-t border-brand-border bg-brand-bg/95 backdrop-blur-sm z-10">
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-brand-muted">{t('total')}</span>
+                  <span className="text-brand-muted text-xs uppercase tracking-wider">{t('total')}</span>
                   <span className="text-2xl font-serif text-brand-light">{total.toFixed(2)} {t('currency')}</span>
                 </div>
                 {isCheckingOut ? (
@@ -516,7 +550,7 @@ export default function CartDrawer() {
                     form="checkout-form"
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-4 bg-brand-accent text-white rounded-xl font-medium uppercase tracking-widest hover:bg-brand-accent-hover transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-4 bg-brand-accent text-white rounded-none text-xs font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-colors flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : 'Подтвердить заказ'}
                   </button>
@@ -524,7 +558,7 @@ export default function CartDrawer() {
                   <motion.button 
                     onClick={() => setIsCheckingOut(true)}
                     animate={justAdded ? { scale: [1, 1.05, 1], transition: { repeat: 3, duration: 0.5 } } : {}}
-                    className="w-full py-4 bg-brand-accent text-white rounded-xl font-medium uppercase tracking-widest hover:bg-brand-accent-hover transition-colors"
+                    className="w-full py-4 bg-brand-accent text-white rounded-none text-xs font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-colors"
                   >
                     {t('checkout')}
                   </motion.button>

@@ -25,6 +25,18 @@ export default function Layout() {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isMobileCatalogOpen, setIsMobileCatalogOpen] = useState(false);
   const catalogRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Track scroll position for weightless sticky header
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -171,133 +183,149 @@ export default function Layout() {
       </AnimatePresence>
 
       {!isLoading && (
-        <div className="min-h-screen bg-brand-bg text-brand-light font-sans selection:bg-brand-accent/50 transition-colors duration-300">
-          <div className="sticky top-0 z-50 flex flex-col">
+        <div className="min-h-screen bg-brand-bg text-brand-light font-sans selection:bg-brand-accent/50 transition-colors duration-300 flex flex-col">
             {config?.announcement?.active && (
-              <div className="bg-brand-accent text-white text-center py-2 px-4 text-[10px] sm:text-xs font-medium uppercase tracking-widest">
+              <div className="bg-brand-accent text-white text-center py-2 px-4 text-[9px] sm:text-[11px] font-medium uppercase tracking-[0.25em] relative z-50">
                 {language === 'be' && config.announcement.text_be ? config.announcement.text_be : config.announcement.text}
               </div>
             )}
             
-            {/* RELOCATED Language Toggle and Icons if needed, but primarily following "Remove this block" */}
-            <header className="bg-brand-bg border-b border-brand-border transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              {/* Mobile Menu Button */}
-              <button 
-                className="md:hidden p-2 -ml-2 text-brand-muted hover:text-brand-accent transition-colors"
-                onClick={() => setIsMobileMenuOpen(true)}
-                aria-label="Open menu"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-
-              <Link to="/" className="flex items-center gap-2 group">
-                <span className="font-serif text-xl font-medium tracking-tight uppercase">АРХЕТИП</span>
-              </Link>
-            </div>
-            
-            <div className="flex items-center gap-8">
-              <nav className="hidden md:flex items-center gap-8">
-                <div 
-                  className="relative py-4" 
-                  ref={catalogRef}
-                  onMouseEnter={() => setIsCatalogOpen(true)}
-                  onMouseLeave={() => setIsCatalogOpen(false)}
-                >
-                  <Link 
-                    to="/catalog"
-                    className="flex items-center gap-1 text-sm font-medium uppercase tracking-wider text-brand-muted hover:text-brand-accent transition-colors focus:outline-none"
-                  >
-                    {t('catalog')}
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isCatalogOpen ? 'rotate-180' : ''}`} />
-                  </Link>
+            <header className={`sticky top-0 z-50 transition-all duration-300 ${
+              isScrolled 
+                ? 'bg-brand-bg/85 backdrop-blur-md border-b border-brand-light/5 shadow-[0_2px_15px_-4px_rgba(17,17,17,0.04)]' 
+                : 'bg-brand-bg/100 border-b border-brand-light/5'
+            }`}>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className={`flex justify-between items-center transition-all duration-300 ${isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} md:grid md:grid-cols-3`}>
                   
-                  <AnimatePresence>
-                    {isCatalogOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute top-full left-0 w-48 bg-brand-bg rounded-xl shadow-lg border border-brand-border py-2 z-50"
+                  {/* Left Column: Navigation (Desktop) & Mobile Burger Button */}
+                  <div className="flex items-center">
+                    {/* Mobile Menu Button */}
+                    <button 
+                      className="md:hidden p-2 -ml-2 text-brand-muted hover:text-brand-light transition-colors"
+                      onClick={() => setIsMobileMenuOpen(true)}
+                      aria-label="Open menu"
+                    >
+                      <Menu className="w-5 h-5" />
+                    </button>
+
+                    <nav className="hidden md:flex items-center gap-8">
+                      <div 
+                        className="relative py-4" 
+                        ref={catalogRef}
+                        onMouseEnter={() => setIsCatalogOpen(true)}
+                        onMouseLeave={() => setIsCatalogOpen(false)}
                       >
                         <Link 
-                          to="/catalog" 
-                          className="block px-4 py-2 text-sm text-brand-muted hover:bg-brand-hover hover:text-brand-accent transition-colors"
+                          to="/catalog"
+                          className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors focus:outline-none relative group py-1"
                         >
-                          {t('viewAll')}
+                          <span className="relative">
+                            {t('catalog')}
+                            <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-brand-light scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+                          </span>
+                          <ChevronDown className={`w-3 h-3 text-brand-muted transition-transform duration-300 ${isCatalogOpen ? 'rotate-180 text-brand-light' : ''}`} />
                         </Link>
-                        {catalogLinks.map(link => (
-                          <Link
-                            key={link.to}
-                            to={link.to}
-                            className="block px-4 py-2 text-sm text-brand-muted hover:bg-brand-hover hover:text-brand-accent transition-colors"
-                          >
-                            {link.label}
-                          </Link>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                <Link to="/about" className="text-sm font-medium uppercase tracking-wider text-brand-muted hover:text-brand-accent transition-colors">{t('about')}</Link>
-                <Link to="/contacts" className="text-sm font-medium uppercase tracking-wider text-brand-muted hover:text-brand-accent transition-colors">{t('contacts')}</Link>
-              </nav>
-              
-              <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-                <div className="hidden md:flex flex items-center">
-                  {renderSocialLinks(false)}
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setLanguage(language === 'ru' ? 'be' : 'ru')}
-                    className="p-2 text-[10px] font-bold text-brand-muted hover:text-brand-accent transition-colors uppercase tracking-widest border border-brand-border rounded-lg"
-                  >
-                    {language}
-                  </button>
-                  <Link
-                    to="/wishlist"
-                  className="relative p-2 text-brand-muted hover:text-brand-accent hover:bg-brand-hover rounded-lg transition-colors"
-                  title={t('wishlist')}
-                >
-                  <Heart className="w-5 h-5" />
-                  {wishlist.length > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-brand-accent text-white text-[10px] font-bold flex items-center justify-center rounded-full transform translate-x-1 -translate-y-1">
-                      {wishlist.length}
-                    </span>
-                  )}
-                </Link>
-
-                <motion.button 
-                  id="cart-button"
-                  onClick={() => setIsCartOpen(true)}
-                  animate={items.length > 0 ? { scale: [1, 1.2, 1] } : {}}
-                  key={items.length}
-                  className="group relative flex items-center gap-2 p-2 text-brand-muted hover:text-brand-accent hover:bg-brand-hover rounded-lg transition-colors border border-transparent hover:border-brand-accent/20"
-                  title={t('cart')}
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  {items.length > 0 && (
-                    <div className="flex flex-col items-start leading-none pr-1">
-                      <span className="text-[10px] font-bold text-brand-accent uppercase tracking-tighter mb-0.5">
-                        {items.reduce((sum, item) => sum + item.quantity, 0)} {t('items')}
-                      </span>
-                      <span className="text-[10px] font-bold text-brand-light whitespace-nowrap">
-                        {items.reduce((sum, item) => sum + (parseFloat(String(item.price)) * item.quantity), 0).toFixed(2)} BYN
-                      </span>
+                        
+                        <AnimatePresence>
+                          {isCatalogOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 5 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 5 }}
+                              transition={{ duration: 0.15 }}
+                              className="absolute top-full left-0 w-48 bg-brand-bg rounded-none border border-brand-light/10 shadow-lg py-2 z-50 animate-fade-in"
+                            >
+                              <Link 
+                                to="/catalog" 
+                                className="block px-4 py-2 text-[11px] font-medium uppercase tracking-[0.15em] text-brand-muted hover:bg-brand-hover hover:text-brand-accent transition-colors"
+                              >
+                                {t('viewAll')}
+                              </Link>
+                              {catalogLinks.map(link => (
+                                <Link
+                                  key={link.to}
+                                  to={link.to}
+                                  className="block px-4 py-2 text-[11px] font-medium uppercase tracking-[0.15em] text-brand-muted hover:bg-brand-hover hover:text-brand-accent transition-colors"
+                                >
+                                  {link.label}
+                                </Link>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                      <Link to="/about" className="text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors relative group py-1">
+                        <span className="relative">
+                          {t('about')}
+                          <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-brand-light scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+                        </span>
+                      </Link>
+                      <Link to="/contacts" className="text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors relative group py-1">
+                        <span className="relative">
+                          {t('contacts')}
+                          <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-brand-light scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+                        </span>
+                      </Link>
+                    </nav>
+                  </div>
+                  
+                  {/* Center Column: Logo */}
+                  <div className="flex justify-center">
+                    <Link to="/" className="flex items-center group">
+                      <span className="font-serif text-xl sm:text-2xl font-light tracking-[0.3em] uppercase text-brand-light hover:opacity-85 transition-opacity">АРХЕТИП</span>
+                    </Link>
+                  </div>
+                  
+                  {/* Right Column: Actions */}
+                  <div className="flex items-center justify-end gap-1 sm:gap-2">
+                    <div className="hidden md:flex items-center">
+                      {renderSocialLinks(false)}
                     </div>
-                  )}
-                </motion.button>
+                    
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <button
+                        onClick={() => setLanguage(language === 'ru' ? 'be' : 'ru')}
+                        className="text-[10px] font-semibold text-brand-muted hover:text-brand-light transition-colors uppercase tracking-[0.2em] px-2 py-1"
+                        title={t('toggleLanguage')}
+                      >
+                        {language}
+                      </button>
+ 
+                      <Link
+                        to="/wishlist"
+                        className="relative p-2 text-brand-muted hover:text-brand-light rounded-none transition-colors group"
+                        title={t('wishlist')}
+                      >
+                        <Heart className="w-4 h-4 text-brand-muted group-hover:text-brand-light group-hover:scale-110 transition-all duration-200" />
+                        {wishlist.length > 0 && (
+                          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-brand-accent rounded-full animate-pulse" />
+                        )}
+                      </Link>
+ 
+                      <motion.button 
+                        id="cart-button"
+                        onClick={() => setIsCartOpen(true)}
+                        animate={items.length > 0 ? { scale: [1, 1.05, 1] } : {}}
+                        key={items.length}
+                        className="group relative flex items-center gap-1.5 p-2 text-brand-muted hover:text-brand-light rounded-none transition-colors"
+                        title={t('cart')}
+                      >
+                        <ShoppingBag className="w-4 h-4 text-brand-muted group-hover:text-brand-light group-hover:scale-110 transition-all duration-200" />
+                        {items.length > 0 ? (
+                          <div className="flex items-center leading-none">
+                            <span className="text-[10px] font-bold text-brand-accent uppercase tracking-wider ml-0.5">
+                              ({items.reduce((sum, item) => sum + item.quantity, 0)})
+                            </span>
+                          </div>
+                        ) : null}
+                      </motion.button>
+                    </div>
+                  </div>
+ 
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-  </div>
+            </header>
 
       {/* Mobile Menu Drawer */}
       <AnimatePresence>
@@ -308,14 +336,14 @@ export default function Layout() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 md:hidden"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] md:hidden"
             />
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 bottom-0 w-[80%] max-w-sm bg-brand-bg z-50 shadow-2xl md:hidden flex flex-col"
+              className="fixed top-0 left-0 bottom-0 w-[80%] max-w-sm bg-brand-bg z-[90] shadow-2xl md:hidden flex flex-col"
             >
               <div className="p-6 flex justify-between items-center border-b border-brand-border">
                 <span className="font-serif text-xl font-medium tracking-tight text-brand-light">{t('menu')}</span>

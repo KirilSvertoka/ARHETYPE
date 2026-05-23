@@ -17,10 +17,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    localStorage.setItem('theme', theme);
+    const root = typeof window !== 'undefined' ? window.document?.documentElement : null;
+    if (root && root.classList) {
+      root.classList.remove('light', 'dark');
+      root.classList.add(theme);
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('theme', theme);
+    }
   }, [theme]);
 
   const toggleTheme = () => {

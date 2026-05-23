@@ -62,7 +62,7 @@ export default function About() {
             className="lg:col-span-5 relative"
           >
             <div className="sticky top-32">
-              <div className="aspect-[3/4] md:aspect-[4/5] rounded-3xl overflow-hidden bg-brand-border/30 relative group">
+              <div className="aspect-[3/4] md:aspect-[4/5] rounded-none border border-brand-border overflow-hidden bg-brand-border/30 relative group">
                 <div className="absolute inset-0 bg-brand-bg/10 group-hover:bg-transparent transition-colors duration-700 z-10" />
                 <img 
                   src={settings?.aboutPhoto || "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=2000&auto=format&fit=crop"} 
