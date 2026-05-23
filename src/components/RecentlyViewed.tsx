@@ -61,7 +61,7 @@ export default function RecentlyViewed({ currentProductId }: { currentProductId:
   return (
     <div className="mt-12 border-t border-brand-border pt-16">
       <h2 className="text-2xl font-serif text-brand-light mb-8">{t('recentlyViewed')}</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-1 bg-brand-border overflow-hidden border border-brand-border">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-[1px] bg-brand-border border border-brand-border/45 overflow-hidden">
         {products.map((product, index) => (
           <div key={product.id} className="bg-brand-bg">
             <motion.div
@@ -71,7 +71,7 @@ export default function RecentlyViewed({ currentProductId }: { currentProductId:
               transition={{ delay: index * 0.1 }}
               className="h-full"
             >
-              <ProductCard product={product} variant="standard" />
+              <ProductCard product={product} />
             </motion.div>
           </div>
         ))}
