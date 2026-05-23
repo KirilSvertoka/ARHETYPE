@@ -1057,6 +1057,24 @@ app.get('/api/brands', (req, res) => {
   }
 });
 
+app.get('/api/scent-families', (req, res) => {
+  try {
+    const products = db.prepare('SELECT scentFamilies FROM products').all() as { scentFamilies: string }[];
+    const allFamilies = new Set<string>();
+    products.forEach(p => {
+      try {
+        const fams = JSON.parse(p.scentFamilies || '[]');
+        fams.forEach((f: string) => {
+          if (f) allFamilies.add(f);
+        });
+      } catch (e) {}
+    });
+    res.json(Array.from(allFamilies));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch scent families' });
+  }
+});
+
 app.get('/api/settings/home', (req, res) => {
   try {
     const row = db.prepare('SELECT value FROM settings WHERE key = ?').get('home_config') as { value: string };

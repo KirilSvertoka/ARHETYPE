@@ -16,16 +16,29 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+  const [availableFamilies, setAvailableFamilies] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  // Focus input when open
+  // Focus input when open and fetch live filter metadata
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
       document.body.style.overflow = 'hidden';
+
+      // Fetch dynamic active brands and scent families under products list in database
+      fetch('/api/brands')
+        .then(res => res.ok ? res.json() : [])
+        .then(data => setAvailableBrands(data))
+        .catch(err => console.error('Failed to load active brands:', err));
+
+      fetch('/api/scent-families')
+        .then(res => res.ok ? res.json() : [])
+        .then(data => setAvailableFamilies(data))
+        .catch(err => console.error('Failed to load active scent families:', err));
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -98,12 +111,31 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
     { name: 'Kilian', label: 'Kilian' }
   ];
 
-  const QUICK_FAMILIES = [
-    { id: 'woody', label: language === 'be' ? 'Драўняныя' : 'Древесные' },
-    { id: 'oriental', label: language === 'be' ? 'Усходнія' : 'Восточные' },
-    { id: 'fresh', label: language === 'be' ? 'Свежыя' : 'Свежие' },
-    { id: 'floral', label: language === 'be' ? 'Кветкавыя' : 'Цветочные' }
+  // Filter popular searches list to only those loaded inside the database
+  const finalBrands = POPULAR_SEARCHES.filter(b => 
+    availableBrands.some(ab => ab.toLowerCase().replace(/[\s-]/g, '') === b.name.toLowerCase().replace(/[\s-]/g, ''))
+  );
+
+  // Fallback to active brands on the site if popular ones aren't stored
+  const finalBrandsList = finalBrands.length > 0
+    ? finalBrands
+    : availableBrands.slice(0, 6).map(b => ({ name: b, label: b }));
+
+  // Dynamic scent families that exist on the site
+  const ALL_FAMILIES = [
+    { id: 'familyFloral', label: t('familyFloral') },
+    { id: 'familyOriental', label: t('familyOriental') },
+    { id: 'familyWoody', label: t('familyWoody') },
+    { id: 'familyFresh', label: t('familyFresh') },
+    { id: 'familyCitrus', label: t('familyCitrus') },
+    { id: 'familySpicy', label: t('familySpicy') },
+    { id: 'familyLeather', label: t('familyLeather') },
+    { id: 'familyGourmand', label: t('familyGourmand') },
+    { id: 'familyChypre', label: t('familyChypre') },
+    { id: 'familyFougere', label: t('familyFougere') },
   ];
+
+  const finalFamiliesList = ALL_FAMILIES.filter(f => availableFamilies.includes(f.id));
 
   return (
     <AnimatePresence>
@@ -215,7 +247,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                             <img
                               src={product.imageUrl}
                               alt={product.name}
-                              className="w-11 h-11 object-cover bg-brand-hover/10 mix-blend-lighten border border-brand-border/30 group-hover:scale-105 transition-transform duration-300"
+                              className="w-11 h-11 object-cover bg-white dark:bg-brand-light border border-brand-border/30 group-hover:scale-105 transition-transform duration-300"
                               referrerPolicy="no-referrer"
                             />
                             <div className="flex-1 min-w-0">
@@ -262,44 +294,48 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 {/* Right side: Quick Links & Popular Searches */}
                 <div className="md:col-span-5 space-y-8 md:border-l md:border-brand-border/30 md:pl-8">
                   {/* Popular Perfume Houses */}
-                  <div className="space-y-3">
-                    <h3 className="text-[10px] font-mono tracking-widest text-brand-muted uppercase">
-                      {language === 'be' ? 'БРЭНДЫ Ў ТРЭНДЗЕ' : 'БРЕНДЫ В ТРЕНДЕ'}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {POPULAR_SEARCHES.map((item) => (
-                        <button
-                          key={item.name}
-                          type="button"
-                          onClick={() => selectPopularBrand(item.name)}
-                          className="px-3.5 py-2 bg-brand-hover/30 hover:bg-brand-accent text-xs tracking-wide text-brand-light hover:text-white border border-brand-border/40 hover:border-brand-accent rounded-none transition-all duration-200 cursor-pointer text-left"
-                        >
-                          {item.label}
-                        </button>
-                      ))}
+                  {finalBrandsList.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-[10px] font-mono tracking-widest text-brand-muted uppercase">
+                        {language === 'be' ? 'БРЭНДЫ Ў ТРЭНДЗЕ' : 'БРЕНДЫ В ТРЕНДЕ'}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {finalBrandsList.map((item) => (
+                          <button
+                            key={item.name}
+                            type="button"
+                            onClick={() => selectPopularBrand(item.name)}
+                            className="px-3.5 py-2 bg-brand-hover/30 hover:bg-brand-accent text-xs tracking-wide text-brand-light hover:text-white border border-brand-border/40 hover:border-brand-accent rounded-none transition-all duration-200 cursor-pointer text-left"
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Quick Families Filter */}
-                  <div className="space-y-3">
-                    <h3 className="text-[10px] font-mono tracking-widest text-brand-muted uppercase">
-                      {language === 'be' ? 'ПАРФУМЕРНЫЯ СЯМЕЙСТВЫ' : 'ПАРФЮМЕРНЫЕ СЕМЕЙСТВА'}
-                    </h3>
-                    <ul className="grid grid-cols-2 gap-2 text-xs">
-                      {QUICK_FAMILIES.map((family) => (
-                        <button
-                          key={family.id}
-                          onClick={() => {
-                            navigate(`/catalog?families=${encodeURIComponent(family.id)}`);
-                            onClose();
-                          }}
-                          className="text-left py-2 px-3 border border-brand-border/20 text-brand-muted hover:text-brand-accent hover:border-brand-accent/40 bg-brand-hover/10 hover:bg-brand-hover/20 transition-all font-light"
-                        >
-                          {family.label}
-                        </button>
-                      ))}
-                    </ul>
-                  </div>
+                  {finalFamiliesList.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-[10px] font-mono tracking-widest text-brand-muted uppercase">
+                        {language === 'be' ? 'ПАРФУМЕРНЫЯ СЯМЕЙСТВЫ' : 'ПАРФЮМЕРНЫЕ СЕМЕЙСТВА'}
+                      </h3>
+                      <ul className="grid grid-cols-2 gap-2 text-xs">
+                        {finalFamiliesList.map((family) => (
+                          <button
+                            key={family.id}
+                            onClick={() => {
+                              navigate(`/catalog?families=${encodeURIComponent(family.id)}`);
+                              onClose();
+                            }}
+                            className="text-left py-2 px-3 border border-brand-border/20 text-brand-muted hover:text-brand-accent hover:border-brand-accent/40 bg-brand-hover/10 hover:bg-brand-hover/20 transition-all font-light"
+                          >
+                            {family.label}
+                          </button>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
               </div>
