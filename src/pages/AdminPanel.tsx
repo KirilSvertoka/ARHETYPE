@@ -14,7 +14,7 @@ import CMSView from '../components/admin/CMSView';
 import ReportsView from '../components/admin/ReportsView';
 import PromoCodesView from '../components/admin/PromoCodesView';
 import AbandonedCartsView from '../components/admin/AbandonedCartsView';
-import { Tag, ShoppingCart } from 'lucide-react';
+import { Tag, ShoppingCart, Star } from 'lucide-react';
 
 export default function AdminPanel() {
   const { theme } = useTheme();
@@ -277,6 +277,7 @@ export default function AdminPanel() {
             { id: 'customers', label: 'Клиенты', icon: Users },
             { id: 'promo', label: 'Промокоды', icon: Tag },
             { id: 'carts', label: 'Брошенные корзины', icon: ShoppingCart },
+            { id: 'reviews', label: 'Отзывы', icon: Star },
             { id: 'reports', label: 'Отчеты', icon: BarChart3 },
           ].map(tab => (
             <button
@@ -331,6 +332,7 @@ export default function AdminPanel() {
               {activeTab === 'customers' && 'Клиенты'}
               {activeTab === 'promo' && 'Промокоды'}
               {activeTab === 'carts' && 'Брошенные корзины'}
+              {activeTab === 'reviews' && 'Отзывы'}
               {activeTab === 'reports' && 'Отчеты'}
               {activeTab === 'cms-contacts' && 'Контактные данные'}
               {activeTab === 'cms-general' && 'О компании (Общее)'}
@@ -415,6 +417,16 @@ export default function AdminPanel() {
               )}
               {activeTab === 'promo' && <PromoCodesView token={token!} />}
               {activeTab === 'carts' && <AbandonedCartsView token={token!} />}
+              {activeTab === 'reviews' && (
+                <ReviewsView 
+                  reviews={reviews} 
+                  token={token!} 
+                  onUpdate={() => fetchReviews(pagination.reviews.page)} 
+                  loading={loading}
+                  pagination={pagination.reviews}
+                  onPageChange={(page) => fetchReviews(page)}
+                />
+              )}
               {activeTab === 'cms-contacts' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="contacts" />}
               {activeTab === 'cms-general' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="general" />}
               {activeTab === 'cms-home' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="home" />}

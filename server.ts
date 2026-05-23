@@ -109,6 +109,20 @@ try {
   db = new Database('perfume.db');
 }
 
+// Register custom normalization function for accent-insensitive comparisons
+try {
+  db.function('normalize_text', (text) => {
+    if (text === null || text === undefined) return '';
+    return text.toString()
+               .toLowerCase()
+               .normalize("NFD")
+               .replace(/[\u0300-\u036f]/g, "")
+               .trim();
+  });
+} catch (err) {
+  console.error('Failed to register normalize_text UDF:', err);
+}
+
 // Create tables if they don't exist
 db.exec(`
   CREATE TABLE IF NOT EXISTS products (
@@ -351,8 +365,33 @@ const defaultGeneralSettings = {
   seoTitle: "Arhetip Perfume",
   seoDescription: "Магазин нишевой парфюмерии Arhetip"
 };
-db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('home_config', JSON.stringify(defaultHomeConfig));
-db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('general_settings', JSON.stringify(defaultGeneralSettings));
+
+let initialHomeConfig = defaultHomeConfig;
+try {
+  const backupPath = path.join(__dirname, 'uploads', 'home_config_backup.json');
+  if (fs.existsSync(backupPath)) {
+    const backupContent = fs.readFileSync(backupPath, 'utf8');
+    initialHomeConfig = JSON.parse(backupContent);
+    console.log('Loaded home_config from backup file!');
+  }
+} catch (e) {
+  console.error('Failed to load home_config backup:', e);
+}
+
+let initialGeneralSettings = defaultGeneralSettings;
+try {
+  const backupPath = path.join(__dirname, 'uploads', 'general_settings_backup.json');
+  if (fs.existsSync(backupPath)) {
+    const backupContent = fs.readFileSync(backupPath, 'utf8');
+    initialGeneralSettings = JSON.parse(backupContent);
+    console.log('Loaded general_settings from backup file!');
+  }
+} catch (e) {
+  console.error('Failed to load general_settings backup:', e);
+}
+
+db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('home_config', JSON.stringify(initialHomeConfig));
+db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('general_settings', JSON.stringify(initialGeneralSettings));
 
 // Migration for new columns
 const migrations = [
@@ -1039,6 +1078,11 @@ app.put('/api/settings/home', requireAuth, (req, res) => {
   try {
     const config = req.body;
     db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(JSON.stringify(config), 'home_config');
+    try {
+      fs.writeFileSync(path.join(__dirname, 'uploads', 'home_config_backup.json'), JSON.stringify(config, null, 2), 'utf8');
+    } catch (e) {
+      console.error('Failed to write backup config file:', e);
+    }
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update config' });
@@ -1062,6 +1106,11 @@ app.put('/api/settings/general', requireAuth, (req, res) => {
   try {
     const settings = req.body;
     db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(JSON.stringify(settings), 'general_settings');
+    try {
+      fs.writeFileSync(path.join(__dirname, 'uploads', 'general_settings_backup.json'), JSON.stringify(settings, null, 2), 'utf8');
+    } catch (e) {
+      console.error('Failed to write general settings backup file:', e);
+    }
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update settings' });
@@ -1204,8 +1253,8 @@ app.get('/api/products', (req, res) => {
     }
 
     if (brand && brand !== 'All') {
-      where += ' AND LOWER(p.brand) = LOWER(?)';
-      params.push(brand);
+      where += ' AND (LOWER(p.brand) = LOWER(?) OR normalize_text(p.brand) = normalize_text(?))';
+      params.push(brand, brand);
     }
 
     if (gender && gender !== 'All') {

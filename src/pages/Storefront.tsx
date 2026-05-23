@@ -34,6 +34,16 @@ export default function Storefront() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
+  const findMatchingBrand = (paramBrand: string, availableBrands: string[]) => {
+    if (!paramBrand || paramBrand === 'All') return 'All';
+    const normParam = paramBrand.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    const match = availableBrands.find(b => {
+      const normB = b.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      return normB === normParam;
+    });
+    return match || paramBrand;
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -99,7 +109,8 @@ export default function Storefront() {
     if (newSort !== sortBy) setSortBy(newSort);
 
     const newBrand = brandParam || 'All';
-    if (newBrand !== activeBrand) setActiveBrand(newBrand);
+    const resolvedBrand = findMatchingBrand(newBrand, brands);
+    if (resolvedBrand !== activeBrand) setActiveBrand(resolvedBrand);
 
     const newSearchQuery = searchParam || '';
     if (newSearchQuery !== searchQuery) setSearchQuery(newSearchQuery);
@@ -168,7 +179,17 @@ export default function Storefront() {
         if (!res.ok) throw new Error(`Brands fetch failed: ${res.status}`);
         return res.json();
       })
-      .then(data => setBrands(['All', ...data]))
+      .then((data: string[]) => {
+        setBrands(['All', ...data]);
+        const params = new URLSearchParams(window.location.search);
+        const bParam = params.get('brand');
+        if (bParam && bParam !== 'All') {
+          const resolved = findMatchingBrand(bParam, data);
+          if (resolved) {
+            setActiveBrand(resolved);
+          }
+        }
+      })
       .catch(console.error);
 
     fetch('/api/accords')
