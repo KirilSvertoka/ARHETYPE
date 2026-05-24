@@ -236,3 +236,12 @@ export interface GeneralSettings {
   contactsDescription?: string;
   contactsDescription_be?: string;
 }
+
+export interface FAQItem {
+  id: number;
+  question: string;
+  question_be?: string;
+  answer: string;
+  answer_be?: string;
+  sort_order: number;
+}

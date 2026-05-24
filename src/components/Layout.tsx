@@ -475,6 +475,7 @@ export default function Layout() {
               <ul className="space-y-4">
                 <li><Link to="/p/delivery" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Дастаўка і аплата' : 'Доставка и оплата'}</Link></li>
                 <li><Link to="/p/returns" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Гарантыя і вяртанне' : 'Гарантия и возврат'}</Link></li>
+                <li><Link to="/p/faq" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Пытанні і адказы (FAQ)' : 'Вопросы и ответы (FAQ)'}</Link></li>
                 <li><Link to="/contacts" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('contacts')}</Link></li>
               </ul>
             </div>

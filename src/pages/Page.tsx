@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '../components/LanguageProvider';
-import { ArrowLeft, Clock, Calendar } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { FAQItem } from '../types';
 
 interface CMSPage {
   id: string;
@@ -20,26 +21,46 @@ interface CMSPage {
 export default function Page() {
   const { id } = useParams();
   const [page, setPage] = useState<CMSPage | null>(null);
+  const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { language, t } = useLanguage();
+  const [expandedFaqId, setExpandedFaqId] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchPage = async () => {
+    const fetchPageData = async () => {
       try {
-        const res = await fetch(`/api/pages/${id}`);
-        if (res.ok) {
-          const data: CMSPage = await res.json();
-          setPage(data);
+        setLoading(true);
+        if (id === 'faq') {
+          const res = await fetch('/api/faq');
+          if (res.ok) {
+            const data = await res.json();
+            setFaqItems(data);
+          }
+          setPage({
+            id: 'faq',
+            title: 'Часто задаваемые вопросы',
+            title_be: 'Часта задаваныя пытанні',
+            content: '',
+            updated_at: new Date().toISOString(),
+            seoTitle: 'Часто задаваемые вопросы (FAQ) — ARCHETYPE',
+            seoDescription: 'Ответы на популярные вопросы о покупке нишевой парфюмерии, доставке, оплате и отливантах в магазине Archetype.'
+          });
         } else {
-          setPage(null);
+          const res = await fetch(`/api/pages/${id}`);
+          if (res.ok) {
+            const data: CMSPage = await res.json();
+            setPage(data);
+          } else {
+            setPage(null);
+          }
         }
       } catch (error) {
-        console.error('Failed to fetch CMS page', error);
+        console.error('Failed to fetch CMS page or FAQ', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchPage();
+    fetchPageData();
   }, [id]);
 
   if (loading) {
@@ -97,9 +118,61 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="prose prose-invert prose-brand max-w-none prose-p:text-brand-muted prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg prose-headings:font-serif prose-headings:uppercase prose-headings:tracking-wider whitespace-pre-wrap break-words prose-img:rounded-2xl prose-img:w-full prose-img:max-w-3xl prose-table:block prose-table:overflow-x-auto">
-        <ReactMarkdown>{content}</ReactMarkdown>
-      </div>
+      {id === 'faq' ? (
+        <div className="space-y-4 mt-8">
+          {faqItems.length === 0 ? (
+            <p className="text-brand-muted text-center py-12">
+              {language === 'be' ? 'Няма даступных пытанняў.' : 'Нет доступных вопросов.'}
+            </p>
+          ) : (
+            faqItems.map((item, idx) => {
+              const q = language === 'be' && item.question_be ? item.question_be : item.question;
+              const a = language === 'be' && item.answer_be ? item.answer_be : item.answer;
+              const isExpanded = expandedFaqId === item.id;
+
+              return (
+                <div 
+                  key={item.id} 
+                  className="bg-white/5 border border-brand-border/40 hover:border-brand-border rounded-2xl overflow-hidden transition-all duration-300"
+                >
+                  <button
+                    onClick={() => setExpandedFaqId(isExpanded ? null : item.id)}
+                    className="w-full text-left px-5 sm:px-6 py-4 sm:py-5 flex justify-between items-center gap-4 group cursor-pointer"
+                  >
+                    <span className="font-medium text-brand-light group-hover:text-brand-light transition-colors tracking-wide text-sm sm:text-base pr-2 leading-relaxed">
+                      {q}
+                    </span>
+                    <ChevronDown 
+                      className={`w-4 h-4 text-brand-muted group-hover:text-brand-light transition-transform duration-300 shrink-0 ${
+                        isExpanded ? 'rotate-180 text-brand-accent' : ''
+                      }`}
+                    />
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                      >
+                        <div className="border-t border-brand-border/20 px-5 sm:px-6 py-4 bg-black/10 text-brand-muted leading-relaxed text-xs sm:text-sm font-light whitespace-pre-wrap">
+                          {a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : (
+        <div className="prose prose-invert prose-brand max-w-none prose-p:text-brand-muted prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg prose-headings:font-serif prose-headings:uppercase prose-headings:tracking-wider whitespace-pre-wrap break-words prose-img:rounded-2xl prose-img:w-full prose-img:max-w-3xl prose-table:block prose-table:overflow-x-auto">
+          <ReactMarkdown>{content}</ReactMarkdown>
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -60,6 +60,9 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -75,7 +78,7 @@ export default function Home() {
     }, 7000); // Change slide every 7 seconds
 
     return () => clearInterval(timer);
-  }, [config]);
+  }, [config, currentSlide]);
 
   if (loading || !config) {
     return (
@@ -175,6 +178,29 @@ export default function Home() {
     setCurrentSlide(prev => (prev + 1) % config.hero.slides.length);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const diffX = touchStartX.current - touchEndX.current;
+    
+    if (diffX > 50) {
+      handleNextSlide();
+    } else if (diffX < -50) {
+      handlePrevSlide();
+    }
+    
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -198,7 +224,12 @@ export default function Home() {
       </Helmet>
 
       {/* 1. LUXURIOUS FULL-SCREEN HERO BANNER */}
-      <section className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-black flex items-center">
+      <section 
+        className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-black flex items-center"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -295,17 +326,17 @@ export default function Home() {
           <>
             <button 
               onClick={handlePrevSlide}
-              className="absolute left-4 md:left-8 z-20 p-3 bg-black/10 hover:bg-black/40 border border-white/5 hover:border-white/20 text-white/70 hover:text-white transition-all hidden md:flex items-center justify-center rounded-none"
+              className="absolute left-2 sm:left-4 md:left-8 z-20 p-2 sm:p-3 bg-black/15 hover:bg-black/45 border border-white/5 hover:border-white/20 text-white/65 hover:text-white transition-all flex items-center justify-center rounded-none"
               aria-label="Previous Slide"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button 
               onClick={handleNextSlide}
-              className="absolute right-4 md:right-8 z-20 p-3 bg-black/10 hover:bg-black/40 border border-white/5 hover:border-white/20 text-white/70 hover:text-white transition-all hidden md:flex items-center justify-center rounded-none"
+              className="absolute right-2 sm:right-4 md:right-8 z-20 p-2 sm:p-3 bg-black/15 hover:bg-black/45 border border-white/5 hover:border-white/20 text-white/65 hover:text-white transition-all flex items-center justify-center rounded-none"
               aria-label="Next Slide"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </>
         )}

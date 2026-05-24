@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { CMSPage, HomeConfig, GeneralSettings } from '../../types';
-import { XCircle, Plus, Trash2, GripVertical, Image as ImageIcon, UploadCloud, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
+import { XCircle, Plus, Trash2, GripVertical, Image as ImageIcon, UploadCloud, ArrowUp, ArrowDown, Eye, EyeOff, ChevronLeft, ChevronRight, Monitor, Smartphone, Globe, ArrowRight, Play, Sparkles } from 'lucide-react';
 import { uploadImageChunks } from '../../utils/uploadUtils';
+import FAQManager from './FAQManager';
 
 interface CMSViewProps {
   pages: CMSPage[];
@@ -18,6 +19,12 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
   const [isCreatingPage, setIsCreatingPage] = useState(false);
   const [localHomeConfig, setLocalHomeConfig] = useState<HomeConfig | null>(homeConfig);
   const [localGeneralSettings, setLocalGeneralSettings] = useState<GeneralSettings | null>(null);
+
+  // States for live interactive hero slides preview
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewSlide, setPreviewSlide] = useState(0);
+  const [previewLang, setPreviewLang] = useState<'ru' | 'be'>('ru');
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
 
   React.useEffect(() => {
     fetch('/api/settings/general')
@@ -723,7 +730,7 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                 <span className="w-2 h-2 rounded-full bg-brand-light"></span>
                 Главный баннер (Слайды)
               </h4>
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4 sm:gap-6">
                 <div className="flex items-center gap-2">
                   <input 
                     type="checkbox" 
@@ -737,12 +744,218 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                   />
                   <label htmlFor="hideHeroTitles" className="text-sm font-medium text-brand-light">Скрыть надписи</label>
                 </div>
+                
+                {/* Banner Preview Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                  className={`text-sm font-medium flex items-center gap-1.5 px-3 py-1.5 transition-colors ${
+                    isPreviewOpen
+                      ? 'bg-brand-accent/20 text-brand-accent border border-brand-accent/30 rounded-lg'
+                      : 'text-brand-muted hover:text-brand-light border border-transparent'
+                  }`}
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>Предпросмотр</span>
+                </button>
+
                 <button onClick={addSlide} className="text-sm font-medium text-brand-muted hover:text-brand-light flex items-center gap-1">
                   <Plus className="w-4 h-4" /> Добавить слайд
                 </button>
               </div>
             </div>
-            
+
+            {/* Premium Interactive Live Preview Section */}
+            {isPreviewOpen && (
+              <div className="bg-white/5 border border-brand-border p-6 rounded-2xl space-y-6">
+                {/* Simulator controls header */}
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-brand-border/40 pb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent"></span>
+                    </span>
+                    <span className="text-xs uppercase tracking-[0.12em] font-mono text-brand-light font-semibold">
+                      Живой интерактивный предпросмотр баннера
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    {/* Device select */}
+                    <div className="flex items-center bg-black/40 border border-brand-border rounded-lg p-1 text-[11px] gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDevice('desktop')}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded transition-all ${
+                          previewDevice === 'desktop'
+                            ? 'bg-brand-accent text-white font-medium'
+                            : 'text-brand-muted hover:text-brand-light'
+                        }`}
+                      >
+                        <Monitor className="w-3 h-3" />
+                        <span>Десктоп</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDevice('mobile')}
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded transition-all ${
+                          previewDevice === 'mobile'
+                            ? 'bg-brand-accent text-white font-medium'
+                            : 'text-brand-muted hover:text-brand-light'
+                        }`}
+                      >
+                        <Smartphone className="w-3 h-3" />
+                        <span>Мобильный</span>
+                      </button>
+                    </div>
+
+                    {/* Language select */}
+                    <div className="flex items-center bg-black/40 border border-brand-border rounded-lg p-1 text-[11px] gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewLang('ru')}
+                        className={`px-2.5 py-1 rounded transition-all ${
+                          previewLang === 'ru'
+                            ? 'bg-brand-accent/20 text-brand-accent font-medium border border-brand-accent/30'
+                            : 'text-brand-muted hover:text-brand-light border border-transparent'
+                        }`}
+                      >
+                        RU
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewLang('be')}
+                        className={`px-2.5 py-1 rounded transition-all ${
+                          previewLang === 'be'
+                            ? 'bg-brand-accent/20 text-brand-accent font-medium border border-brand-accent/30'
+                            : 'text-brand-muted hover:text-brand-light border border-transparent'
+                        }`}
+                      >
+                        BE
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Banner canvas */}
+                <div className="flex justify-center bg-black/30 p-4 border border-brand-border/30 rounded-xl overflow-hidden min-h-[300px] items-center">
+                  <div
+                    className={`relative bg-neutral-950 transition-all duration-300 overflow-hidden shadow-2xl ${
+                      previewDevice === 'desktop'
+                        ? 'w-full aspect-[21/9] min-h-[220px] max-h-[360px] border border-brand-border/40'
+                        : 'w-[260px] sm:w-[300px] h-[440px] rounded-[32px] border-[8px] border-neutral-800 relative shadow-2xl'
+                    }`}
+                  >
+                    {/* Simulated screen inside device */}
+                    <div className="absolute inset-0 w-full h-full overflow-hidden select-none">
+                      {localHomeConfig.hero.slides.length === 0 ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-brand-muted text-xs p-6 text-center">
+                          <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
+                          <span>Добавьте слайды, чтобы увидеть превью баннера</span>
+                        </div>
+                      ) : (() => {
+                        const totalSlides = localHomeConfig.hero.slides.length;
+                        const validIndex = Math.min(previewSlide, totalSlides - 1);
+                        const actIndex = validIndex >= 0 ? validIndex : 0;
+                        const s = localHomeConfig.hero.slides[actIndex];
+                        if (!s) return null;
+                        const displayImg = (previewDevice === 'mobile' && s.mobileImage) ? s.mobileImage : s.image;
+                        const displaySubtitle = previewLang === 'be' ? (s.subtitle_be || s.subtitle) : s.subtitle;
+                        const displayTitle = previewLang === 'be' ? (s.title_be || s.title) : s.title;
+
+                        return (
+                          <div className="w-full h-full bg-neutral-900 flex flex-col justify-end text-center relative">
+                            {displayImg ? (
+                              <>
+                                <img
+                                  src={displayImg}
+                                  alt=""
+                                  className="absolute inset-0 w-full h-full object-cover brightness-[0.7] transform scale-102 transition-all duration-500"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/45 transition-all" />
+                              </>
+                            ) : (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900 border border-brand-border/30 text-brand-muted text-[10px] px-4 text-center">
+                                <ImageIcon className="w-8 h-8 opacity-45 mb-1" />
+                                <span>[Изображение не добавлено / Нет ссылки]</span>
+                              </div>
+                            )}
+
+                            {/* Text content overlay */}
+                            <div className="absolute inset-x-0 bottom-[14%] px-4 z-10 flex flex-col items-center justify-end text-center">
+                              {!localHomeConfig.hero.hideTitles && (
+                                <div className="text-center max-w-full space-y-1.5 mb-3.5 sm:mb-5">
+                                  {displaySubtitle && (
+                                    <p className="text-[7px] sm:text-[9px] font-semibold tracking-[0.3em] text-brand-accent uppercase">
+                                      {displaySubtitle}
+                                    </p>
+                                  )}
+                                  {displayTitle && (
+                                    <h1 className="text-[10px] sm:text-sm md:text-base text-white font-sans font-light tracking-[0.14em] leading-snug uppercase break-keep line-clamp-2 px-1">
+                                      {displayTitle}
+                                    </h1>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Shop collections button */}
+                              <div className="inline-flex items-center gap-1 bg-brand-accent text-white px-4 py-2 text-[7px] sm:text-[9px] font-semibold uppercase tracking-[0.2em]">
+                                <span>В каталог</span>
+                                <ArrowRight className="w-2.5 h-2.5" />
+                              </div>
+                            </div>
+
+                            {/* Simulator pagination dots */}
+                            {totalSlides > 1 && (
+                              <div className="absolute bottom-[6%] left-1/2 -translate-x-1/2 z-20 flex gap-1.5 items-center">
+                                {localHomeConfig.hero.slides.map((_, dotIdx) => (
+                                  <button
+                                    key={dotIdx}
+                                    type="button"
+                                    onClick={() => setPreviewSlide(dotIdx)}
+                                    className={`h-[2px] rounded-none transition-all duration-300 ${
+                                      actIndex === dotIdx ? 'w-5 bg-brand-accent' : 'w-1.5 bg-white/20 hover:bg-white/40'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Simulator left/right controls inside banner */}
+                            {totalSlides > 1 && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewSlide((prev) => (prev - 1 + totalSlides) % totalSlides)}
+                                  className="absolute left-[3%] top-1/2 -translate-y-1/2 z-25 text-white/50 hover:text-white bg-black/20 hover:bg-black/50 p-1.5 rounded-full transition-all"
+                                  title="Предыдущий слайд"
+                                >
+                                  <ChevronLeft className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewSlide((prev) => (prev + 1) % totalSlides)}
+                                  className="absolute right-[3%] top-1/2 -translate-y-1/2 z-25 text-white/50 hover:text-white bg-black/20 hover:bg-black/50 p-1.5 rounded-full transition-all"
+                                  title="Следующий слайд"
+                                >
+                                  <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center font-mono text-[9px] text-brand-muted">
+                  * Изменения в слайдах (названия, фото, ссылки) отображаются моментально. Проверьте обе версии, затем нажмите «Сохранить настройки» вверху для публикации.
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               {localHomeConfig.hero.slides.map((slide, idx) => (
                 <div key={idx} className="bg-white/5 p-5 rounded-2xl border border-brand-border relative">
@@ -1170,6 +1383,8 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
               </div>
             ))}
           </div>
+
+          <FAQManager token={token} />
         </div>
       )}
 

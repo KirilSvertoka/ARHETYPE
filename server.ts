@@ -245,6 +245,15 @@ db.exec(`
     applicable_brands TEXT DEFAULT '[]',
     excluded_brands TEXT DEFAULT '[]'
   );
+
+  CREATE TABLE IF NOT EXISTS faq_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    question TEXT NOT NULL,
+    question_be TEXT,
+    answer TEXT NOT NULL,
+    answer_be TEXT,
+    sort_order INTEGER DEFAULT 0
+  );
 `);
 
 // Seed default home config
@@ -583,6 +592,39 @@ seedCMS.forEach(page => {
   db.prepare('UPDATE cms_pages SET title = ?, title_be = ?, content = ?, content_be = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
     .run(page.title, page.title_be, page.content, page.content_be, page.id);
 });
+
+// Seed default FAQs if the table is empty
+const faqCount = db.prepare('SELECT COUNT(*) as count FROM faq_items').get() as { count: number };
+if (faqCount.count === 0) {
+  const seedFAQs = [
+    {
+      question: 'У вас оригинальная парфюмерия?',
+      question_be: 'У вас арыгінальная парфумерыя?',
+      answer: 'Да, вся наша продукция исключительно оригинальная, сертифицированная и проходит тщательный контроль качества. Мы работаем только с надежными европейскими поставщиками и ценим доверие наших покупателей.',
+      answer_be: 'Так, уся наша прадукцыя выключна арыгінальная, сертыфікаваная і праходзіць старанны кантроль якасці. Мы працуем толькі з надзейнымі еўрапейскімі пастаўшчыкамі і цэнім давер нашых пакупнікоў.',
+      sort_order: 1
+    },
+    {
+      question: 'Что такое отливанты (распив) и зачем они нужны?',
+      question_be: 'Што такое адліванты (распіў) і навошта яны патрэбныя?',
+      answer: 'Отливанты — это оригинальная парфюмерия, перелитая из оригинального фирменного флакона в меньшие по объему флакончики с распылителем (атомайзеры от 2 до 10 мл). Это отличная возможность полноценно опробовать нишевый или люксовый аромат в повседневной жизни, разносить его на коже и понять, подходит ли он вам, не покупая дорогой флакон целиком.',
+      answer_be: 'Адліванты — гэта арыгінальная парфумерыя, пералітая з арыгінальнага фірмога флакона ў меншыя па аб\'ёме флакончыкі з распыляльнікам (атамайзеры ад 2 да 10 мл). Гэта выдатная магчымасць паўнавартасна апрабаваць нішавы або люксавы водар у паўсядзённым жыцці, разносіць яго на скуры і зразумець, ці падыходзіць ён вам, не купляючы дарагі флакон цалкам.',
+      sort_order: 2
+    },
+    {
+      question: 'Как осуществляется доставка и сколько она стоит?',
+      question_be: 'Як ажыццяўляецца дастаўка і колькі яна каштуе?',
+      answer: 'По Гродно мы отправляем курьером (бесплатно при сумме заказа от 150 BYN, для остальных заказов стоимость — 5 BYN). По Беларуси доставляем Белпочтой или Европочтой (до отделения или на дом). Срок отправки — всего 1-2 рабочих дня, доставка обычно занимает от 3 до 5 дней.',
+      answer_be: 'Па Гродне мы адпраўляем кур\'ерам (бясплатна пры суме замовы ад 150 BYN, для астатніх замоў кошт — 5 BYN). Па Беларусі дастаўляем Белпоштай або Еўрапоштай (да аддзялення ці на дом). Тэрмін адпраўкі — усяго 1-2 працоўныя дні, дастаўка звычайна займае ад 3 да 5 дзён.',
+      sort_order: 3
+    }
+  ];
+
+  const insertFAQ = db.prepare('INSERT INTO faq_items (question, question_be, answer, answer_be, sort_order) VALUES (?, ?, ?, ?, ?)');
+  seedFAQs.forEach(f => {
+    insertFAQ.run(f.question, f.question_be, f.answer, f.answer_be, f.sort_order);
+  });
+}
 
 // Update all products with new transliterated slugs
 const allProducts = db.prepare('SELECT id, name, brand FROM products').all() as { id: number, name: string, brand: string }[];
@@ -1593,6 +1635,62 @@ app.delete('/api/admin/cms/:id', requireAuth, (req, res) => {
   }
 });
 
+// FAQ API Endpoints
+app.get('/api/faq', (req, res) => {
+  try {
+    const list = db.prepare('SELECT * FROM faq_items ORDER BY sort_order ASC, id ASC').all();
+    res.json(list);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get FAQ' });
+  }
+});
+
+app.get('/api/admin/faq', requireAuth, (req, res) => {
+  try {
+    const list = db.prepare('SELECT * FROM faq_items ORDER BY sort_order ASC, id ASC').all();
+    res.json(list);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get FAQ' });
+  }
+});
+
+app.post('/api/admin/faq', requireAuth, (req, res) => {
+  const { question, question_be, answer, answer_be, sort_order } = req.body;
+  if (!question || !answer) {
+    return res.status(400).json({ error: 'Question and answer are required' });
+  }
+  try {
+    const result = db.prepare('INSERT INTO faq_items (question, question_be, answer, answer_be, sort_order) VALUES (?, ?, ?, ?, ?)')
+      .run(question, question_be || null, answer, answer_be || null, isNaN(parseInt(sort_order, 10)) ? 0 : parseInt(sort_order, 10));
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create FAQ item' });
+  }
+});
+
+app.put('/api/admin/faq/:id', requireAuth, (req, res) => {
+  const { question, question_be, answer, answer_be, sort_order } = req.body;
+  if (!question || !answer) {
+    return res.status(400).json({ error: 'Question and answer are required' });
+  }
+  try {
+    db.prepare('UPDATE faq_items SET question = ?, question_be = ?, answer = ?, answer_be = ?, sort_order = ? WHERE id = ?')
+      .run(question, question_be || null, answer, answer_be || null, isNaN(parseInt(sort_order, 10)) ? 0 : parseInt(sort_order, 10), req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update FAQ item' });
+  }
+});
+
+app.delete('/api/admin/faq/:id', requireAuth, (req, res) => {
+  try {
+    db.prepare('DELETE FROM faq_items WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete FAQ item' });
+  }
+});
+
 app.post('/api/products/:id/view', (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) {
@@ -2301,6 +2399,41 @@ async function startServer() {
             `;
             html = html.replace('</head>', `${metaTags}</head>`);
           }
+        }
+      } else if (req.path === '/p/faq' || req.path.startsWith('/p/faq')) {
+        try {
+          const faqs = db.prepare('SELECT * FROM faq_items ORDER BY sort_order ASC, id ASC').all() as any[];
+          if (faqs && faqs.length > 0) {
+            const faqSchema = {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": faqs.map(faq => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": faq.answer
+                }
+              }))
+            };
+            ldJson.push(faqSchema);
+            
+            const faqMeta = `
+              <title>Часто задаваемые вопросы (FAQ) | АРХЕТИП</title>
+              <meta name="description" content="Ответы на популярные вопросы о покупке оригинальной нишевой парфюмерии, доставке, оплате и отливантах в магазине Archetype." />
+              <meta property="og:title" content="Часто задаваемые вопросы (FAQ) | АРХЕТИП" />
+              <meta property="og:description" content="Ответы на популярные вопросы о покупке оригинальной нишевой парфюмерии, доставке, оплате и отливантах в магазине Archetype." />
+              <meta property="og:type" content="website" />
+              <meta property="og:url" content="${domain}${req.path}" />
+              <link rel="canonical" href="${domain}${req.path}" />
+              <link rel="icon" href="${domain}/favicon.png" type="image/png" />
+              <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
+              <link rel="apple-touch-icon" href="${domain}/favicon.png" />
+            `;
+            html = html.replace('</head>', `${faqMeta}</head>`);
+          }
+        } catch (error) {
+          console.error('Failed to inject FAQ Schema', error);
         }
       } else {
         // For non-product pages, still ensure meta and favicon
