@@ -8,6 +8,12 @@ interface NoteDiagramProps {
   topNotes: any[];
   heartNotes: any[];
   baseNotes: any[];
+  topNotesDuration?: string;
+  topNotesDuration_be?: string;
+  heartNotesDuration?: string;
+  heartNotesDuration_be?: string;
+  baseNotesDuration?: string;
+  baseNotesDuration_be?: string;
 }
 
 interface NoteMetadata {
@@ -225,7 +231,17 @@ const getNoteMetadata = (noteName: string, lang: 'be' | 'ru'): NoteMetadata => {
   };
 };
 
-export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDiagramProps) {
+export default function NoteDiagram({ 
+  topNotes, 
+  heartNotes, 
+  baseNotes,
+  topNotesDuration,
+  topNotesDuration_be,
+  heartNotesDuration,
+  heartNotesDuration_be,
+  baseNotesDuration,
+  baseNotesDuration_be
+}: NoteDiagramProps) {
   const { language } = useLanguage();
   const [activeTier, setActiveTier] = useState<'top' | 'heart' | 'base'>('top');
   const [hoveredNote, setHoveredNote] = useState<string | null>(null);
@@ -250,8 +266,8 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
       titleBe: 'Верхнія ноты',
       subtitleRu: 'Создают мгновенное первое впечатление',
       subtitleBe: 'Ствараюць імгненнае першае ўражанне',
-      timeRu: 'Звучат первые 10–15 минут',
-      timeBe: 'Гучаць першыя 10–15 хвілін',
+      timeRu: topNotesDuration || 'Звучат первые 10–15 минут',
+      timeBe: topNotesDuration_be || 'Гучаць першыя 10–15 хвілін',
       accentColor: 'border-yellow-500/30 text-yellow-400 bg-yellow-500/5',
       glow: 'rgba(234, 179, 8, 0.05)'
     },
@@ -260,8 +276,8 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
       titleBe: 'Сярэднія ноты',
       subtitleRu: 'Определяют истинный характер и темперамент',
       subtitleBe: 'Вызначаюць сапраўдны характар і тэмперамент',
-      timeRu: 'Звучат на протяжении 2–4 часов',
-      timeBe: 'Гучаць на працягу 2–4 гадзін',
+      timeRu: heartNotesDuration || 'Звучат на протяжении 2–4 часов',
+      timeBe: heartNotesDuration_be || 'Гучаць на працягу 2–4 гадзін',
       accentColor: 'border-pink-500/30 text-pink-450 bg-pink-500/5',
       glow: 'rgba(236, 72, 103, 0.05)'
     },
@@ -270,8 +286,8 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
       titleBe: 'Базавыя ноты (Шлейф)',
       subtitleRu: 'Мягко фиксируют аромат на вашей коже',
       subtitleBe: 'Мякка фіксуюць водар на вашай скуры',
-      timeRu: 'Шлейф раскрывается до 10–12 часов',
-      timeBe: 'Шлейф раскрываецца да 10–12 гадзін',
+      timeRu: baseNotesDuration || 'Шлейф раскрывается до 10–12 часов',
+      timeBe: baseNotesDuration_be || 'Шлейф раскрываецца да 10–12 гадзін',
       accentColor: 'border-amber-500/30 text-amber-500 bg-amber-500/5',
       glow: 'rgba(217, 119, 6, 0.05)'
     }
@@ -279,6 +295,48 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
 
   const activeMeta = tierMetadata[activeTier];
   const info = hoveredNote ? getNoteMetadata(hoveredNote, language) : null;
+
+  const getTopButtonText = () => {
+    if (language === 'be') {
+      if (topNotesDuration_be) {
+        return topNotesDuration_be.replace(/^(Гучаць першыя|Гучаць на працягу|Шлейф раскрываецца да)\s+/gi, '').toUpperCase();
+      }
+      return '0–15 ХВІЛІН';
+    } else {
+      if (topNotesDuration) {
+        return topNotesDuration.replace(/^(Звучат первые|Звучат на протяжении|Шлейф раскрывается до)\s+/gi, '').toUpperCase();
+      }
+      return '0–15 МИНУТ';
+    }
+  };
+
+  const getHeartButtonText = () => {
+    if (language === 'be') {
+      if (heartNotesDuration_be) {
+        return heartNotesDuration_be.replace(/^(Гучаць першыя|Гучаць на працягу|Шлейф раскрываецца да)\s+/gi, '').toUpperCase();
+      }
+      return '2–4 ГАДЗІНЫ';
+    } else {
+      if (heartNotesDuration) {
+        return heartNotesDuration.replace(/^(Звучат первые|Звучат на протяжении|Шлейф раскрывается до)\s+/gi, '').toUpperCase();
+      }
+      return '2–4 ЧАСА';
+    }
+  };
+
+  const getBaseButtonText = () => {
+    if (language === 'be') {
+      if (baseNotesDuration_be) {
+        return baseNotesDuration_be.replace(/^(Гучаць першыя|Гучаць на працягу|Шлейф раскрываецца да)\s+/gi, '').toUpperCase();
+      }
+      return 'ДА 12 ГАДЗІН';
+    } else {
+      if (baseNotesDuration) {
+        return baseNotesDuration.replace(/^(Звучат первые|Звучат на протяжении|Шлейф раскрывается до)\s+/gi, '').toUpperCase();
+      }
+      return 'ДО 12 ЧАСОВ';
+    }
+  };
 
   return (
     <motion.div
@@ -311,7 +369,7 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
           <div className="w-full flex flex-col gap-3 relative max-w-[280px]">
             {/* Pyramid Level 3 (Top) */}
             <button
-              onClick={() => { setActiveTier('top'); setHoveredNote(null); }}
+               onClick={() => { setActiveTier('top'); setHoveredNote(null); }}
               className={`relative h-14 w-full flex flex-col items-center justify-center border transition-all duration-300 ${
                 activeTier === 'top'
                   ? 'bg-yellow-500/10 border-yellow-500/60 shadow-[0_0_15px_rgba(234,179,8,0.15)] text-brand-light'
@@ -327,7 +385,7 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
                 {language === 'be' ? 'ВЕРХНІЯ' : 'ВЕРХНИЕ'}
               </span>
               <span className="text-[8px] font-mono tracking-wider opacity-80 mt-1">
-                {language === 'be' ? '0–15 ХВІЛІН' : '0–15 МИНУТ'}
+                {getTopButtonText()}
               </span>
             </button>
 
@@ -349,7 +407,7 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
                 {language === 'be' ? 'СЯРЭДНІЯ' : 'СЕРДЦЕ'}
               </span>
               <span className="text-[8px] font-mono tracking-wider opacity-80 mt-1">
-                {language === 'be' ? '2–4 ГАДЗІНЫ' : '2–4 ЧАСА'}
+                {getHeartButtonText()}
               </span>
             </button>
 
@@ -369,7 +427,7 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
                 {language === 'be' ? 'БАЗАВЫЯ' : 'БАЗА / ШЛЕЙФ'}
               </span>
               <span className="text-[8px] font-mono tracking-wider opacity-80 mt-1">
-                {language === 'be' ? 'ДА 12 ГАДЗІН' : 'ДО 12 ЧАСОВ'}
+                {getBaseButtonText()}
               </span>
             </button>
           </div>
@@ -398,6 +456,10 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
                   key={idx}
                   onMouseEnter={() => setHoveredNote(name)}
                   onMouseLeave={() => setHoveredNote(null)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHoveredNote(prev => prev === name ? null : name);
+                  }}
                   className={`px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.1em] transition-all duration-200 flex items-center gap-1.5 border ${
                     hoveredNote === name
                       ? 'border-brand-accent bg-brand-accent/10 text-white scale-105'
@@ -445,8 +507,8 @@ export default function NoteDiagram({ topNotes, heartNotes, baseNotes }: NoteDia
                   <HelpCircle className="w-4 h-4 text-brand-muted/70 mt-0.5 shrink-0" />
                   <p className="text-[10px] text-brand-muted leading-relaxed font-light">
                     {language === 'be'
-                      ? 'Навядзіце курсор або зацісніце пальцам любы інгрэдыент вышэй, каб акунуцца ў апісанне яго араматычных уласцівісцяў.'
-                      : 'Наведите курсор на любой ингредиент выше, чтобы погрузиться в описание его ароматических свойств и почувствовать раскрытие.'}
+                      ? 'Націсніце на любы інгрэдыент вышэй, каб акунуцца ў апісанне яго араматычных уласцівасцей і адчуць раскрыццё.'
+                      : 'Нажмите на любой ингредиент выше, чтобы погрузиться в описание его ароматических свойств и почувствовать раскрытие.'}
                   </p>
                 </motion.div>
               )}

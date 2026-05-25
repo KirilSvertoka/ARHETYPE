@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle, Send, Star, ChevronDown } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import NoteDiagram from '../components/NoteDiagram';
+import DecantSizeGuide from '../components/DecantSizeGuide';
 import { useCart } from '../components/CartProvider';
 import { useLanguage } from '../components/LanguageProvider';
 import RelatedProducts from '../components/RelatedProducts';
@@ -35,6 +36,7 @@ export default function ProductDetails() {
 
   const [quantity, setQuantity] = useState(1);
   const [activeNotesAccordion, setActiveNotesAccordion] = useState<'top' | 'heart' | 'base' | null>('top');
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   const [newReviewName, setNewReviewName] = useState('');
   const [newReviewRating, setNewReviewRating] = useState(5);
@@ -507,9 +509,23 @@ export default function ProductDetails() {
 
             {product.variants && product.variants.length > 0 && (
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-brand-muted mb-4 ml-1">
-                  {language === 'be' ? 'Аб\'ём' : 'Объем'}
-                </p>
+                <div className="flex justify-between items-baseline mb-4 ml-1">
+                  <p className="text-xs font-medium uppercase tracking-wider text-brand-muted">
+                    {language === 'be' ? 'Аб\'ём' : 'Объем'}
+                  </p>
+                  <button
+                    onClick={() => setShowSizeGuide(!showSizeGuide)}
+                    className="text-[10px] font-medium tracking-[0.12em] uppercase text-brand-accent hover:text-brand-accent-hover transition-colors flex items-center gap-1.5 focus:outline-none cursor-pointer"
+                  >
+                    <span className="text-[10px] opacity-85">📐</span>
+                    <span className="border-b border-brand-accent/20 hover:border-brand-accent transition-all leading-tight">
+                      {showSizeGuide 
+                        ? (language === 'be' ? 'Схаваць гід' : 'Скрыть гид') 
+                        : (language === 'be' ? 'Як выглядае адлівант?' : 'Как выглядит отливант?')
+                      }
+                    </span>
+                  </button>
+                </div>
                 <div className="flex flex-col gap-6">
                   {Object.entries(
                     product.variants.reduce((acc, variant) => {
@@ -540,6 +556,22 @@ export default function ProductDetails() {
                     </div>
                   ))}
                 </div>
+                
+                <AnimatePresence initial={false}>
+                  {showSizeGuide && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-2">
+                        <DecantSizeGuide selectedSize={volumeStr} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </div>
@@ -662,6 +694,12 @@ export default function ProductDetails() {
             topNotes={topNotesList}
             heartNotes={heartNotesList}
             baseNotes={baseNotesList}
+            topNotesDuration={product.topNotesDuration}
+            topNotesDuration_be={product.topNotesDuration_be}
+            heartNotesDuration={product.heartNotesDuration}
+            heartNotesDuration_be={product.heartNotesDuration_be}
+            baseNotesDuration={product.baseNotesDuration}
+            baseNotesDuration_be={product.baseNotesDuration_be}
           />
 
           {/* Scent Profiles (Longevity and Sillage) */}

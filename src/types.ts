@@ -80,6 +80,12 @@ export interface Product {
   seoDescription?: string;
   variants?: ProductVariant[];
   popularity?: number;
+  topNotesDuration?: string;
+  topNotesDuration_be?: string;
+  heartNotesDuration?: string;
+  heartNotesDuration_be?: string;
+  baseNotesDuration?: string;
+  baseNotesDuration_be?: string;
 }
 
 export interface User {

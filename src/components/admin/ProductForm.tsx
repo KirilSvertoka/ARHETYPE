@@ -126,7 +126,13 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     season: initialData?.season?.join(', ') || '',
     seoTitle: initialData?.seoTitle || '',
     seoDescription: initialData?.seoDescription || '',
-    variants: initialData?.variants || []
+    variants: initialData?.variants || [],
+    topNotesDuration: (initialData as any)?.topNotesDuration || '',
+    topNotesDuration_be: (initialData as any)?.topNotesDuration_be || '',
+    heartNotesDuration: (initialData as any)?.heartNotesDuration || '',
+    heartNotesDuration_be: (initialData as any)?.heartNotesDuration_be || '',
+    baseNotesDuration: (initialData as any)?.baseNotesDuration || '',
+    baseNotesDuration_be: (initialData as any)?.baseNotesDuration_be || ''
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -427,6 +433,79 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             notes={formData.baseNotes as Note[]} 
             onChange={(notes) => setFormData({...formData, baseNotes: notes})} 
           />
+        </div>
+
+        {/* Custom Scent Disclosure Times */}
+        <div className="pt-6 border-t border-brand-border space-y-4">
+          <h4 className="text-sm font-semibold uppercase tracking-wider text-brand-light">Время раскрытия и звучания нот</h4>
+          <p className="text-xs text-brand-muted leading-relaxed">
+            Вы можете переопределить стандартное время звучания для каждой ступени пирамиды. Если поля оставить пустыми, время будет задано автоматически.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-1">
+              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Верхние ноты (RU)</label>
+              <input 
+                type="text" 
+                value={formData.topNotesDuration} 
+                onChange={e => setFormData({...formData, topNotesDuration: e.target.value})} 
+                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                placeholder="Автоматически: Звучат первые 10–15 минут" 
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Верхнія ноты (BE)</label>
+              <input 
+                type="text" 
+                value={formData.topNotesDuration_be} 
+                onChange={e => setFormData({...formData, topNotesDuration_be: e.target.value})} 
+                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                placeholder="Аўтаматычна: Гучаць першыя 10–15 хвілін" 
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Средние ноты / Сердце (RU)</label>
+              <input 
+                type="text" 
+                value={formData.heartNotesDuration} 
+                onChange={e => setFormData({...formData, heartNotesDuration: e.target.value})} 
+                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                placeholder="Автоматически: Звучат на протяжении 2–4 часов" 
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Сярэднія ноты / Сэрца (BE)</label>
+              <input 
+                type="text" 
+                value={formData.heartNotesDuration_be} 
+                onChange={e => setFormData({...formData, heartNotesDuration_be: e.target.value})} 
+                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                placeholder="Аўтаматычна: Гучаць на працягу 2–4 гадзін" 
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Базовые ноты / Шлейф (RU)</label>
+              <input 
+                type="text" 
+                value={formData.baseNotesDuration} 
+                onChange={e => setFormData({...formData, baseNotesDuration: e.target.value})} 
+                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                placeholder="Автоматически: Шлейф раскрывается до 10–12 часов" 
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Базавыя ноты / Шлейф (BE)</label>
+              <input 
+                type="text" 
+                value={formData.baseNotesDuration_be} 
+                onChange={e => setFormData({...formData, baseNotesDuration_be: e.target.value})} 
+                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                placeholder="Аўтаматычна: Шлейф раскрываецца да 10–12 гадзін" 
+              />
+            </div>
+          </div>
         </div>
 
         <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-brand-border">
