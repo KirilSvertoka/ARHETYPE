@@ -2225,180 +2225,180 @@ async function startServer() {
       };
       ldJson.push(orgSchema, websiteSchema);
 
+      let seoInjected = false;
+
       if (req.path.startsWith('/catalog/')) {
-        const slug = req.path.split('/').pop();
-        if (slug) {
-          const product = db.prepare('SELECT * FROM products WHERE slug = ? OR id = ?').get(slug, slug) as any;
-          if (product) {
-            const pVariants = db.prepare('SELECT * FROM product_variants WHERE product_id = ?').all(product.id) as any[];
-            let lowestPrice = Infinity;
-            pVariants.forEach(v => {
-              if (v.price < lowestPrice) lowestPrice = v.price;
-            });
-            if (lowestPrice === Infinity) lowestPrice = product.price;
+        try {
+          const slug = req.path.split('/').pop();
+          if (slug) {
+            const product = db.prepare('SELECT * FROM products WHERE slug = ? OR id = ?').get(slug, slug) as any;
+            if (product) {
+              const pVariants = db.prepare('SELECT * FROM product_variants WHERE product_id = ?').all(product.id) as any[];
+              let lowestPrice = Infinity;
+              pVariants.forEach(v => {
+                const val = parseFloat(v.price);
+                if (!isNaN(val) && val < lowestPrice) lowestPrice = val;
+              });
+              if (lowestPrice === Infinity) lowestPrice = parseFloat(product.price) || 0;
 
-            let inStock = pVariants.some(v => v.stock > 0);
+              let inStock = pVariants.some(v => v.stock > 0);
 
-            const productReviews = db.prepare('SELECT * FROM reviews WHERE product_id = ? AND status = "Approved"').all(product.id) as any[];
-            
-            const productSchema: any = {
-              "@context": "https://schema.org/",
-              "@type": "Product",
-              "name": `${product.brand} ${product.name}`,
-              "image": [
-                product.imageUrl.startsWith('http') ? product.imageUrl : domain + product.imageUrl
-              ],
-              "description": product.description,
-              "sku": product.id.toString(),
-              "brand": {
-                "@type": "Brand",
-                "name": product.brand
-              },
-              "offers": {
-                "@type": "Offer",
-                "url": `${domain}/catalog/${slug}`,
-                "priceCurrency": "BYN",
-                "price": lowestPrice,
-                "itemCondition": "https://schema.org/NewCondition",
-                "availability": inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-                "priceValidUntil": "2027-12-31",
-                "shippingDetails": {
-                  "@type": "OfferShippingDetails",
-                  "shippingRate": {
-                    "@type": "MonetaryAmount",
-                    "value": 5,
-                    "currency": "BYN"
-                  },
-                  "shippingDestination": {
-                    "@type": "DefinedRegion",
-                    "addressCountry": "BY"
-                  },
-                  "deliveryTime": {
-                    "@type": "ShippingDeliveryTime",
-                    "handlingTime": {
-                      "@type": "QuantitativeValue",
-                      "minValue": 0,
-                      "maxValue": 1,
-                      "unitCode": "DAY"
+              const productReviews = db.prepare('SELECT * FROM reviews WHERE product_id = ? AND status = "Approved"').all(product.id) as any[];
+              
+              const productSchema: any = {
+                "@context": "https://schema.org/",
+                "@type": "Product",
+                "name": `${product.brand} ${product.name}`,
+                "image": [
+                  (product.imageUrl || '').startsWith('http') ? product.imageUrl : domain + (product.imageUrl || '/favicon.png')
+                ],
+                "description": product.description || '',
+                "sku": product.id.toString(),
+                "brand": {
+                  "@type": "Brand",
+                  "name": product.brand
+                },
+                "offers": {
+                  "@type": "Offer",
+                  "url": `${domain}/catalog/${slug}`,
+                  "priceCurrency": "BYN",
+                  "price": lowestPrice,
+                  "itemCondition": "https://schema.org/NewCondition",
+                  "availability": inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                  "priceValidUntil": "2027-12-31",
+                  "shippingDetails": {
+                    "@type": "OfferShippingDetails",
+                    "shippingRate": {
+                      "@type": "MonetaryAmount",
+                      "value": 5,
+                      "currency": "BYN"
                     },
-                    "transitTime": {
-                      "@type": "QuantitativeValue",
-                      "minValue": 1,
-                      "maxValue": 5,
-                      "unitCode": "DAY"
+                    "shippingDestination": {
+                      "@type": "DefinedRegion",
+                      "addressCountry": "BY"
+                    },
+                    "deliveryTime": {
+                      "@type": "ShippingDeliveryTime",
+                      "handlingTime": {
+                        "@type": "QuantitativeValue",
+                        "minValue": 0,
+                        "maxValue": 1,
+                        "unitCode": "DAY"
+                      },
+                      "transitTime": {
+                        "@type": "QuantitativeValue",
+                        "minValue": 1,
+                        "maxValue": 5,
+                        "unitCode": "DAY"
+                      }
                     }
+                  },
+                  "hasMerchantReturnPolicy": {
+                    "@type": "MerchantReturnPolicy",
+                    "applicableCountry": "BY",
+                    "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+                    "merchantReturnDays": 14,
+                    "returnMethod": "https://schema.org/ReturnByMail",
+                    "returnFees": "https://schema.org/FreeReturn",
+                    "merchantReturnLink": `${domain}/page/returns`
                   }
-                },
-                "hasMerchantReturnPolicy": {
-                  "@type": "MerchantReturnPolicy",
-                  "applicableCountry": "BY",
-                  "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
-                  "merchantReturnDays": 14,
-                  "returnMethod": "https://schema.org/ReturnByMail",
-                  "returnFees": "https://schema.org/FreeReturn",
-                  "merchantReturnLink": `${domain}/page/returns`
                 }
-              }
-            };
+              };
 
-            if (productReviews.length > 0) {
-              const avgRating = productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length;
-              productSchema.aggregateRating = {
-                "@type": "AggregateRating",
-                "ratingValue": avgRating.toFixed(1),
-                "reviewCount": productReviews.length
-              };
-              productSchema.review = productReviews.map(r => ({
-                "@type": "Review",
-                "author": {
-                  "@type": "Person",
-                  "name": r.user_name
-                },
-                "datePublished": r.created_at,
-                "reviewBody": r.comment,
-                "reviewRating": {
-                  "@type": "Rating",
-                  "ratingValue": r.rating
+              if (productReviews.length > 0) {
+                const avgRating = productReviews.reduce((sum, r) => sum + r.rating, 0) / productReviews.length;
+                productSchema.aggregateRating = {
+                  "@type": "AggregateRating",
+                  "ratingValue": avgRating.toFixed(1),
+                  "reviewCount": productReviews.length
+                };
+                productSchema.review = productReviews.map(r => ({
+                  "@type": "Review",
+                  "author": {
+                    "@type": "Person",
+                    "name": r.user_name
+                  },
+                  "datePublished": r.created_at,
+                  "reviewBody": r.comment,
+                  "reviewRating": {
+                    "@type": "Rating",
+                    "ratingValue": r.rating
+                  }
+                }));
+              } else {
+                productSchema.aggregateRating = {
+                  "@type": "AggregateRating",
+                  "ratingValue": "5.0",
+                  "reviewCount": "1"
+                };
+                productSchema.review = {
+                  "@type": "Review",
+                  "author": {
+                    "@type": "Person",
+                    "name": "Клиент"
+                  },
+                  "datePublished": "2024-01-01",
+                  "reviewBody": "Прекрасный оригинальный аромат. Рекомендую!",
+                  "reviewRating": {
+                    "@type": "Rating",
+                    "ratingValue": "5"
+                  }
+                };
+              }
+
+              const parseNotes = (str: string) => {
+                if (!str) return [];
+                try {
+                  const p = JSON.parse(str);
+                  return Array.isArray(p) ? p : [];
+                } catch(e) {
+                  return str.split(',').map(s => s.trim()).filter(Boolean);
                 }
-              }));
-            } else {
-              // Default data to satisfy Google Search Console requirements for rich results
-              productSchema.aggregateRating = {
-                "@type": "AggregateRating",
-                "ratingValue": "5.0",
-                "reviewCount": "1"
               };
-              productSchema.review = {
-                "@type": "Review",
-                "author": {
-                  "@type": "Person",
-                  "name": "Клиент"
-                },
-                "datePublished": "2024-01-01",
-                "reviewBody": "Прекрасный оригинальный аромат. Рекомендую!",
-                "reviewRating": {
-                  "@type": "Rating",
-                  "ratingValue": "5"
-                }
+              const tn = parseNotes(product.topNotes);
+              const hn = parseNotes(product.heartNotes);
+              const bn = parseNotes(product.baseNotes);
+
+              const breadcrumbSchema = {
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                  {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Каталог",
+                    "item": `${domain}/catalog`
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": `${product.brand} ${product.name}`,
+                    "item": `${domain}/catalog/${slug}`
+                  }
+                ]
               };
+              ldJson.push(productSchema, breadcrumbSchema);
+              
+              const desc = (product.description || '').substring(0, 150);
+              const metaTags = `
+                <title>${product.brand} ${product.name} | АРХЕТИП</title>
+                <meta name="description" content="${desc}..." />
+                <meta property="og:title" content="${product.brand} ${product.name} | АРХЕТИП" />
+                <meta property="og:description" content="${desc}..." />
+                <meta property="og:image" content="${(product.imageUrl || '').startsWith('http') ? product.imageUrl : domain + (product.imageUrl || '/favicon.png')}" />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="${domain}${req.path}" />
+                <link rel="canonical" href="${domain}${req.path}" />
+                <link rel="icon" href="${domain}/favicon.png" type="image/png" />
+                <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
+                <link rel="apple-touch-icon" href="${domain}/favicon.png" />
+              `;
+              html = html.replace('</head>', `${metaTags}</head>`);
+              seoInjected = true;
             }
-
-            // Helpers for notes reading
-            const parseNotes = (str: string) => {
-              if (!str) return [];
-              try {
-                const p = JSON.parse(str);
-                return Array.isArray(p) ? p : [];
-              } catch(e) {
-                return str.split(',').map(s => s.trim()).filter(Boolean);
-              }
-            };
-            const tn = parseNotes(product.topNotes);
-            const hn = parseNotes(product.heartNotes);
-            const bn = parseNotes(product.baseNotes);
-            
-            const allIngredients = [...tn, ...hn, ...bn].map(ing => {
-              if (typeof ing === 'string') return ing;
-              if (ing && typeof ing === 'object' && (ing as any).name) return (ing as any).name;
-              return null;
-            }).filter(Boolean) as string[];
-
-            const breadcrumbSchema = {
-              "@context": "https://schema.org",
-              "@type": "BreadcrumbList",
-              "itemListElement": [
-                {
-                  "@type": "ListItem",
-                  "position": 1,
-                  "name": "Каталог",
-                  "item": `${domain}/catalog`
-                },
-                {
-                  "@type": "ListItem",
-                  "position": 2,
-                  "name": `${product.brand} ${product.name}`,
-                  "item": `${domain}/catalog/${slug}`
-                }
-              ]
-            };
-            ldJson.push(productSchema, breadcrumbSchema);
-            
-            // Also inject some basic meta tags for safety
-            const metaTags = `
-              <title>${product.brand} ${product.name} | АРХЕТИП</title>
-              <meta name="description" content="${product.description.substring(0, 150)}..." />
-              <meta property="og:title" content="${product.brand} ${product.name} | АРХЕТИП" />
-              <meta property="og:description" content="${product.description.substring(0, 150)}..." />
-              <meta property="og:image" content="${product.imageUrl.startsWith('http') ? product.imageUrl : domain + product.imageUrl}" />
-              <meta property="og:type" content="website" />
-              <meta property="og:url" content="${domain}${req.path}" />
-              <link rel="canonical" href="${domain}${req.path}" />
-              <link rel="icon" href="${domain}/favicon.png" type="image/png" />
-              <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
-              <link rel="apple-touch-icon" href="${domain}/favicon.png" />
-            `;
-            html = html.replace('</head>', `${metaTags}</head>`);
           }
+        } catch (error) {
+          console.error('Failed to inject Product SEO schema/meta', error);
         }
       } else if (req.path === '/p/faq' || req.path.startsWith('/p/faq')) {
         try {
@@ -2431,21 +2431,27 @@ async function startServer() {
               <link rel="apple-touch-icon" href="${domain}/favicon.png" />
             `;
             html = html.replace('</head>', `${faqMeta}</head>`);
+            seoInjected = true;
           }
         } catch (error) {
           console.error('Failed to inject FAQ Schema', error);
         }
-      } else {
-        // For non-product pages, still ensure meta and favicon
-        const genSet = JSON.parse(db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}');
-        const defaultTitle = genSet.siteName || "АРХЕТИП | онлайн-магазин парфюмерии";
-        const metaTags = `
-          <link rel="icon" href="${domain}/favicon.png" type="image/png" />
-          <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
-          <link rel="apple-touch-icon" href="${domain}/favicon.png" />
-        `;
-        if (!html.includes('<link rel="icon"')) {
-           html = html.replace('</head>', `${metaTags}</head>`);
+      }
+
+      if (!seoInjected) {
+        try {
+          const genSet = JSON.parse(db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}');
+          const defaultTitle = genSet.siteName || "АРХЕТИП | онлайн-магазин парфюмерии";
+          const metaTags = `
+            <link rel="icon" href="${domain}/favicon.png" type="image/png" />
+            <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
+            <link rel="apple-touch-icon" href="${domain}/favicon.png" />
+          `;
+          if (!html.includes('<link rel="icon"')) {
+            html = html.replace('</head>', `${metaTags}</head>`);
+          }
+        } catch (e) {
+          console.error('Failed to restore generic meta tags:', e);
         }
       }
 

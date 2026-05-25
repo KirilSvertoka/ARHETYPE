@@ -29,6 +29,8 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
     product.variants && product.variants.length > 0 ? product.variants[0].id : undefined
   );
   const [flyingItems, setFlyingItems] = useState<FlyingItem[]>([]);
+  const [isHovered, setIsHovered] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   const productUrl = `/catalog/${product.slug || product.id}`;
 
@@ -54,6 +56,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
     e.preventDefault();
     e.stopPropagation();
     setSelectedVariantId(variantId);
+    setHasInteracted(true);
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
@@ -70,13 +73,28 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
     navigate(`/catalog?brand=${encodeURIComponent(product.brand)}`);
   };
 
-  const formattedPrice = product.variants && product.variants.length > 0 
-    ? `${language === 'be' ? 'ад' : 'от'} ${(() => {
-        const prices = product.variants.map(v => typeof v.price === 'number' ? v.price : parseFloat(v.price as string));
-        const minPrice = Math.min(...prices.filter(p => !isNaN(p)));
-        return isFinite(minPrice) ? minPrice.toFixed(2) : product.variants[0].price;
-      })()}` 
-    : (typeof product.price === 'number' ? product.price.toFixed(2) : product.price);
+  const getSelectedVariantPrice = () => {
+    if (selectedVariantId && product.variants && product.variants.length > 0) {
+      const selected = product.variants.find(v => v.id === selectedVariantId);
+      if (selected) {
+        const val = typeof selected.price === 'number' ? selected.price : parseFloat(selected.price as string);
+        return isNaN(val) ? selected.price : val.toFixed(2);
+      }
+    }
+    return null;
+  };
+
+  const selectedPriceValue = getSelectedVariantPrice();
+
+  const formattedPrice = (variant !== 'standard' && (isHovered || hasInteracted) && selectedPriceValue !== null)
+    ? selectedPriceValue
+    : (product.variants && product.variants.length > 0 
+        ? `${language === 'be' ? 'ад' : 'от'} ${(() => {
+            const prices = product.variants.map(v => typeof v.price === 'number' ? v.price : parseFloat(v.price as string));
+            const minPrice = Math.min(...prices.filter(p => !isNaN(p)));
+            return isFinite(minPrice) ? minPrice.toFixed(2) : product.variants[0].price;
+          })()}` 
+        : (typeof product.price === 'number' ? product.price.toFixed(2) : product.price));
 
   const isOutOfStock = product.variants && product.variants.every(v => v.stock === 0);
 
@@ -85,6 +103,8 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
       ref={ref} 
       initial="initial"
       whileHover="hover"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="block w-full h-full group overflow-hidden bg-brand-bg relative flex flex-col"
     >
       <AnimatePresence>
@@ -229,7 +249,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                         className="pointer-events-auto flex flex-col items-start gap-4 w-full"
                       >
                         {product.variants && product.variants.length > 0 && (
-                          <div className="flex flex-col gap-3 w-full max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                          <div className="flex flex-col gap-3 w-full max-h-48 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none] pr-1">
                             {Object.entries(
                               product.variants.reduce((acc, variant) => {
                                 const type = getVariantType(variant, language);

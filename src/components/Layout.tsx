@@ -196,17 +196,16 @@ export default function Layout() {
 
       {!isLoading && (
         <div className="min-h-screen bg-brand-bg text-brand-light font-sans selection:bg-brand-accent/50 transition-colors duration-300 flex flex-col">
-            {config?.announcement?.active && (
-              <div className="bg-brand-accent text-white text-center py-2 px-4 text-[9px] sm:text-[11px] font-medium uppercase tracking-[0.25em] relative z-50">
-                {language === 'be' && config.announcement.text_be ? config.announcement.text_be : config.announcement.text}
-              </div>
-            )}
-            
             <header className={`sticky top-0 z-50 transition-all duration-300 ${
               isScrolled 
                 ? 'bg-brand-bg/85 backdrop-blur-md border-b border-brand-light/5 shadow-[0_2px_15px_-4px_rgba(17,17,17,0.04)]' 
                 : 'bg-brand-bg/100 border-b border-brand-light/5'
             }`}>
+              {config?.announcement?.active && (
+                <div className="bg-brand-accent text-white text-center py-2 px-4 text-[9px] sm:text-[11px] font-medium uppercase tracking-[0.25em] relative z-50">
+                  {language === 'be' && config.announcement.text_be ? config.announcement.text_be : config.announcement.text}
+                </div>
+              )}
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className={`flex justify-between items-center transition-all duration-300 ${isScrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'} md:grid md:grid-cols-3`}>
                   
