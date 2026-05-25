@@ -658,138 +658,11 @@ export default function ProductDetails() {
         
         {/* Accordions */}
         <div className="lg:col-span-5 space-y-4">
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-muted mb-4">
-            {language === 'be' ? 'Парфумерныя ноты' : 'Парфюмерные ноты'}
-          </h2>
-          
-          {/* Top Notes Accordion */}
-          <div className="border border-brand-border/60 bg-brand-hover/5 rounded-none overflow-hidden hover:border-brand-accent/30 transition-all">
-            <button
-              onClick={() => setActiveNotesAccordion(activeNotesAccordion === 'top' ? null : 'top')}
-              className="w-full flex justify-between items-center p-5 text-left text-brand-light hover:text-brand-accent transition-colors"
-            >
-              <span className="text-xs font-semibold uppercase tracking-[0.15em] flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${activeNotesAccordion === 'top' ? 'bg-brand-accent animate-pulse' : 'bg-brand-muted'}`} />
-                {language === 'be' ? 'Верхнія ноты' : 'Верхние ноты'}
-              </span>
-              <ChevronDown className={`w-4 h-4 text-brand-muted transition-transform duration-300 ${activeNotesAccordion === 'top' ? 'rotate-180 text-brand-accent' : ''}`} />
-            </button>
-            <AnimatePresence initial={false}>
-              {activeNotesAccordion === 'top' && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="overflow-hidden border-t border-brand-border/40"
-                >
-                  <div className="p-5 space-y-4 bg-brand-hover/10">
-                    <p className="text-[11px] text-brand-muted leading-relaxed">
-                      {language === 'be' 
-                        ? 'Стварюць першае ўражанне. Раскрываюцца адразу пры нанясенні і гучаць на працягу першых 10-15 хвілін.' 
-                        : 'Создают первое впечатление об аромате. Легкие, летучие акценты раскрываются сразу при нанесении и звучат на протяжении первых 10-15 минут.'}
-                    </p>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {topNotesList.map((note: any, idx: number) => (
-                        <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-brand-bg border border-brand-border/60 text-brand-light text-[10px] font-medium uppercase tracking-[0.1em] rounded-none animate-fade-in">
-                          {getNoteStringVal(note)}
-                        </span>
-                      ))}
-                      {topNotesList.length === 0 && (
-                        <span className="text-xs text-brand-muted italic">{language === 'be' ? 'Няма звестак' : 'Нет данных'}</span>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Heart Notes Accordion */}
-          <div className="border border-brand-border/60 bg-brand-hover/5 rounded-none overflow-hidden hover:border-brand-accent/30 transition-all">
-            <button
-              onClick={() => setActiveNotesAccordion(activeNotesAccordion === 'heart' ? null : 'heart')}
-              className="w-full flex justify-between items-center p-5 text-left text-brand-light hover:text-brand-accent transition-colors"
-            >
-              <span className="text-xs font-semibold uppercase tracking-[0.15em] flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${activeNotesAccordion === 'heart' ? 'bg-brand-accent animate-pulse' : 'bg-brand-muted'}`} />
-                {language === 'be' ? 'Сярэднія ноты' : 'Средние ноты'}
-              </span>
-              <ChevronDown className={`w-4 h-4 text-brand-muted transition-transform duration-300 ${activeNotesAccordion === 'heart' ? 'rotate-180 text-brand-accent' : ''}`} />
-            </button>
-            <AnimatePresence initial={false}>
-              {activeNotesAccordion === 'heart' && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="overflow-hidden border-t border-brand-border/40"
-                >
-                  <div className="p-5 space-y-4 bg-brand-hover/10">
-                    <p className="text-[11px] text-brand-muted leading-relaxed">
-                      {language === 'be' 
-                        ? 'Сэрца водару. Раскрываюцца пасля верхніх нот і вызначаюць праўдзівы кірунак, тэмперамент і характар кампазіцыі.' 
-                        : 'Ядро и сердце композиции. Раскрываются вслед за верхними нотами, звучат от 2 до 4 часов и определяют истинный характер.'}
-                    </p>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {heartNotesList.map((note: any, idx: number) => (
-                        <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-brand-bg border border-brand-border/60 text-brand-light text-[10px] font-medium uppercase tracking-[0.1em] rounded-none animate-fade-in">
-                          {getNoteStringVal(note)}
-                        </span>
-                      ))}
-                      {heartNotesList.length === 0 && (
-                        <span className="text-xs text-brand-muted italic">{language === 'be' ? 'Няма звестак' : 'Нет данных'}</span>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Base Notes Accordion */}
-          <div className="border border-brand-border/60 bg-brand-hover/5 rounded-none overflow-hidden hover:border-brand-accent/30 transition-all">
-            <button
-              onClick={() => setActiveNotesAccordion(activeNotesAccordion === 'base' ? null : 'base')}
-              className="w-full flex justify-between items-center p-5 text-left text-brand-light hover:text-brand-accent transition-colors"
-            >
-              <span className="text-xs font-semibold uppercase tracking-[0.15em] flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${activeNotesAccordion === 'base' ? 'bg-brand-accent animate-pulse' : 'bg-brand-muted'}`} />
-                {language === 'be' ? 'Базавыя ноты' : 'Базовые ноты'}
-              </span>
-              <ChevronDown className={`w-4 h-4 text-brand-muted transition-transform duration-300 ${activeNotesAccordion === 'base' ? 'rotate-180 text-brand-accent' : ''}`} />
-            </button>
-            <AnimatePresence initial={false}>
-              {activeNotesAccordion === 'base' && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="overflow-hidden border-t border-brand-border/40"
-                >
-                  <div className="p-5 space-y-4 bg-brand-hover/10">
-                    <p className="text-[11px] text-brand-muted leading-relaxed">
-                      {language === 'be' 
-                        ? 'Шлейф водару. Глыбокія і стойкія інтэнсіўныя кампаненты, якія замацоўваюць гучанне на скуры да 10-12 гадзін.' 
-                        : 'Глубокие и стойкие аккорды фиксируют парфюм на коже до 10-12 часов, оставляя за собой благородный шлейф.'}
-                    </p>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {baseNotesList.map((note: any, idx: number) => (
-                        <span key={idx} className="inline-flex items-center px-2.5 py-1 bg-brand-bg border border-brand-border/60 text-brand-light text-[10px] font-medium uppercase tracking-[0.1em] rounded-none animate-fade-in">
-                          {getNoteStringVal(note)}
-                        </span>
-                      ))}
-                      {baseNotesList.length === 0 && (
-                        <span className="text-xs text-brand-muted italic">{language === 'be' ? 'Няма звестак' : 'Нет данных'}</span>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <NoteDiagram
+            topNotes={topNotesList}
+            heartNotes={heartNotesList}
+            baseNotes={baseNotesList}
+          />
 
           {/* Scent Profiles (Longevity and Sillage) */}
           <div className="mt-8 pt-6 border-t border-brand-border/40 grid grid-cols-2 gap-6 bg-brand-hover/5 p-5 border border-brand-border/45">
@@ -802,11 +675,11 @@ export default function ProductDetails() {
               </span>
               <div className="w-full h-[3px] bg-brand-border/30 rounded-full mt-2.5 overflow-hidden relative">
                 <motion.div 
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${product.longevity || 70}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, ease: "circOut" }}
-                  className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
+                   initial={{ width: 0 }}
+                   whileInView={{ width: `${product.longevity || 70}%` }}
+                   viewport={{ once: true }}
+                   transition={{ duration: 1, ease: "circOut" }}
+                   className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
                 />
               </div>
             </div>
@@ -820,16 +693,15 @@ export default function ProductDetails() {
               </span>
               <div className="w-full h-[3px] bg-brand-border/30 rounded-full mt-2.5 overflow-hidden relative">
                 <motion.div 
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${product.sillage || 60}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, ease: "circOut" }}
-                  className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
+                   initial={{ width: 0 }}
+                   whileInView={{ width: `${product.sillage || 60}%` }}
+                   viewport={{ once: true }}
+                   transition={{ duration: 1, ease: "circOut" }}
+                   className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
                 />
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
