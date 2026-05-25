@@ -143,7 +143,9 @@ db.exec(`
     tags TEXT DEFAULT '[]',
     popularity INTEGER DEFAULT 0,
     longevity INTEGER DEFAULT 70,
-    sillage INTEGER DEFAULT 60
+    sillage INTEGER DEFAULT 60,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
   CREATE TABLE IF NOT EXISTS product_variants (
@@ -433,8 +435,17 @@ const migrations = [
   "ALTER TABLE products ADD COLUMN accords TEXT DEFAULT '[]'",
   "ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'При получении'",
   "ALTER TABLE orders ADD COLUMN comment TEXT",
-  "ALTER TABLE product_variants ADD COLUMN variant_type TEXT DEFAULT 'decant'"
+  "ALTER TABLE product_variants ADD COLUMN variant_type TEXT DEFAULT 'decant'",
+  "ALTER TABLE products ADD COLUMN created_at DATETIME",
+  "ALTER TABLE products ADD COLUMN updated_at DATETIME"
 ];
+
+// Populate newly added fields
+try {
+  db.prepare("UPDATE products SET created_at = datetime('now'), updated_at = datetime('now') WHERE created_at IS NULL").run();
+} catch (e) {
+  // Ignored if column doesn't exist yet
+}
 
 function slugify(text: string) {
   const cyrillicToLatinMap: Record<string, string> = {
@@ -896,45 +907,112 @@ db.prepare(`
 app.get('/sitemap.xml', (req, res) => {
   try {
     const domain = req.protocol + '://' + req.get('host');
-    const products = db.prepare('SELECT slug FROM products').all() as { slug: string }[];
     
+    // Helper to format dates to YYYY-MM-DD
+    const formatSitemapDate = (dbDate?: string | null) => {
+      if (!dbDate) return new Date().toISOString().split('T')[0];
+      try {
+        const normalized = dbDate.includes(' ') && !dbDate.includes('T')
+          ? dbDate.replace(' ', 'T') + 'Z'
+          : dbDate;
+        const d = new Date(normalized);
+        if (!isNaN(d.getTime())) {
+          return d.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        // fallback
+      }
+      return new Date().toISOString().split('T')[0];
+    };
+
+    // Query all products with their latest modified or created dates
+    const products = db.prepare("SELECT slug, COALESCE(updated_at, created_at) as mdate FROM products WHERE slug IS NOT NULL AND slug != ''").all() as { slug: string; mdate?: string }[];
+    
+    // Query all dynamic CMS pages with their updated dates
+    const cmsPages = db.prepare('SELECT id, updated_at FROM cms_pages').all() as { id: string; updated_at?: string }[];
+
+    // Determine the overall latest dates in the DB to represent the last time content changed
+    let latestProductDateStr = null;
+    let latestPageDateStr = null;
+    let latestReviewDateStr = null;
+
+    try {
+      const pMax = db.prepare('SELECT MAX(COALESCE(updated_at, created_at)) as latest FROM products').get() as { latest?: string };
+      latestProductDateStr = pMax?.latest;
+    } catch (e) {}
+
+    try {
+      const cMax = db.prepare('SELECT MAX(updated_at) as latest FROM cms_pages').get() as { latest?: string };
+      latestPageDateStr = cMax?.latest;
+    } catch (e) {}
+
+    try {
+      const rMax = db.prepare('SELECT MAX(created_at) as latest FROM reviews WHERE status = "Approved"').get() as { latest?: string };
+      latestReviewDateStr = rMax?.latest;
+    } catch (e) {}
+
+    const productLastMod = formatSitemapDate(latestProductDateStr);
+    const pageLastMod = formatSitemapDate(latestPageDateStr);
+    const reviewLastMod = formatSitemapDate(latestReviewDateStr || latestProductDateStr);
+
+    // Site overall lastmod is the max of pages and products
+    const siteLastMod = new Date(productLastMod) > new Date(pageLastMod) ? productLastMod : pageLastMod;
+
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${domain}/</loc>
+    <lastmod>${siteLastMod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>${domain}/catalog</loc>
+    <lastmod>${productLastMod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>${domain}/about</loc>
-    <changefreq>monthly</changefreq>
+    <lastmod>${pageLastMod}</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>${domain}/contacts</loc>
+    <lastmod>${pageLastMod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>${domain}/reviews</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>${reviewLastMod}</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>`;
 
+    // Append dynamic CMS Pages
+    cmsPages.forEach(page => {
+      const pageDate = formatSitemapDate(page.updated_at);
+      xml += `
+  <url>
+    <loc>${domain}/p/${page.id}</loc>
+    <lastmod>${pageDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    });
+
+    // Append dynamic Products (automatically updated when new products are added!)
     products.forEach(product => {
-      if (product.slug) {
-        xml += `
+      const prodDate = formatSitemapDate(product.mdate);
+      xml += `
   <url>
     <loc>${domain}/catalog/${product.slug}</loc>
+    <lastmod>${prodDate}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>`;
-      }
     });
 
     xml += `\n</urlset>`;
@@ -942,6 +1020,7 @@ app.get('/sitemap.xml', (req, res) => {
     res.type('application/xml');
     res.send(xml);
   } catch (error) {
+    console.error('Sitemap generation error:', error);
     res.status(500).send('Error generating sitemap');
   }
 });
@@ -1812,8 +1891,8 @@ app.post('/api/products', requireAuth, (req, res) => {
   
   try {
     const insert = db.prepare(`
-      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage)
-      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage)
+      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage, created_at, updated_at)
+      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `);
     
     const result = insert.run({
@@ -1878,7 +1957,8 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
       UPDATE products 
       SET name = @name, brand = @brand, description = @description, description_be = @description_be, imageUrl = @imageUrl, images = @images,
           price = @price, topNotes = @topNotes, heartNotes = @heartNotes, baseNotes = @baseNotes, accords = @accords, gender = @gender,
-          scentFamilies = @scentFamilies, scentFamilies_be = @scentFamilies_be, concentration = @concentration, stockThreshold = @stockThreshold, tags = @tags, tags_be = @tags_be, slug = @slug, season = @season, seo_title = @seoTitle, seo_description = @seoDescription, longevity = @longevity, sillage = @sillage
+          scentFamilies = @scentFamilies, scentFamilies_be = @scentFamilies_be, concentration = @concentration, stockThreshold = @stockThreshold, tags = @tags, tags_be = @tags_be, slug = @slug, season = @season, seo_title = @seoTitle, seo_description = @seoDescription, longevity = @longevity, sillage = @sillage,
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = @id
     `).run({
       id, name, brand, description, description_be: description_be || null, imageUrl,
@@ -2225,7 +2305,10 @@ async function startServer() {
       };
       ldJson.push(orgSchema, websiteSchema);
 
-      let seoInjected = false;
+      let customTitle = "АРХЕТИП | Купить оригинальную нишевую парфюмерию на распив и во флаконах в Беларуси";
+      let customDescription = "Эксклюзивная селективная парфюмерия на распив (отливанты) и во флаконах в Беларуси. Только оригинальные ароматы с быстрой доставкой по Минску, Гродно и всем регионам.";
+      let customKeywords = "купить парфюм, нишевая парфюмерия, селективные духи, распив парфюмерии беларусь, отливанты минск, парфюм гродно, оригинальные духи купить, духи на распив, аромабоксы";
+      let customImage = `${domain}/favicon.png`;
 
       if (req.path.startsWith('/catalog/')) {
         try {
@@ -2346,19 +2429,6 @@ async function startServer() {
                 };
               }
 
-              const parseNotes = (str: string) => {
-                if (!str) return [];
-                try {
-                  const p = JSON.parse(str);
-                  return Array.isArray(p) ? p : [];
-                } catch(e) {
-                  return str.split(',').map(s => s.trim()).filter(Boolean);
-                }
-              };
-              const tn = parseNotes(product.topNotes);
-              const hn = parseNotes(product.heartNotes);
-              const bn = parseNotes(product.baseNotes);
-
               const breadcrumbSchema = {
                 "@context": "https://schema.org",
                 "@type": "BreadcrumbList",
@@ -2379,22 +2449,10 @@ async function startServer() {
               };
               ldJson.push(productSchema, breadcrumbSchema);
               
-              const desc = (product.description || '').substring(0, 150);
-              const metaTags = `
-                <title>${product.brand} ${product.name} | АРХЕТИП</title>
-                <meta name="description" content="${desc}..." />
-                <meta property="og:title" content="${product.brand} ${product.name} | АРХЕТИП" />
-                <meta property="og:description" content="${desc}..." />
-                <meta property="og:image" content="${(product.imageUrl || '').startsWith('http') ? product.imageUrl : domain + (product.imageUrl || '/favicon.png')}" />
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content="${domain}${req.path}" />
-                <link rel="canonical" href="${domain}${req.path}" />
-                <link rel="icon" href="${domain}/favicon.png" type="image/png" />
-                <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
-                <link rel="apple-touch-icon" href="${domain}/favicon.png" />
-              `;
-              html = html.replace('</head>', `${metaTags}</head>`);
-              seoInjected = true;
+              customTitle = `${product.brand} ${product.name} — Купить отливант на распив и оригинал | АРХЕТИП`;
+              customDescription = (product.description || '').substring(0, 150).trim() + "... Оригинальная нишевая парфюмерия с удобным распивом на выбор и быстрой доставкой.";
+              customKeywords = `${product.brand}, ${product.name}, оригинальный ${product.name}, купить ${product.name} в беларуси, духи на распив, отливанты`;
+              customImage = (product.imageUrl || '').startsWith('http') ? product.imageUrl : domain + (product.imageUrl || '/favicon.png');
             }
           }
         } catch (error) {
@@ -2418,42 +2476,66 @@ async function startServer() {
             };
             ldJson.push(faqSchema);
             
-            const faqMeta = `
-              <title>Часто задаваемые вопросы (FAQ) | АРХЕТИП</title>
-              <meta name="description" content="Ответы на популярные вопросы о покупке оригинальной нишевой парфюмерии, доставке, оплате и отливантах в магазине Archetype." />
-              <meta property="og:title" content="Часто задаваемые вопросы (FAQ) | АРХЕТИП" />
-              <meta property="og:description" content="Ответы на популярные вопросы о покупке оригинальной нишевой парфюмерии, доставке, оплате и отливантах в магазине Archetype." />
-              <meta property="og:type" content="website" />
-              <meta property="og:url" content="${domain}${req.path}" />
-              <link rel="canonical" href="${domain}${req.path}" />
-              <link rel="icon" href="${domain}/favicon.png" type="image/png" />
-              <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
-              <link rel="apple-touch-icon" href="${domain}/favicon.png" />
-            `;
-            html = html.replace('</head>', `${faqMeta}</head>`);
-            seoInjected = true;
+            customTitle = "Часто задаваемые вопросы (FAQ) о распиве и оригинальной парфюмерии | АРХЕТИП";
+            customDescription = "Ответы на популярные вопросы о подборе оригинальной нишевой парфюмерии, доставке по Беларуси, отличии отливантов от тестеров в магазине Archetype.";
+            customKeywords = "faq, вопросы и ответы, парфюмерия беларусь отзывы, доставка отливантов, оригинальный парфюм";
           }
         } catch (error) {
           console.error('Failed to inject FAQ Schema', error);
         }
-      }
-
-      if (!seoInjected) {
-        try {
-          const genSet = JSON.parse(db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}');
-          const defaultTitle = genSet.siteName || "АРХЕТИП | онлайн-магазин парфюмерии";
-          const metaTags = `
-            <link rel="icon" href="${domain}/favicon.png" type="image/png" />
-            <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
-            <link rel="apple-touch-icon" href="${domain}/favicon.png" />
-          `;
-          if (!html.includes('<link rel="icon"')) {
-            html = html.replace('</head>', `${metaTags}</head>`);
+      } else if (req.path === '/catalog' || req.path === '/catalog/') {
+        customTitle = "Каталог селективного и нишевого парфюма — Купить отливанты с доставкой по РБ | АРХЕТИП";
+        customDescription = "Каталог оригинальных селективных духов от лучших нишевых брендов (Tom Ford, Byredo, Kilian, Kurkdjian, Le Labo) в объемах 2, 5, 10 и 100 мл. Доставка по всей Беларуси.";
+        customKeywords = "каталог парфюма, нишевые бренды, оригинальные духи купить в беларуси, заказать отливанты, селективная парфюмерия каталог, распив духи";
+      } else if (req.path === '/contacts' || req.path === '/contacts/') {
+        customTitle = "Контакты интернет-магазина АРХЕТИП — Нишевая парфюмерия в Беларуси";
+        customDescription = "Свяжитесь с нами для консультации и заказа оригинальной селективной парфюмерии: телефон, Telegram, Instagram. Быстрая доставка по Гродно, Минску и РБ.";
+        customKeywords = "контакты, заказать парфюм, оригинальные духи беларусь, архетип контакты";
+      } else if (req.path === '/about' || req.path === '/about/') {
+        customTitle = "О магазине АРХЕТИП — Эксклюзивный парфюм и селективная парфюмерия на распив";
+        customDescription = "АРХЕТИП — ваш надежный путеводитель в мире селективных ароматов. Мы предлагаем 100% оригинальную продукцию, парфюмерные боксы и удобный распив духов.";
+        customKeywords = "о магазине, о нас, оригинальная парфюмерия, архетип духи";
+      } else if (req.path === '/reviews' || req.path === '/reviews/') {
+        customTitle = "Отзывы покупателей о магазине АРХЕТИП — Оригинальные духи и отливанты";
+        customDescription = "Искренние отзывы клиентов о покупке оригинальной нишевой парфюмерии и качестве обслуживания в магазине АРХЕТИП. Оценки шлейфа, стойкости духов.";
+        customKeywords = "отзывы, парфюм отзывы, оригинальные духи отзывы, архетип отзывы клиентов";
+      } else if (req.path.startsWith('/p/')) {
+        const id = req.path.split('/').pop();
+        if (id) {
+          try {
+            const page = db.prepare('SELECT * FROM cms_pages WHERE id = ?').get(id) as any;
+            if (page) {
+              customTitle = `${page.title} | АРХЕТИП — Нишевая парфюмерия в Беларуси`;
+              const cleanContent = (page.content || '')
+                .replace(/<[^>]*>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+              customDescription = cleanContent.substring(0, 160).trim() + "...";
+              customKeywords = `${page.title.toLowerCase()}, архетип, нишевая парфюмерия беларусь`;
+            }
+          } catch (e) {
+            console.error('Failed to inject CMS page seo', e);
           }
-        } catch (e) {
-          console.error('Failed to restore generic meta tags:', e);
         }
       }
+
+      // Replace duplicate-prone elements
+      html = html.replace(/<title>[^<]*<\/title>/i, `<title>${customTitle}</title>`);
+      html = html.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${customDescription}" />`);
+
+      const finalMetaTags = `
+        <meta name="keywords" content="${customKeywords}" />
+        <meta property="og:title" content="${customTitle}" />
+        <meta property="og:description" content="${customDescription}" />
+        <meta property="og:image" content="${customImage}" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="${domain}${req.path}" />
+        <link rel="canonical" href="${domain}${req.path}" />
+        <link rel="icon" href="${domain}/favicon.png" type="image/png" />
+        <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="${domain}/favicon.png" />
+      `;
+      html = html.replace('</head>', `${finalMetaTags}</head>`);
 
       const scriptTag = `<script type="application/ld+json">${JSON.stringify(ldJson)}</script>`;
       html = html.replace('</head>', `${scriptTag}</head>`);
