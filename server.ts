@@ -1843,7 +1843,7 @@ app.get('/api/products/:id/reviews', (req, res) => {
   }
 });
 
-app.post('/api/products/:id/reviews', (req, res) => {
+app.post('/api/products/:id/reviews', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { user_name, rating, comment } = req.body;
 
@@ -1863,8 +1863,34 @@ app.post('/api/products/:id/reviews', (req, res) => {
   try {
     db.prepare('INSERT INTO reviews (product_id, user_name, rating, comment) VALUES (?, ?, ?, ?)')
       .run(id, user_name, ratingNum, comment);
+
+    // Send Telegram Notification on new review
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (botToken && chatId) {
+      try {
+        const product = db.prepare('SELECT brand, name FROM products WHERE id = ?').get(id) as any;
+        const productName = product ? `${product.brand} ${product.name}` : `ID ${id}`;
+        const stars = '⭐️'.repeat(ratingNum);
+        const text = `📬 *Новый отзыв на сайте*\n\n📦 *Товар:* ${productName}\n👤 *Автор:* ${user_name}\n⭐ *Оценка:* ${ratingNum}/5 ${stars}\n💬 *Комментарий:* ${comment}`;
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text,
+            parse_mode: 'Markdown',
+          }),
+        });
+      } catch (tgError) {
+        console.error('Failed to send Telegram review notification:', tgError);
+      }
+    }
+
     res.status(201).json({ success: true });
   } catch (error) {
+    console.error('Submit review error:', error);
     res.status(500).json({ error: 'Failed to submit review' });
   }
 });
