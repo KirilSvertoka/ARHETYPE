@@ -96,6 +96,11 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
           })()}` 
         : (typeof product.price === 'number' ? product.price.toFixed(2) : product.price));
 
+  const formatPriceWithCurrency = (priceStr: string | number) => {
+    const s = String(priceStr);
+    return /\d/.test(s) ? `${s} ${t('currency')}` : s;
+  };
+
   const isOutOfStock = product.variants && product.variants.every(v => v.stock === 0);
 
   return (
@@ -194,7 +199,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                 <h3 className="font-serif text-base sm:text-lg md:text-xl leading-tight text-white/95">{product.name}</h3>
                 <div className="flex flex-col items-end shrink-0">
                   <span className="text-xs sm:text-sm md:text-base font-light font-mono whitespace-nowrap text-white">
-                    {formattedPrice} {t('currency')}
+                    {formatPriceWithCurrency(formattedPrice)}
                   </span>
                   {isOutOfStock && (
                     <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-red-500 font-bold mt-0.5">
@@ -221,7 +226,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                   <h3 className="font-serif text-lg sm:text-xl md:text-2xl leading-tight" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{product.name}</h3>
                   <div className="flex flex-col items-start md:items-end shrink-0">
                     <span className="text-[11px] sm:text-base md:text-lg font-light whitespace-nowrap" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
-                      {formattedPrice} {t('currency')}
+                      {formatPriceWithCurrency(formattedPrice)}
                     </span>
                     {isOutOfStock && (
                       <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-red-400 font-bold" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
@@ -322,7 +327,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
           </div>
           <div className="flex justify-between items-end mt-2 pt-1 border-t border-brand-border/20 w-full">
             <span className="text-xs sm:text-sm font-light font-mono text-brand-light">
-              {formattedPrice} {t('currency')}
+              {formatPriceWithCurrency(formattedPrice)}
             </span>
             {isOutOfStock && (
               <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-red-500 font-bold">

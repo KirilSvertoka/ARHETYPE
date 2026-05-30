@@ -260,7 +260,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                             </div>
                             <div className="text-right shrink-0">
                               <span className="block text-xs font-mono font-medium text-brand-light">
-                                {product.price} {t('currency')}
+                                {/\d/.test(String(product.price)) ? `${product.price} ${t('currency')}` : product.price}
                               </span>
                               <span className="text-[9px] text-brand-muted font-light uppercase tracking-wider block">
                                 {product.concentration}

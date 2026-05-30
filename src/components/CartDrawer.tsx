@@ -177,7 +177,7 @@ export default function CartDrawer() {
             initial={{ x: '100%', opacity: 0.95 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0.95 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 220 }}
+            transition={{ type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.55 }}
             className="fixed top-0 right-0 h-full w-full max-w-md bg-brand-bg shadow-2xl z-[90] flex flex-col border-l border-brand-border/40"
           >
             <div className="p-6 border-b border-brand-border flex justify-between items-center bg-brand-hover/5">
@@ -526,7 +526,10 @@ export default function CartDrawer() {
                                   </button>
                                 </div>
                                 <span className="font-serif lining-nums text-[13px] font-medium text-brand-light">
-                                  {typeof item.price === 'number' ? item.price.toFixed(2) : item.price} {t('currency')}
+                                  {(() => {
+                                    const formatted = typeof item.price === 'number' ? item.price.toFixed(2) : item.price;
+                                    return /\d/.test(String(formatted)) ? `${formatted} ${t('currency')}` : formatted;
+                                  })()}
                                 </span>
                               </div>
                             </div>

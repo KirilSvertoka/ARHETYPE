@@ -604,8 +604,9 @@ export default function ProductDetails() {
                     const price = selectedVariantId 
                       ? product.variants?.find(v => v.id === selectedVariantId)?.price 
                       : product.price;
-                    return typeof price === 'number' ? price.toFixed(2) : price;
-                  })()} {t('currency')}
+                    const formatted = typeof price === 'number' ? price.toFixed(2) : price;
+                    return /\d/.test(String(formatted)) ? `${formatted} ${t("currency")}` : formatted;
+                  })()}
                 </span>
                 {selectedVariantId && product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 && (
                   <span className="text-xs font-bold text-red-500 uppercase tracking-[0.15em]">

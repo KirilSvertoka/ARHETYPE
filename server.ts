@@ -2505,12 +2505,18 @@ async function startServer() {
                   {
                     "@type": "ListItem",
                     "position": 1,
+                    "name": "Главная",
+                    "item": domain
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 2,
                     "name": "Каталог",
                     "item": `${domain}/catalog`
                   },
                   {
                     "@type": "ListItem",
-                    "position": 2,
+                    "position": 3,
                     "name": `${product.brand} ${product.name}`,
                     "item": `${domain}/catalog/${slug}`
                   }
@@ -2543,7 +2549,25 @@ async function startServer() {
                 }
               }))
             };
-            ldJson.push(faqSchema);
+            const faqBreadcrumb = {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Главная",
+                  "item": domain
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Вопросы и ответы",
+                  "item": `${domain}/p/faq`
+                }
+              ]
+            };
+            ldJson.push(faqSchema, faqBreadcrumb);
             
             customTitle = "Часто задаваемые вопросы (FAQ) о распиве и оригинальной парфюмерии | АРХЕТИП";
             customDescription = "Ответы на популярные вопросы о подборе оригинальной нишевой парфюмерии, доставке по Беларуси, отличии отливантов от тестеров в магазине Archetype.";
@@ -2586,18 +2610,98 @@ async function startServer() {
           customDescription = "Каталог оригинальных селективных духов от лучших нишевых брендов (Tom Ford, Byredo, Kilian, Kurkdjian, Le Labo) в объемах 2, 5, 10 и 100 мл. Доставка по всей Беларуси.";
         }
         customKeywords = "каталог парфюма, нишевые бренды, оригинальные духи купить в беларуси, заказать отливанты, селективная парфюмерия каталог, распив духи";
+
+        const catalogBreadcrumb = {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": domain
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Каталог",
+              "item": `${domain}/catalog`
+            }
+          ]
+        };
+        ldJson.push(catalogBreadcrumb);
       } else if (req.path === '/contacts' || req.path === '/contacts/') {
         customTitle = "Контакты интернет-магазина АРХЕТИП — Нишевая парфюмерия в Беларуси";
         customDescription = "Свяжитесь с нами для консультации и заказа оригинальной селективной парфюмерии: телефон, Telegram, Instagram. Быстрая доставка по Гродно, Минску и РБ.";
         customKeywords = "контакты, заказать парфюм, оригинальные духи беларусь, архетип контакты";
+
+        const contactsBreadcrumb = {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": domain
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Контакты",
+              "item": `${domain}/contacts`
+            }
+          ]
+        };
+        ldJson.push(contactsBreadcrumb);
       } else if (req.path === '/about' || req.path === '/about/') {
         customTitle = "О магазине АРХЕТИП — Эксклюзивный парфюм и селективная парфюмерия на распив";
         customDescription = "АРХЕТИП — ваш надежный путеводитель в мире селективных ароматов. Мы предлагаем 100% оригинальную продукцию, парфюмерные боксы и удобный распив духов.";
         customKeywords = "о магазине, о нас, оригинальная парфюмерия, архетип духи";
+
+        const aboutBreadcrumb = {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": domain
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "О магазине",
+              "item": `${domain}/about`
+            }
+          ]
+        };
+        ldJson.push(aboutBreadcrumb);
       } else if (req.path === '/reviews' || req.path === '/reviews/') {
         customTitle = "Отзывы покупателей о магазине АРХЕТИП — Оригинальные духи и отливанты";
         customDescription = "Искренние отзывы клиентов о покупке оригинальной нишевой парфюмерии и качестве обслуживания в магазине АРХЕТИП. Оценки шлейфа, стойкости духов.";
         customKeywords = "отзывы, парфюм отзывы, оригинальные духи отзывы, архетип отзывы клиентов";
+
+        const reviewsBreadcrumb = {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": domain
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Отзывы",
+              "item": `${domain}/reviews`
+            }
+          ]
+        };
+        ldJson.push(reviewsBreadcrumb);
       } else if (req.path.startsWith('/p/')) {
         const id = req.path.split('/').pop();
         if (id) {
@@ -2611,11 +2715,45 @@ async function startServer() {
                 .trim();
               customDescription = cleanContent.substring(0, 160).trim() + "...";
               customKeywords = `${page.title.toLowerCase()}, архетип, нишевая парфюмерия беларусь`;
+
+              const pageBreadcrumb = {
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                  {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Главная",
+                    "item": domain
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": page.title,
+                    "item": `${domain}/p/${id}`
+                  }
+                ]
+              };
+              ldJson.push(pageBreadcrumb);
             }
           } catch (e) {
             console.error('Failed to inject CMS page seo', e);
           }
         }
+      } else if (req.path === '/' || req.path === '/index.html') {
+        const homeBreadcrumb = {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": domain
+            }
+          ]
+        };
+        ldJson.push(homeBreadcrumb);
       }
 
       // Check if current page should be hidden from search engines (NoIndex)

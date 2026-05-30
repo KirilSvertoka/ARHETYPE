@@ -18,7 +18,7 @@ export default function Layout() {
   const [config, setConfig] = useState<HomeConfig | null>(null);
   const [settings, setSettings] = useState<GeneralSettings | null>(null);
   const { language, setLanguage, t } = useLanguage();
-  const { items, setIsCartOpen } = useCart();
+  const { items, setIsCartOpen, justAdded } = useCart();
   const { wishlist } = useWishlist();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -325,8 +325,14 @@ export default function Layout() {
                       <motion.button 
                         id="cart-button"
                         onClick={() => setIsCartOpen(true)}
-                        animate={items.length > 0 ? { scale: [1, 1.05, 1] } : {}}
-                        key={items.length}
+                        animate={justAdded ? {
+                          y: [0, -8, 4, -4, 2, 0],
+                          scale: [1, 1.15, 0.95, 1.05, 0.98, 1],
+                        } : { y: 0, scale: 1 }}
+                        transition={{ 
+                          duration: 0.6, 
+                          ease: "easeOut" 
+                        }}
                         className="group relative flex items-center gap-1.5 p-2 text-brand-muted hover:text-brand-light rounded-none transition-colors"
                         title={t('cart')}
                       >
