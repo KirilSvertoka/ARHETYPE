@@ -525,7 +525,7 @@ export default function CartDrawer() {
                                     <Plus className="w-3 h-3" />
                                   </button>
                                 </div>
-                                <span className="font-serif text-[13px] font-medium text-brand-light">
+                                <span className="font-serif lining-nums text-[13px] font-medium text-brand-light">
                                   {typeof item.price === 'number' ? item.price.toFixed(2) : item.price} {t('currency')}
                                 </span>
                               </div>
@@ -543,7 +543,7 @@ export default function CartDrawer() {
               <div className="p-6 border-t border-brand-border bg-brand-bg/95 backdrop-blur-sm z-10">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-brand-muted text-xs uppercase tracking-wider">{t('total')}</span>
-                  <span className="text-2xl font-serif text-brand-light">{total.toFixed(2)} {t('currency')}</span>
+                  <span className="text-2xl font-serif lining-nums text-brand-light">{total.toFixed(2)} {t('currency')}</span>
                 </div>
                 {isCheckingOut ? (
                   <button 

@@ -200,6 +200,52 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Custom form validations to prevent silent browser failures when tabs are inactive
+    if (!formData.name || formData.name.trim().length < 2) {
+      setActiveTab('basic');
+      alert('Пожалуйста, введите название товара (минимум 2 символа).');
+      return;
+    }
+
+    if (!formData.brand || formData.brand.trim().length < 2) {
+      setActiveTab('basic');
+      alert('Пожалуйста, введите название бренда (минимум 2 символа).');
+      return;
+    }
+
+    if (!formData.price || formData.price.toString().trim().length === 0) {
+      setActiveTab('basic');
+      alert('Пожалуйста, укажите базовую цену товара.');
+      return;
+    }
+
+    if (!formData.stockThreshold || formData.stockThreshold.toString().trim().length === 0) {
+      setActiveTab('basic');
+      alert('Пожалуйста, укажите порог остатка.');
+      return;
+    }
+
+    // Validate variants if any exist
+    for (let i = 0; i < formData.variants.length; i++) {
+      const variant = formData.variants[i];
+      if (!variant.size || variant.size.trim().length === 0) {
+        setActiveTab('variants');
+        alert(`Пожалуйста, укажите объем для варианта №${i + 1}.`);
+        return;
+      }
+      if (variant.price === undefined || variant.price === null || variant.price.toString().trim().length === 0) {
+        setActiveTab('variants');
+        alert(`Пожалуйста, укажите цену для варианта №${i + 1}.`);
+        return;
+      }
+      if (variant.stock === undefined || variant.stock === null || variant.stock.toString().trim().length === 0) {
+        setActiveTab('variants');
+        alert(`Пожалуйста, укажите остаток для варианта №${i + 1}.`);
+        return;
+      }
+    }
+
     setSubmitting(true);
 
     const payload = {
@@ -299,26 +345,26 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           <div className="space-y-6 max-w-3xl">
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Название товара</label>
-            <input required type="text" minLength={2} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Santal 33" />
+            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Santal 33" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Бренд</label>
-            <input required type="text" minLength={2} value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Le Labo" />
+            <input type="text" value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Le Labo" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Базовая цена (BYN)</label>
-              <input required type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="320.00 или 'Уточняйте'" />
+              <input type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="320.00 или 'Уточняйте'" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Порог остатка</label>
-              <input required type="number" min="0" value={formData.stockThreshold} onChange={e => setFormData({...formData, stockThreshold: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="10" />
+              <input type="number" min="0" value={formData.stockThreshold} onChange={e => setFormData({...formData, stockThreshold: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="10" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Пол</label>
-              <select required value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light appearance-none">
+              <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light appearance-none">
                 <option value="Unisex" className="bg-brand-bg">Унисекс</option>
                 <option value="Male" className="bg-brand-bg">Мужской</option>
                 <option value="Female" className="bg-brand-bg">Женский</option>
@@ -326,7 +372,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Концентрация</label>
-              <select required value={formData.concentration} onChange={e => setFormData({...formData, concentration: e.target.value as any})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light appearance-none">
+              <select value={formData.concentration} onChange={e => setFormData({...formData, concentration: e.target.value as any})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light appearance-none">
                 <option value="EDP" className="bg-brand-bg">Парфюмерная вода (EDP)</option>
                 <option value="EDT" className="bg-brand-bg">Туалетная вода (EDT)</option>
                 <option value="Parfum" className="bg-brand-bg">Духи (Parfum)</option>
@@ -733,7 +779,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
               <div key={idx} className="grid grid-cols-1 sm:grid-cols-5 gap-4 p-4 bg-transparent rounded-2xl border border-brand-border items-end">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-brand-muted">Объем</label>
-                  <input required type="text" value={variant.size} onChange={e => updateVariant(idx, 'size', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted" placeholder="100ml" />
+                  <input type="text" value={variant.size} onChange={e => updateVariant(idx, 'size', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted" placeholder="100ml" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-brand-muted">Тип</label>
@@ -751,11 +797,11 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-brand-muted">Цена (BYN)</label>
-                  <input required type="text" value={variant.price} onChange={e => updateVariant(idx, 'price', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted" placeholder="290.00" />
+                  <input type="text" value={variant.price} onChange={e => updateVariant(idx, 'price', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted" placeholder="290.00" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase text-brand-muted">Остаток</label>
-                  <input required type="number" value={variant.stock} onChange={e => updateVariant(idx, 'stock', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted" placeholder="50" />
+                  <input type="number" value={variant.stock} onChange={e => updateVariant(idx, 'stock', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light placeholder:text-brand-muted" placeholder="50" />
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="space-y-1 flex-1">

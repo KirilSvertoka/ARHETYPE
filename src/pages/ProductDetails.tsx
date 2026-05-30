@@ -581,8 +581,8 @@ export default function ProductDetails() {
               <div className="p-6 rounded-none bg-brand-hover border border-brand-border flex flex-col items-center text-center gap-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-muted">
                   {language === 'be' 
-                    ? 'Цану і бягучы аб\'ём удакладняйце ў мэнэджэра' 
-                    : 'Ценник и текущий объём уточняется у менеджера'}
+                    ? 'Кошт астатку ў флаконе ўдакладняйце ў мэнэджэра' 
+                    : 'Стоимость остатка во флаконе уточняйте у менеджера'}
                 </p>
                 <a 
                   href={settings?.telegram || '#'}
@@ -599,7 +599,7 @@ export default function ProductDetails() {
           ) : (
             <div className="mt-8 pt-8 border-t border-brand-border">
               <div className="flex items-baseline gap-2 mb-6">
-                <span className="text-3xl font-serif text-brand-light">
+                <span className="text-3xl font-serif lining-nums text-brand-light">
                   {(() => {
                     const price = selectedVariantId 
                       ? product.variants?.find(v => v.id === selectedVariantId)?.price 
@@ -708,7 +708,7 @@ export default function ProductDetails() {
               <span className="text-[10px] uppercase tracking-[0.12em] text-brand-muted font-medium mb-1.5 block">
                 {language === 'be' ? 'стойкасць' : 'стойкость'}
               </span>
-              <span className="text-2xl font-serif text-brand-light leading-none block">
+              <span className="text-2xl font-serif lining-nums text-brand-light leading-none block">
                 {product.longevity || 70}%
               </span>
               <div className="w-full h-[3px] bg-brand-border/30 rounded-full mt-2.5 overflow-hidden relative">
@@ -726,7 +726,7 @@ export default function ProductDetails() {
               <span className="text-[10px] uppercase tracking-[0.12em] text-brand-muted font-medium mb-1.5 block">
                 {language === 'be' ? 'шлейф' : 'шлейф'}
               </span>
-              <span className="text-2xl font-serif text-brand-light leading-none block">
+              <span className="text-2xl font-serif lining-nums text-brand-light leading-none block">
                 {product.sillage || 60}%
               </span>
               <div className="w-full h-[3px] bg-brand-border/30 rounded-full mt-2.5 overflow-hidden relative">
@@ -754,7 +754,7 @@ export default function ProductDetails() {
                 {language === 'be' ? 'Водгукі кліентаў' : 'Отзывы о товаре'}
               </h2>
               <div className="flex items-center gap-4">
-                <span className="text-5xl font-serif text-brand-light">
+                <span className="text-5xl font-serif lining-nums text-brand-light">
                   {reviews.length > 0 
                     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) 
                     : "5.0"}

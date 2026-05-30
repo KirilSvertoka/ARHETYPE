@@ -24,7 +24,7 @@ export default function Forbidden() {
           <Lock className="w-10 h-10 text-brand-muted" />
         </motion.div>
         
-        <h1 className="text-8xl font-serif text-brand-light mb-4 tracking-tighter">403</h1>
+        <h1 className="text-8xl font-serif lining-nums text-brand-light mb-4 tracking-tighter">403</h1>
         <h2 className="text-2xl font-serif text-brand-light mb-4">{t('exclusiveVault')}</h2>
         
         <p className="text-brand-muted mb-10 leading-relaxed">

@@ -3,6 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  --font-serif: "Playfair Display", serif;
   --font-oranienbaum: "Playfair Display", serif;
   --font-arsenica: "Playfair Display", serif;
   --font-adventor: "Montserrat", sans-serif;

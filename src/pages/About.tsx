@@ -104,19 +104,19 @@ export default function About() {
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 pt-12 border-t border-brand-border/50">
               <div className="space-y-3">
-                <h3 className="text-4xl sm:text-5xl font-serif text-brand-light">{settings?.stat1Value || '50+'}</h3>
+                <h3 className="text-4xl sm:text-5xl font-serif lining-nums text-brand-light">{settings?.stat1Value || '50+'}</h3>
                 <p className="text-xs uppercase tracking-[0.2em] text-brand-muted font-medium">
                   {language === 'ru' ? (settings?.stat1Label || 'Уникальных ароматов') : (settings?.stat1Label_be || 'Унікальных водараў')}
                 </p>
               </div>
               <div className="space-y-3">
-                <h3 className="text-4xl sm:text-5xl font-serif text-brand-light">{settings?.stat2Value || '12'}</h3>
+                <h3 className="text-4xl sm:text-5xl font-serif lining-nums text-brand-light">{settings?.stat2Value || '12'}</h3>
                 <p className="text-xs uppercase tracking-[0.2em] text-brand-muted font-medium">
                   {language === 'ru' ? (settings?.stat2Label || 'Нишевых брендов') : (settings?.stat2Label_be || 'Нішавых брэндаў')}
                 </p>
               </div>
               <div className="space-y-3">
-                <h3 className="text-4xl sm:text-5xl font-serif text-brand-light">{settings?.stat3Value || '10k+'}</h3>
+                <h3 className="text-4xl sm:text-5xl font-serif lining-nums text-brand-light">{settings?.stat3Value || '10k+'}</h3>
                 <p className="text-xs uppercase tracking-[0.2em] text-brand-muted font-medium">
                   {language === 'ru' ? (settings?.stat3Label || 'Счастливых клиентов') : (settings?.stat3Label_be || 'Шчаслівых кліентаў')}
                 </p>

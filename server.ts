@@ -910,6 +910,30 @@ db.prepare(`
 
 // SEO Endpoints
 
+app.get('/robots.txt', (req, res) => {
+  const domain = req.protocol + '://' + req.get('host');
+  const adminPathEnv = process.env.VITE_ADMIN_PATH || 'admin';
+  const cleanAdminPath = adminPathEnv.startsWith('/') ? adminPathEnv : `/${adminPathEnv}`;
+  
+  res.type('text/plain');
+  res.send(`User-agent: *
+Disallow: /api/
+Disallow: /forbidden
+Disallow: /502
+Disallow: /500
+Disallow: ${cleanAdminPath}
+Disallow: ${cleanAdminPath}/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /wishlist
+Disallow: /cart
+Disallow: /*?
+Disallow: /*_
+
+Sitemap: ${domain}/sitemap.xml
+`);
+});
+
 app.get('/sitemap.xml', (req, res) => {
   try {
     const domain = req.protocol + '://' + req.get('host');
@@ -2503,8 +2527,38 @@ async function startServer() {
           console.error('Failed to inject FAQ Schema', error);
         }
       } else if (req.path === '/catalog' || req.path === '/catalog/') {
-        customTitle = "Каталог селективного и нишевого парфюма — Купить отливанты с доставкой по РБ | АРХЕТИП";
-        customDescription = "Каталог оригинальных селективных духов от лучших нишевых брендов (Tom Ford, Byredo, Kilian, Kurkdjian, Le Labo) в объемах 2, 5, 10 и 100 мл. Доставка по всей Беларуси.";
+        const brand = req.query.brand ? String(req.query.brand) : '';
+        const search = req.query.search ? String(req.query.search) : '';
+        const category = req.query.category ? String(req.query.category) : '';
+        const gender = req.query.gender ? String(req.query.gender) : '';
+        const scentFamily = req.query.family ? String(req.query.family) : '';
+        
+        let filterParts = [];
+        if (brand) filterParts.push(brand);
+        if (category) {
+          const catMap: Record<string, string> = {
+            'decants': 'отливанты',
+            'full': 'флаконы',
+            'boxes': 'боксы',
+            'sets': 'наборы'
+          };
+          filterParts.push(catMap[category.toLowerCase()] || category);
+        }
+        if (gender) {
+          const genderStr = gender === 'Male' ? 'для мужчин' : gender === 'Female' ? 'для женщин' : gender === 'Unisex' ? 'унисекс' : gender;
+          filterParts.push(genderStr);
+        }
+        if (scentFamily) filterParts.push(`${scentFamily} ароматы`);
+        if (search) filterParts.push(`поиск: "${search}"`);
+        
+        if (filterParts.length > 0) {
+          const suffix = filterParts.join(', ');
+          customTitle = `${suffix} — купить оригинальный парфюм на распив | АРХЕТИП`;
+          customDescription = `Вся оригинальная селективная парфюмерия (${suffix}) в магазине АРХЕТИП. Только оригиналы, удобный распив на выбор, быстрая доставка по Минску, Гродно и Беларуси.`;
+        } else {
+          customTitle = "Каталог селективного и нишевого парфюма — Купить отливанты с доставкой по РБ | АРХЕТИП";
+          customDescription = "Каталог оригинальных селективных духов от лучших нишевых брендов (Tom Ford, Byredo, Kilian, Kurkdjian, Le Labo) в объемах 2, 5, 10 и 100 мл. Доставка по всей Беларуси.";
+        }
         customKeywords = "каталог парфюма, нишевые бренды, оригинальные духи купить в беларуси, заказать отливанты, селективная парфюмерия каталог, распив духи";
       } else if (req.path === '/contacts' || req.path === '/contacts/') {
         customTitle = "Контакты интернет-магазина АРХЕТИП — Нишевая парфюмерия в Беларуси";
@@ -2538,12 +2592,29 @@ async function startServer() {
         }
       }
 
+      // Check if current page should be hidden from search engines (NoIndex)
+      const adminPathEnv = process.env.VITE_ADMIN_PATH || 'admin';
+      const cleanAdminPath = adminPathEnv.startsWith('/') ? adminPathEnv : `/${adminPathEnv}`;
+      const isNoIndex = req.path === cleanAdminPath || 
+                        req.path.startsWith(cleanAdminPath + '/') || 
+                        req.path === '/admin' ||
+                        req.path.startsWith('/admin/') ||
+                        req.path === '/wishlist' ||
+                        req.path === '/wishlist/' ||
+                        req.path === '/cart' ||
+                        req.path === '/cart/' ||
+                        req.path === '/forbidden' ||
+                        req.path === '/502' ||
+                        req.path === '/500';
+
       // Replace duplicate-prone elements
       html = html.replace(/<title>[^<]*<\/title>/i, `<title>${customTitle}</title>`);
       html = html.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${customDescription}" />`);
 
+      const robotsMeta = isNoIndex ? '\n        <meta name="robots" content="noindex, nofollow" />' : '';
+
       const finalMetaTags = `
-        <meta name="keywords" content="${customKeywords}" />
+        <meta name="keywords" content="${customKeywords}" />${robotsMeta}
         <meta property="og:title" content="${customTitle}" />
         <meta property="og:description" content="${customDescription}" />
         <meta property="og:image" content="${customImage}" />
@@ -2554,6 +2625,7 @@ async function startServer() {
         <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="${domain}/favicon.png" />
       `;
+
       html = html.replace('</head>', `${finalMetaTags}</head>`);
 
       const scriptTag = `<script type="application/ld+json">${JSON.stringify(ldJson)}</script>`;
