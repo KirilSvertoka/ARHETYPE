@@ -680,7 +680,8 @@ export default function Storefront() {
                       { id: 'name-desc', label: t('sortNameDesc') },
                       { id: 'price-asc', label: t('sortPriceAsc') },
                       { id: 'price-desc', label: t('sortPriceDesc') },
-                      { id: 'popularity', label: language === 'be' ? 'Папулярнасць' : 'Популярность' }
+                      { id: 'popularity', label: language === 'be' ? 'Папулярнасць' : 'Популярность' },
+                      { id: 'newest', label: language === 'be' ? 'Навінкі' : 'Новинки' }
                     ].map(option => (
                       <button
                         key={option.id}

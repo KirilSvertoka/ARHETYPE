@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { HomeConfig, Product, BrandCard } from '../types';
 import ProductCard from '../components/ProductCard';
+import ScentQuiz from '../components/ScentQuiz';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../components/LanguageProvider';
 
@@ -18,7 +19,7 @@ export default function Home() {
       try {
         const [configRes, productsRes, genRes] = await Promise.all([
           fetch('/api/settings/home'),
-          fetch('/api/products'),
+          fetch('/api/products?sort=newest'),
           fetch('/api/settings/general')
         ]);
 
@@ -31,22 +32,8 @@ export default function Home() {
 
         setConfig({ ...configData, genData });
         
-        // Filter and sort for New Arrivals
-        // Match tags like 'new', 'новинка', 'hot' first, or fallback to the latest products (highest IDs or first 8)
-        const taggedNew = productsData.filter(p => 
-          p.tags?.some(tag => {
-            const tl = tag.toLowerCase();
-            return tl === 'new' || tl === 'новинка' || tl === 'новинки' || tl === 'hot' || tl === 'decant' || tl === 'отливант';
-          })
-        );
-        
-        // Combine tagged & all products, keep unique, then take first 8
-        const combined = [...taggedNew, ...productsData];
-        const uniqueProducts = Array.from(new Set(combined.map(p => p.id)))
-          .map(id => combined.find(p => p.id === id)!)
-          .slice(0, 8);
-
-        setNewArrivals(uniqueProducts);
+        // Use the first 8 products as New Arrivals (pre-sorted by newest)
+        setNewArrivals(productsData.slice(0, 8));
         setLoading(false);
       } catch (err) {
         console.error('Failed to load home data', err);
@@ -413,6 +400,9 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* INTERACTIVE SCENT SELECTOR */}
+      <ScentQuiz />
 
       {/* 3. STYLISH GRID OF NEW ARRIVALS */}
       {newArrivals.length > 0 && (

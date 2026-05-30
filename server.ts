@@ -1511,6 +1511,7 @@ app.get('/api/products', (req, res) => {
           case 'price-asc': return getPrice(a) - getPrice(b);
           case 'price-desc': return getPrice(b) - getPrice(a);
           case 'popularity': return (b.popularity || 0) - (a.popularity || 0);
+          case 'newest': return b.id - a.id;
           default: return 0;
         }
       });
@@ -1571,6 +1572,119 @@ app.get('/api/admin/dashboard', requireAuth, (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+  }
+});
+
+// Sales Reports API (Daily, Weekly, Monthly metrics for Recharts)
+app.get('/api/admin/reports/sales', requireAuth, (req, res) => {
+  try {
+    // 1. Daily Trend (Last 30 days)
+    const dailyData = db.prepare(`
+      SELECT 
+        date(created_at) as label,
+        SUM(CAST(total AS REAL)) as revenue,
+        COUNT(id) as orders
+      FROM orders
+      WHERE created_at >= date('now', '-30 days') AND status != 'Cancelled'
+      GROUP BY date(created_at)
+      ORDER BY date(created_at) ASC
+    `).all() as any[];
+
+    const processedDaily = dailyData.map(d => ({
+      label: d.label,
+      revenue: parseFloat(d.revenue.toFixed(2)),
+      profit: parseFloat((d.revenue * 0.65).toFixed(2)), // 65% profit margin
+      orders: d.orders
+    }));
+
+    // 2. Weekly Trend (Last 12 weeks)
+    const weeklyData = db.prepare(`
+      SELECT 
+        strftime('%Y-W%W', created_at) as label,
+        SUM(CAST(total AS REAL)) as revenue,
+        COUNT(id) as orders
+      FROM orders
+      WHERE created_at >= date('now', '-90 days') AND status != 'Cancelled'
+      GROUP BY strftime('%Y-W%W', created_at)
+      ORDER BY strftime('%Y-W%W', created_at) ASC
+    `).all() as any[];
+
+    const processedWeekly = weeklyData.map(w => ({
+      label: w.label,
+      revenue: parseFloat(w.revenue.toFixed(2)),
+      profit: parseFloat((w.revenue * 0.65).toFixed(2)),
+      orders: w.orders
+    }));
+
+    // 3. Monthly Trend (Last 12 months)
+    const monthlyData = db.prepare(`
+      SELECT 
+        strftime('%Y-%m', created_at) as label,
+        SUM(CAST(total AS REAL)) as revenue,
+        COUNT(id) as orders
+      FROM orders
+      WHERE created_at >= date('now', '-365 days') AND status != 'Cancelled'
+      GROUP BY strftime('%Y-%m', created_at)
+      ORDER BY strftime('%Y-%m', created_at) ASC
+    `).all() as any[];
+
+    const processedMonthly = monthlyData.map(m => {
+      // Map '2026-05' to readable format if desired, or let frontend do it
+      return {
+        label: m.label,
+        revenue: parseFloat(m.revenue.toFixed(2)),
+        profit: parseFloat((m.revenue * 0.65).toFixed(2)),
+        orders: m.orders
+      };
+    });
+
+    // 4. Overall metrics for selected range (last 90 days total)
+    const overall = db.prepare(`
+      SELECT 
+        SUM(CAST(total AS REAL)) as totalRevenue,
+        COUNT(id) as totalOrders
+      FROM orders
+      WHERE status != 'Cancelled'
+    `).get() as any;
+
+    const totalRevenue = overall?.totalRevenue || 0;
+    const totalOrders = overall?.totalOrders || 0;
+    const totalProfit = totalRevenue * 0.65;
+    const averageOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
+
+    // 5. Popular categories / brands by sales
+    const topProducts = db.prepare(`
+      SELECT 
+        product_name as name,
+        SUM(quantity) as quantity,
+        SUM(CAST(price AS REAL) * quantity) as revenue
+      FROM order_items
+      JOIN orders ON order_items.order_id = orders.id
+      WHERE orders.status != 'Cancelled'
+      GROUP BY product_name
+      ORDER BY revenue DESC
+      LIMIT 5
+    `).all() as any[];
+
+    res.json({
+      daily: processedDaily,
+      weekly: processedWeekly,
+      monthly: processedMonthly,
+      summary: {
+        totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+        totalProfit: parseFloat(totalProfit.toFixed(2)),
+        totalOrders,
+        averageOrderValue: parseFloat(averageOrderValue.toFixed(2))
+      },
+      topProducts: topProducts.map(tp => ({
+        name: tp.name,
+        quantity: tp.quantity,
+        revenue: parseFloat(tp.revenue.toFixed(2))
+      }))
+    });
+  } catch (error) {
+    console.error('Failed to compile sales report data', error);
+    res.status(500).json({ error: 'Failed to compile report stats' });
   }
 });
 

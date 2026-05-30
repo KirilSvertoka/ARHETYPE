@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Product, getVariantType, GeneralSettings, getConcentrationLabel } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle, Send, Star, ChevronDown } from 'lucide-react';
+import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle, Send, Star, ChevronDown, Sun, Moon, Compass, Sparkles } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import NoteDiagram from '../components/NoteDiagram';
 import DecantSizeGuide from '../components/DecantSizeGuide';
@@ -703,42 +703,149 @@ export default function ProductDetails() {
             baseNotesDuration_be={product.baseNotesDuration_be}
           />
 
-          {/* Scent Profiles (Longevity and Sillage) */}
-          <div className="mt-8 pt-6 border-t border-brand-border/40 grid grid-cols-2 gap-6 bg-brand-hover/5 p-5 border border-brand-border/45">
-            <div>
-              <span className="text-[10px] uppercase tracking-[0.12em] text-brand-muted font-medium mb-1.5 block">
-                {language === 'be' ? 'стойкасць' : 'стойкость'}
-              </span>
-              <span className="text-2xl font-serif lining-nums text-brand-light leading-none block">
-                {product.longevity || 70}%
-              </span>
-              <div className="w-full h-[3px] bg-brand-border/30 rounded-full mt-2.5 overflow-hidden relative">
-                <motion.div 
-                   initial={{ width: 0 }}
-                   whileInView={{ width: `${product.longevity || 70}%` }}
-                   viewport={{ once: true }}
-                   transition={{ duration: 1, ease: "circOut" }}
-                   className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
-                />
+          {/* Scent Profiles (Longevity, Sillage, Seasonality, Time of Day) */}
+          <div className="mt-8 pt-6 border-t border-brand-border/40 space-y-6">
+            
+            {/* Longevity & Sillage Gauges */}
+            <div className="grid grid-cols-2 gap-6 bg-brand-hover/5 p-5 border border-brand-border/45 animate-fade-in">
+              <div>
+                <span className="text-[10px] uppercase tracking-[0.12em] text-brand-muted font-medium mb-1.5 block">
+                  {language === 'be' ? 'стойкасць' : 'стойкость'}
+                </span>
+                <span className="text-xs sm:text-sm font-serif font-medium text-brand-light leading-snug block h-10">
+                  {(() => {
+                    const val = product.longevity || 70;
+                    if (val < 35) return language === 'be' ? 'Блізка да скуры' : 'Близко к коже';
+                    if (val < 65) return language === 'be' ? 'Умераная стойкасць' : 'Умеренная стойкость';
+                    if (val < 85) return language === 'be' ? 'Длітельная стойкасць' : 'Длительная стойкость';
+                    return language === 'be' ? 'Экстрэмальная стойкасць' : 'Экстремальная стойкость';
+                  })()}
+                </span>
+                <div className="w-full h-1 bg-brand-border/30 rounded-full mt-2 overflow-hidden relative">
+                  <motion.div 
+                     initial={{ width: 0 }}
+                     whileInView={{ width: `${product.longevity || 70}%` }}
+                     viewport={{ once: true }}
+                     transition={{ duration: 1, ease: "circOut" }}
+                     className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
+                  />
+                </div>
+              </div>
+
+              <div className="pl-6 border-l border-brand-border/30">
+                <span className="text-[10px] uppercase tracking-[0.12em] text-brand-muted font-medium mb-1.5 block">
+                  {language === 'be' ? 'шлейф' : 'шлейф'}
+                </span>
+                <span className="text-xs sm:text-sm font-serif font-medium text-brand-light leading-snug block h-10">
+                  {(() => {
+                    const val = product.sillage || 60;
+                    if (val < 35) return language === 'be' ? 'Інтымны' : 'Интимный';
+                    if (val < 60) return language === 'be' ? 'Умераны шлейф' : 'Умеренный шлейф';
+                    if (val < 85) return language === 'be' ? 'Заўважны шлейф' : 'Заметный шлейф';
+                    return language === 'be' ? 'Запаўняе ўвесь пакой' : 'Заполняет всю комнату';
+                  })()}
+                </span>
+                <div className="w-full h-1 bg-brand-border/30 rounded-full mt-2 overflow-hidden relative">
+                  <motion.div 
+                     initial={{ width: 0 }}
+                     whileInView={{ width: `${product.sillage || 60}%` }}
+                     viewport={{ once: true }}
+                     transition={{ duration: 1, ease: "circOut" }}
+                     className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="pl-6 border-l border-brand-border/30">
-              <span className="text-[10px] uppercase tracking-[0.12em] text-brand-muted font-medium mb-1.5 block">
-                {language === 'be' ? 'шлейф' : 'шлейф'}
-              </span>
-              <span className="text-2xl font-serif lining-nums text-brand-light leading-none block">
-                {product.sillage || 60}%
-              </span>
-              <div className="w-full h-[3px] bg-brand-border/30 rounded-full mt-2.5 overflow-hidden relative">
-                <motion.div 
-                   initial={{ width: 0 }}
-                   whileInView={{ width: `${product.sillage || 60}%` }}
-                   viewport={{ once: true }}
-                   transition={{ duration: 1, ease: "circOut" }}
-                   className="h-full bg-brand-accent rounded-full absolute left-0 top-0"
-                />
+            {/* Time of Day & Seasonality Visual Compass */}
+            <div className="border border-brand-border/40 p-5 space-y-5 bg-[#FAF9F6] shadow-2xs">
+              
+              {/* Seasonality Grid */}
+              <div className="space-y-2.5">
+                <span className="text-[10px] uppercase tracking-[0.12em] text-brand-muted font-semibold flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5 text-brand-accent" />
+                  {language === 'be' ? 'сезоннасць' : 'сезонность'}
+                </span>
+                <div className="grid grid-cols-4 gap-1.5 text-center">
+                  {[
+                    { id: 'spring', label: 'Весна', labelBe: 'Вясна' },
+                    { id: 'summer', label: 'Лето', labelBe: 'Лета' },
+                    { id: 'autumn', label: 'Осень', labelBe: 'Восень' },
+                    { id: 'winter', label: 'Зима', labelBe: 'Зіма' }
+                  ].map(seasonOpt => {
+                    const activeSeasons = product.season || [];
+                    let isActive = false;
+                    
+                    if (activeSeasons.includes('all_season')) {
+                      isActive = true;
+                    } else if (activeSeasons.length === 0 || (activeSeasons.length === 1 && activeSeasons[0] === '')) {
+                      const accordsStr = (product.accords || []).map(a => a.name.toLowerCase()).join(' ');
+                      
+                      if (seasonOpt.id === 'summer') {
+                        isActive = accordsStr.includes('цитрус') || accordsStr.includes('водн') || accordsStr.includes('морск') || accordsStr.includes('свеж');
+                      } else if (seasonOpt.id === 'winter') {
+                        isActive = accordsStr.includes('сладк') || accordsStr.includes('кожа') || accordsStr.includes('табак') || accordsStr.includes('прян') || accordsStr.includes('тепл');
+                      } else if (seasonOpt.id === 'autumn') {
+                        isActive = accordsStr.includes('дерев') || accordsStr.includes('карамел') || accordsStr.includes('пудр');
+                      } else {
+                        isActive = true;
+                      }
+                    } else {
+                      isActive = activeSeasons.includes(seasonOpt.id);
+                    }
+
+                    return (
+                      <div 
+                        key={seasonOpt.id} 
+                        className={`py-2 px-1 border transition-all text-[9px] uppercase tracking-wider ${
+                          isActive 
+                            ? 'bg-brand-accent text-white border-brand-accent font-medium' 
+                            : 'border-brand-border/30 bg-transparent text-brand-muted/50'
+                        }`}
+                      >
+                        {language === 'be' ? seasonOpt.labelBe : seasonOpt.label}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
+
+              {/* Time of Day Sun / Moon Slider */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex justify-between items-center text-[10px] uppercase tracking-[0.12em] text-brand-muted font-semibold">
+                  <span className="flex items-center gap-1">
+                    <Sun className="w-3.5 h-3.5 text-amber-500" />
+                    {language === 'be' ? 'Дзень' : 'День'}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                    {language === 'be' ? 'Ноч' : 'Ночь'}
+                  </span>
+                </div>
+                
+                {/* Visual horizontal compass line */}
+                <div className="relative w-full h-1 bg-gradient-to-r from-amber-400/20 via-brand-border/40 to-indigo-500/20 rounded-full flex items-center">
+                  <motion.div 
+                    initial={{ left: '50%' }}
+                    whileInView={{ 
+                      left: (() => {
+                        const accordsStr = (product.accords || []).map(a => a.name.toLowerCase()).join(' ');
+                        let isNightLeaning = accordsStr.includes('уд') || accordsStr.includes('кожа') || accordsStr.includes('табак') || accordsStr.includes('прян') || accordsStr.includes('тепл') || accordsStr.includes('гурма');
+                        let isDayLeaning = accordsStr.includes('цитрус') || accordsStr.includes('водн') || accordsStr.includes('мята') || accordsStr.includes('свеж');
+                        if (isNightLeaning && !isDayLeaning) return '80%';
+                        if (isDayLeaning && !isNightLeaning) return '20%';
+                        return '50%';
+                      })()
+                    }}
+                    viewport={{ once: true }}
+                    transition={{ type: 'spring', damping: 15, stiffness: 100 }}
+                    className="absolute -translate-x-1/2 w-3.5 h-3.5 bg-brand-accent rounded-full border-2 border-white shadow-md flex items-center justify-center cursor-default z-10"
+                  >
+                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping absolute opacity-70" />
+                  </motion.div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
