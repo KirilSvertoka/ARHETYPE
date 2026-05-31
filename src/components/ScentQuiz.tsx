@@ -414,7 +414,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-              className="bg-brand-bg border border-brand-border/40 w-full max-w-2xl h-[90vh] md:h-auto max-h-[640px] flex flex-col justify-between shadow-2xl relative"
+              className="bg-brand-bg border border-brand-border/40 w-full max-w-3xl h-[90vh] md:h-auto max-h-[700px] flex flex-col justify-between shadow-2xl relative"
             >
               
               {/* Header */}
@@ -671,73 +671,86 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-5 max-h-[420px] overflow-y-auto pr-1.5 custom-scrollbar">
+                        <div className="space-y-5 max-h-[460px] overflow-y-auto pr-1.5 custom-scrollbar">
                           {results.map(({ product, match, explanation, explanationBe }, idx) => (
                             <div 
                               key={product.id}
-                              className="border border-brand-border/40 p-4 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between text-left group hover:border-brand-accent/20 transition-all bg-white"
+                              className="border border-brand-border/30 p-5 flex flex-col md:flex-row gap-6 items-start md:items-stretch justify-between text-left group hover:border-brand-accent/20 transition-all bg-white relative"
                             >
-                              <div className="flex items-center gap-4">
-                                {/* Matched % Badge */}
-                                <div className="shrink-0 aspect-square w-16 h-16 relative overflow-hidden border border-brand-border/20 bg-brand-hover/10">
+                              {/* Left column: image and description */}
+                              <div className="flex gap-5 flex-1 min-w-0 items-start">
+                                {/* Product Image with match badge overlay */}
+                                <div className="shrink-0 aspect-square w-20 h-20 sm:w-24 sm:h-24 relative overflow-hidden border border-brand-border/20 bg-brand-hover/5 shadow-xs">
                                   <img 
                                     src={product.imageUrl} 
                                     alt={product.name} 
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     referrerPolicy="no-referrer"
                                   />
-                                  <div className="absolute top-1 left-1 bg-brand-accent text-white text-[8px] font-bold px-1 font-sans">
-                                    {match}%
+                                  <div className="absolute top-1.5 left-1.5 bg-brand-accent text-white text-[8px] font-bold px-1.5 py-0.5 tracking-wider font-sans uppercase">
+                                    {match}% Match
                                   </div>
                                 </div>
-                                <div className="space-y-1">
-                                  <p className="text-[10px] tracking-wider text-brand-muted font-sans font-light leading-none mb-0.5">
-                                    {product.brand}
-                                  </p>
-                                  <h4 className="font-serif text-sm font-medium text-brand-light leading-snug">
+
+                                {/* Texts: Brand, Name, Recommendation/Explanation */}
+                                <div className="flex-1 min-w-0 space-y-1.5">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-[10px] tracking-widest text-brand-muted font-sans font-semibold uppercase">
+                                      {product.brand}
+                                    </span>
+                                  </div>
+                                  <h4 className="font-serif text-sm sm:text-base font-semibold text-brand-light leading-snug">
                                     {product.name}
                                   </h4>
-                                  <p className="text-[10px] italic text-brand-accent font-sans">
-                                    {language === 'be' ? explanationBe : explanation}
-                                  </p>
+                                  
+                                  {/* Explanation block - beautiful block design to handle wrap nicely */}
+                                  <div className="pt-2">
+                                    <p className="text-[11px] sm:text-xs text-brand-muted font-serif italic leading-relaxed pl-3 border-l-2 border-brand-accent/30">
+                                      {language === 'be' ? explanationBe : explanation}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
                               
-                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-brand-border/20">
+                              {/* Right column: Action section (selector and add to cart) */}
+                              <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-stretch md:items-end justify-between sm:justify-start md:justify-center gap-4 w-full md:w-auto shrink-0 border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-6 border-brand-border/20">
                                 {product.variants && product.variants.length > 0 && (
-                                  <div className="relative min-w-[130px]">
+                                  <div className="relative w-full sm:w-48 md:w-[160px]">
+                                    <span className="absolute -top-3.5 left-0 text-[8px] font-mono text-brand-muted uppercase tracking-wider block">
+                                      {language === 'be' ? 'Аб’ём' : 'Объем'}
+                                    </span>
                                     <select
                                       value={selectedVariants[product.id] || ''}
                                       onChange={(e) => {
                                         const val = parseInt(e.target.value);
                                         setSelectedVariants(prev => ({ ...prev, [product.id]: val }));
                                       }}
-                                      className="w-full text-[10px] uppercase font-semibold tracking-wider pr-8 pl-3 py-2 bg-white border border-brand-border/40 hover:border-brand-accent/30 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer rounded-none"
+                                      className="w-full text-[10px] uppercase font-semibold tracking-wider pr-8 pl-3 py-2.5 bg-white border border-brand-border/40 hover:border-brand-accent/30 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer rounded-none"
                                     >
                                       {product.variants.map((v) => {
                                         const typeStr = getVariantType(v, language);
                                         return (
                                           <option key={v.id} value={v.id} disabled={v.stock === 0}>
-                                            {typeStr} {v.size} {v.stock === 0 ? `(${language === 'be' ? 'Няма' : 'Нет'})` : ''}
+                                            {v.size} — {typeStr} {v.stock === 0 ? `(${language === 'be' ? 'Няма' : 'Нет'})` : ''}
                                           </option>
                                         );
                                       })}
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-brand-muted">
-                                      <ChevronDown className="w-3 h-3" />
+                                      <ChevronDown className="w-3.5 h-3.5" />
                                     </div>
                                   </div>
                                 )}
                                 
-                                <div className="flex items-center gap-3 justify-between sm:justify-start">
-                                  <span className="text-xs font-serif font-semibold text-brand-light whitespace-nowrap min-w-[65px] text-right">
+                                <div className="flex items-center gap-4 justify-between sm:justify-end w-full sm:w-auto">
+                                  <span className="text-sm font-serif font-semibold text-brand-light whitespace-nowrap sm:min-w-[65px] text-right">
                                     {(product.variants?.find(v => v.id === selectedVariants[product.id])?.price || product.price)} {t('currency')}
                                   </span>
                                   <button
                                     id={`quiz-add-to-cart-${product.id}`}
                                     onClick={() => handleAddScentToCart(product)}
                                     disabled={product.variants?.find(v => v.id === selectedVariants[product.id])?.stock === 0}
-                                    className="flex-1 sm:flex-initial bg-brand-accent text-white hover:bg-brand-accent-hover px-4 py-2.5 text-[10px] uppercase font-semibold tracking-wider transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="bg-brand-accent text-white hover:bg-brand-accent-hover h-10 px-6 text-[10px] uppercase font-semibold tracking-wider transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 min-w-[120px]"
                                   >
                                     {successAdded[product.id] ? (
                                       <>

@@ -95,7 +95,6 @@ export default function Layout() {
     { label: language === 'be' ? 'Жаночыя' : 'Женские', to: '/catalog?gender=Female' },
     { label: language === 'be' ? 'Унісекс' : 'Унисекс', to: '/catalog?gender=Unisex' },
     { label: language === 'be' ? 'Готовые наборы' : 'Готовые наборы', to: '/catalog?category=set' },
-    { label: language === 'be' ? 'Канструктар аромабоксаў' : 'Конструктор аромабоксов', to: '/catalog?category=custom-set' },
   ];
 
   const SocialIcon = ({ platform, className }: { platform: string, className?: string }) => {

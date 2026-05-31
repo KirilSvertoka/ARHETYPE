@@ -810,42 +810,6 @@ export default function ProductDetails() {
                 </div>
               </div>
 
-              {/* Time of Day Sun / Moon Slider */}
-              <div className="space-y-2.5 pt-1">
-                <div className="flex justify-between items-center text-[10px] uppercase tracking-[0.12em] text-brand-muted font-semibold">
-                  <span className="flex items-center gap-1">
-                    <Sun className="w-3.5 h-3.5 text-amber-500" />
-                    {language === 'be' ? 'Дзень' : 'День'}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Moon className="w-3.5 h-3.5 text-indigo-400" />
-                    {language === 'be' ? 'Ноч' : 'Ночь'}
-                  </span>
-                </div>
-                
-                {/* Visual horizontal compass line */}
-                <div className="relative w-full h-1 bg-gradient-to-r from-amber-400/20 via-brand-border/40 to-indigo-500/20 rounded-full flex items-center">
-                  <motion.div 
-                    initial={{ left: '50%' }}
-                    whileInView={{ 
-                      left: (() => {
-                        const accordsStr = (product.accords || []).map(a => a.name.toLowerCase()).join(' ');
-                        let isNightLeaning = accordsStr.includes('уд') || accordsStr.includes('кожа') || accordsStr.includes('табак') || accordsStr.includes('прян') || accordsStr.includes('тепл') || accordsStr.includes('гурма');
-                        let isDayLeaning = accordsStr.includes('цитрус') || accordsStr.includes('водн') || accordsStr.includes('мята') || accordsStr.includes('свеж');
-                        if (isNightLeaning && !isDayLeaning) return '80%';
-                        if (isDayLeaning && !isNightLeaning) return '20%';
-                        return '50%';
-                      })()
-                    }}
-                    viewport={{ once: true }}
-                    transition={{ type: 'spring', damping: 15, stiffness: 100 }}
-                    className="absolute -translate-x-1/2 w-3.5 h-3.5 bg-brand-accent rounded-full border-2 border-white shadow-md flex items-center justify-center cursor-default z-10"
-                  >
-                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping absolute opacity-70" />
-                  </motion.div>
-                </div>
-              </div>
-
             </div>
           </div>
         </div>

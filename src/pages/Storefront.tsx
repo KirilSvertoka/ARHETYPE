@@ -410,22 +410,15 @@ export default function Storefront() {
         <p className="text-sm text-brand-muted font-light max-w-xl mx-auto leading-relaxed">
           {t('exploreCatalog')}
         </p>
-        {activeCategory !== 'custom-set' && (
-          <div className="pt-2">
-            <span className="inline-block text-[10px] font-mono tracking-widest text-brand-muted/70 uppercase">
-              [ {products.length} {language === 'be' ? 'ароматаў' : 'ароматов'} ]
-            </span>
-          </div>
-        )}
+        <div className="pt-2">
+          <span className="inline-block text-[10px] font-mono tracking-widest text-brand-muted/70 uppercase">
+            [ {products.length} {language === 'be' ? 'ароматаў' : 'ароматов'} ]
+          </span>
+        </div>
       </section>
 
-      {activeCategory === 'custom-set' ? (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
-          <CustomSetBuilder />
-        </div>
-      ) : (
-        <>
-          <div className="sticky top-14 sm:top-16 z-40 bg-brand-bg/95 backdrop-blur-md border-b border-brand-border/40 mb-8 sm:mb-12">
+      <>
+        <div className="sticky top-14 sm:top-16 z-40 bg-brand-bg/95 backdrop-blur-md border-b border-brand-border/40 mb-8 sm:mb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
           <div className="flex items-center gap-4">
             <div className="relative flex-1" ref={searchRef}>
@@ -552,7 +545,6 @@ export default function Storefront() {
         </div>
       </section>
     </>
-  )}
 
       <section id="callback-section" className="max-w-xl mx-auto bg-brand-bg/40 p-8 md:p-12 rounded-none border border-brand-border mx-4 sm:mx-auto mb-12 shadow-none">
         <div className="text-center mb-8">
@@ -627,7 +619,6 @@ export default function Storefront() {
                       <option value="cologne" className="bg-brand-bg text-brand-light">{t('cologne')}</option>
                       <option value="decant" className="bg-brand-bg text-brand-light">{language === 'be' ? 'Адліванты' : 'Отливанты'}</option>
                       <option value="set" className="bg-brand-bg text-brand-light">{language === 'be' ? 'Готовые наборы' : 'Готовые наборы'}</option>
-                      <option value="custom-set" className="bg-brand-bg text-brand-light">{language === 'be' ? 'Канструктар аромабоксаў (Новае)' : 'Конструктор аромабоксов (Новое)'}</option>
                       <option value="oil" className="bg-brand-bg text-brand-light">{t('oil')}</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-brand-muted">
