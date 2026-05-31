@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, ArrowRight, ArrowLeft, Check, CheckCircle2, ShoppingBag, X, Compass, Gift, Briefcase, Flame, Droplets, Crown } from 'lucide-react';
+import { Sparkles, ArrowRight, ArrowLeft, Check, CheckCircle2, ShoppingBag, X, Compass, Gift, Briefcase, Flame, Droplets, Crown, ChevronDown } from 'lucide-react';
 import { useLanguage } from './LanguageProvider';
 import { useCart } from './CartProvider';
-import { Product } from '../types';
+import { Product, getVariantType } from '../types';
 
 interface ScentQuizProps {
   onOrderBoxClick?: () => void;
@@ -21,6 +21,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
   const [occasion, setOccasion] = useState<string>('');
   const [family, setFamily] = useState<string>('');
   const [intensity, setIntensity] = useState<string>('');
+  const [selectedVariants, setSelectedVariants] = useState<Record<number, number>>({});
   
   // Matched products
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -45,6 +46,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
     setIntensity('');
     setResults([]);
     setSuccessAdded({});
+    setSelectedVariants({});
   };
 
   const handleNext = () => {
@@ -61,6 +63,80 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
     }
   };
 
+  // Helper to generate bespoke copywriting explanations for matched products
+  const generateBespokeExplanation = (
+    product: Product, 
+    selectedFamily: string, 
+    selectedOccasion: string, 
+    lang: 'ru' | 'be',
+    idx: number
+  ): string => {
+    const isBe = lang === 'be';
+    
+    // Extract notes
+    const topNotes = (product.topNotes || []).slice(0, 2).map(n => isBe && n.name_be ? n.name_be.toLowerCase() : n.name.toLowerCase());
+    const heartNotes = (product.heartNotes || []).slice(0, 2).map(n => isBe && n.name_be ? n.name_be.toLowerCase() : n.name.toLowerCase());
+    const baseNotes = (product.baseNotes || []).slice(0, 2).map(n => isBe && n.name_be ? n.name_be.toLowerCase() : n.name.toLowerCase());
+    const accords = (product.accords || []).slice(0, 2).map(a => isBe && a.name_be ? a.name_be.toLowerCase() : a.name.toLowerCase());
+
+    const brand = product.brand;
+    const name = product.name;
+
+    // Use (product.id + idx) as a seed to ensure high variety
+    const patternId = (product.id + idx) % 4;
+
+    const notesJoined = topNotes.concat(heartNotes).concat(baseNotes).slice(0, 3);
+    const notesStr = notesJoined.length > 0 ? notesJoined.join(', ') : '';
+
+    if (isBe) {
+      let context = 'вельмі вытанчаны спадарожнік';
+      if (selectedOccasion === 'everyday') context = 'ідэальна падыходзіць на кожны дзень і для працы';
+      else if (selectedOccasion === 'date') context = 'зачаруе і створыць рамантычную атмасферу вечарам';
+      else if (selectedOccasion === 'fresh') context = 'падорыць доўгачаканую свежасць і прыліў бадзёрасці';
+      else if (selectedOccasion === 'status') context = 'падкрэсліць вытанчаны стыль і асаблівы статус';
+
+      let famStr = 'воды';
+      if (selectedFamily === 'citrus_fresh') famStr = 'віхрам цытрусавай прахалоды';
+      else if (selectedFamily === 'sweet_gourmand') famStr = 'млявым гурманскім шлейфам';
+      else if (selectedFamily === 'woody_spicy') famStr = 'шляхетнымі драўняна-рэзкімі акордамі';
+      else if (selectedFamily === 'floral_powdery') famStr = 'далікатнымі пудрава-кветкавымі нотамі';
+
+      if (patternId === 0) {
+        return `Гэты шэдэўр ад ${brand} з нотамі ${notesStr} ${context}.`;
+      } else if (patternId === 1) {
+        return `Выразны ${name} раскрываецца ${famStr}, што ${context}.`;
+      } else if (patternId === 2) {
+        const accordPart = accords.length > 0 ? ` з асноўнымі акцэнтамі ${accords.join(' і ')}` : '';
+        return `Цудоўны выбар ад ${brand}${accordPart}. Водар ${context}.`;
+      } else {
+        return `Кампазіцыя раскрываецца гучаннем ${notesStr} і ${context}.`;
+      }
+    } else {
+      let context = 'великолепно подчеркнет ваш образ';
+      if (selectedOccasion === 'everyday') context = 'создаст безупречный и деликатный офисный стиль на каждый день';
+      else if (selectedOccasion === 'date') context = 'окружит вас притягательной, теплой атмосферой вечернего свидания';
+      else if (selectedOccasion === 'fresh') context = 'подарит ощущение живительной прохлады, чистоты и легкости';
+      else if (selectedOccasion === 'status') context = 'выгодно выделит ваш безупречный вкус и высокий статус';
+
+      let famStr = 'утонченного парфюма';
+      if (selectedFamily === 'citrus_fresh') famStr = 'свежим вихрем сочных цитрусов';
+      else if (selectedFamily === 'sweet_gourmand') famStr = 'аппетитным ванильно-гурманским шлейфом';
+      else if (selectedFamily === 'woody_spicy') famStr = 'благородными древесно-пряными полутонами';
+      else if (selectedFamily === 'floral_powdery') famStr = 'нежным, обволакивающим пудровым облаком';
+
+      if (patternId === 0) {
+        return `Аромат от ${brand} с нотами ${notesStr} ${context}.`;
+      } else if (patternId === 1) {
+        return `Гармоничный ${name} раскрывается ${famStr}, который ${context}.`;
+      } else if (patternId === 2) {
+        const accordPart = accords.length > 0 ? ` с доминирующими аккордами ${accords.join(' и ')}` : '';
+        return `Изысканное творение от ${brand}${accordPart} — ${context}.`;
+      } else {
+        return `Сочетание нот ${notesStr} подчеркивает фирменный стиль бренда и ${context}.`;
+      }
+    }
+  };
+
   const calculateRecommendations = () => {
     setLoadingResults(true);
     setCurrentStep(4);
@@ -73,123 +149,191 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
 
       // Mathematical matching algorithms
       const scored = allProducts.map(product => {
-        let score = 0;
-        
-        // 1. Gender (30 points)
+        // Construct detailed lowcase product text for searchable match
+        const productText = [
+          product.name,
+          product.brand,
+          product.description,
+          product.description_be,
+          ...(product.scentFamilies || []),
+          ...(product.scentFamilies_be || []),
+          ...(product.accords || []).map(a => a.name),
+          ...(product.topNotes || []).map(n => n.name),
+          ...(product.heartNotes || []).map(n => n.name),
+          ...(product.baseNotes || []).map(n => n.name),
+          ...(product.tags || []),
+          ...(product.tags_be || [])
+        ].map(t => (t || '').toLowerCase()).join(' ');
+
+        const checkKeywords = (keywords: string[]) => keywords.some(kw => productText.includes(kw));
+
+        // 1. Gender Filter & Match (Max 35 points)
+        let genderScore = 0;
         if (gender === 'female') {
-          score += product.gender === 'Female' ? 30 : (product.gender === 'Unisex' ? 22 : 0);
+          if (product.gender === 'Female') genderScore = 35;
+          else if (product.gender === 'Unisex') genderScore = 20;
+          else genderScore = -20; // Heavy penalty for opposite gender
         } else if (gender === 'male') {
-          score += product.gender === 'Male' ? 30 : (product.gender === 'Unisex' ? 22 : 0);
-        } else {
-          score += product.gender === 'Unisex' ? 30 : 15;
+          if (product.gender === 'Male') genderScore = 35;
+          else if (product.gender === 'Unisex') genderScore = 20;
+          else genderScore = -20; // Heavy penalty
+        } else { // unisex choice
+          if (product.gender === 'Unisex') genderScore = 35;
+          else genderScore = 15;
         }
 
-        // 2. Occasion Vibe (25 points)
-        const lowerDesc = (product.description || '').toLowerCase();
-        const lowerName = product.name.toLowerCase();
-        const lowerBrand = product.brand.toLowerCase();
-        const families = (product.scentFamilies || []).map(f => f.toLowerCase());
-        const accords = (product.accords || []).map(a => a.name.toLowerCase());
+        // 2. Olfactory Family Match (Max 40 points)
+        let familyScore = 0;
+        let hasDirectFamilyMatch = false;
 
-        let occasionMatched = false;
-        if (occasion === 'everyday') {
-          if (families.some(f => f.includes('свеж') || f.includes('цитр') || f.includes('мускус') || f.includes('цветоч') || f.includes('fresh') || f.includes('citrus') || f.includes('floral'))) occasionMatched = true;
-          if (accords.some(a => a.includes('цитрус') || a.includes('свеж') || a.includes('мускус') || a.includes('зелен') || a.includes('чист') || a.includes('аква'))) occasionMatched = true;
-          score += occasionMatched ? 25 : 10;
-        } else if (occasion === 'date') {
-          if (families.some(f => f.includes('восточ') || f.includes('гурман') || f.includes('прян') || f.includes('oriental') || f.includes('gourmand') || f.includes('spicy'))) occasionMatched = true;
-          if (accords.some(a => a.includes('сладк') || a.includes('ванил') || a.includes('роза') || a.includes('тепл') || a.includes('прян') || a.includes('кокос') || a.includes('вишн'))) occasionMatched = true;
-          score += occasionMatched ? 25 : 10;
-        } else if (occasion === 'fresh') {
-          if (families.some(f => f.includes('свеж') || f.includes('цитр') || f.includes('fresh') || f.includes('citrus'))) occasionMatched = true;
-          if (accords.some(a => a.includes('цитрус') || a.includes('свеж') || a.includes('водн') || a.includes('морск') ||  a.includes('зелен'))) occasionMatched = true;
-          score += occasionMatched ? 25 : 8;
-        } else if (occasion === 'status') {
-          if (families.some(f => f.includes('древес') || f.includes('кожан') || f.includes('шипр') || f.includes('woody') || f.includes('leather') || f.includes('chypre'))) occasionMatched = true;
-          if (accords.some(a => a.includes('дерев') || a.includes('кожа') || a.includes('уд') || a.includes('амбр') || a.includes('дым') || a.includes('сандал'))) occasionMatched = true;
-          score += occasionMatched ? 25 : 10;
-        }
+        const famUpper = (product.scentFamilies || []).map(f => f.toUpperCase());
+        const tagsUpper = (product.tags || []).map(t => t.toUpperCase());
 
-        // 3. Olfactory Families (25 points)
-        let familyMatched = false;
         if (family === 'citrus_fresh') {
-          if (families.some(f => f.includes('цитр') || f.includes('свеж') || f.includes('citrus') || f.includes('fresh')) ||
-              accords.some(a => a.includes('цитрус') || a.includes('свеж') || a.includes('водн') || a.includes('морск') || a.includes('зелен'))) familyMatched = true;
+          const directMatch = ['CITRUS', 'FRESH', 'AQUATIC', 'GREEN', 'AROMATIC'].some(f => famUpper.includes(f) || tagsUpper.includes(f));
+          if (directMatch) {
+            familyScore = 40;
+            hasDirectFamilyMatch = true;
+          } else if (checkKeywords(['цитр', 'свеж', 'водн', 'морск', 'аква', 'акват', 'зелен', 'чай', 'бергамот', 'лимон', 'грейп', 'мята', 'минерал', 'шалфей', 'citrus', 'fresh', 'aquatic', 'marine'])) {
+            familyScore = 30;
+            hasDirectFamilyMatch = true;
+          } else {
+            familyScore = 0; // No match
+          }
         } else if (family === 'sweet_gourmand') {
-          if (families.some(f => f.includes('гурман') || f.includes('сладк') || f.includes('gourmand') || f.includes('vanilla') || f.includes('ваниль')) ||
-              accords.some(a => a.includes('сладк') || a.includes('ванил') || a.includes('карамел') || a.includes('шоколад') || a.includes('мед') || a.includes('мёд'))) familyMatched = true;
+          const directMatch = ['GOURMAND', 'SWEET', 'ORIENTAL', 'VANILLA'].some(f => famUpper.includes(f) || tagsUpper.includes(f));
+          if (directMatch) {
+            familyScore = 40;
+            hasDirectFamilyMatch = true;
+          } else if (checkKeywords(['гурман', 'сладк', 'ванил', 'карамел', 'шоколад', 'мёд', 'мед', 'кокос', 'вишн', 'малина', 'слив', 'тонка', 'миндал', 'sugar', 'gourmand', 'sweet', 'vanilla'])) {
+            familyScore = 30;
+            hasDirectFamilyMatch = true;
+          } else {
+            familyScore = 0;
+          }
         } else if (family === 'woody_spicy') {
-          if (families.some(f => f.includes('древес') || f.includes('прян') || f.includes('кожан') || f.includes('woody') || f.includes('spicy') || f.includes('leather')) ||
-              accords.some(a => a.includes('дерев') || a.includes('кожа') || a.includes('прян') || a.includes('спец') || a.includes('сандал') || a.includes('кедр') || a.includes('табак') || a.includes('пачули'))) familyMatched = true;
+          const directMatch = ['WOODY', 'SPICY', 'LEATHER', 'OUD', 'WARM SPICY'].some(f => famUpper.includes(f) || tagsUpper.includes(f));
+          if (directMatch) {
+            familyScore = 40;
+            hasDirectFamilyMatch = true;
+          } else if (checkKeywords(['древес', 'прян', 'кожан', 'дерев', 'уд', 'кожа', 'табак', 'перец', 'кардамон', 'кедр', 'сандал', 'пачули', 'ветивер', 'woody', 'spicy', 'leather', 'oud'])) {
+            familyScore = 30;
+            hasDirectFamilyMatch = true;
+          } else {
+            familyScore = 0;
+          }
         } else if (family === 'floral_powdery') {
-          if (families.some(f => f.includes('цветоч') || f.includes('пудр') || f.includes('floral') || f.includes('powder')) ||
-              accords.some(a => a.includes('цвет') || a.includes('пудр') || a.includes('роза') || a.includes('жасмин') || a.includes('пион') || a.includes('мускус'))) familyMatched = true;
+          const directMatch = ['FLORAL', 'POWDERY', 'MUSK'].some(f => famUpper.includes(f) || tagsUpper.includes(f));
+          if (directMatch) {
+            familyScore = 40;
+            hasDirectFamilyMatch = true;
+          } else if (checkKeywords(['цветоч', 'пудр', 'цвет', 'роза', 'жасмин', 'пион', 'мускус', 'тубероз', 'фиалк', 'ирис', 'лаванд', 'floral', 'powdery', 'rose', 'jasmine', 'musk'])) {
+            familyScore = 30;
+            hasDirectFamilyMatch = true;
+          } else {
+            familyScore = 0;
+          }
         }
-        score += familyMatched ? 25 : 8;
 
-        // 4. Sillage / Longevity (20 points)
+        // 3. Occasion Match (Max 25 points)
+        let occasionScore = 0;
+        if (occasion === 'everyday') {
+          if (checkKeywords(['офис', 'ежедневн', 'каждый день', 'чист', 'легк', 'нежн', 'мускус', 'чай', 'office', 'clean', 'light', 'daily', 'everyday', 'soft'])) {
+            occasionScore = 25;
+          } else {
+            const isLightBrand = ['molecule', 'byredo', 'jo malone'].some(b => productText.includes(b));
+            occasionScore = isLightBrand ? 20 : 5;
+          }
+        } else if (occasion === 'date') {
+          if (checkKeywords(['свидан', 'вечер', 'чувствен', 'сладк', 'прян', 'амбр', 'тепл', 'романт', 'ноч', 'ванил', 'вишн', 'страст', 'карамел', 'date', 'evening', 'sensual', 'romantic', 'night', 'vanilla', 'sweet', 'amber'])) {
+            occasionScore = 25;
+          } else {
+            const isRich = product.concentration === 'Parfum' || product.concentration === 'EDP';
+            occasionScore = isRich ? 15 : 5;
+          }
+        } else if (occasion === 'fresh') {
+          if (checkKeywords(['свеж', 'спорт', 'водн', 'морск', 'акват', 'прохлад', 'аква', 'минерал', 'цитрус', 'лайм', 'лимон', 'бергамот', 'мята', 'грейп', 'fresh', 'aquatic', 'marine', 'citrus', 'mint'])) {
+            occasionScore = 25;
+          } else {
+            occasionScore = 5;
+          }
+        } else if (occasion === 'status') {
+          if (checkKeywords(['статус', 'роскош', 'особ', 'богат', 'шлейф', 'глубок', 'дерев', 'уд', 'кожа', 'амбр', 'сандал', 'пачули', 'luxury', 'fancy', 'status', 'rich', 'oud', 'leather', 'woody'])) {
+            occasionScore = 25;
+          } else {
+            const isPremium = typeof product.price === 'number' ? product.price > 300 : parseFloat(product.price as string) > 300;
+            occasionScore = isPremium ? 18 : 5;
+          }
+        }
+
+        // 4. Intensity Match (Max 15 points)
+        const sillageValue = product.sillage || 60; // 0-100 scale
+        const longevityValue = product.longevity || 70; // 0-100 scale
+        let intensityScore = 0;
         if (intensity === 'subtle') {
-          const isLight = (product.sillage || 3) <= 3 || (product.concentration && ['EDT', 'Cologne'].includes(product.concentration));
-          score += isLight ? 20 : 10;
+          if (sillageValue < 55) intensityScore = 15;
+          else if (sillageValue < 75) intensityScore = 10;
+          else intensityScore = 2; // high boundary penalty
         } else if (intensity === 'moderate') {
-          const isMod = (product.sillage || 3) === 3 || (product.sillage || 3) === 4 || product.concentration === 'EDP';
-          score += isMod ? 20 : 12;
+          if (sillageValue >= 50 && sillageValue <= 78) intensityScore = 15;
+          else intensityScore = 10;
         } else if (intensity === 'bold') {
-          const isBold = (product.sillage || 3) >= 4 || product.concentration === 'Parfum' || families.some(f => f.includes('восточ') || f.includes('amber')) || accords.some(a => a.includes('уд') || a.includes('кожа') || a.includes('амбр'));
-          score += isBold ? 20 : 8;
+          if (sillageValue > 75 || longevityValue > 75 || product.concentration === 'Parfum') intensityScore = 15;
+          else if (sillageValue > 60 || longevityValue > 60) intensityScore = 10;
+          else intensityScore = 2; // low sillage penalty
         }
 
-        const matchPercent = Math.round(68 + (score / 100) * 31);
-        
-        // Generate contextual explanation
-        let explanation = '';
-        let explanationBe = '';
-        
-        if (family === 'sweet_gourmand' && occasion === 'date') {
-          explanation = 'Этот чувственный и томный шлейф с выраженной гурманской сладостью идеально дополнит атмосферу свидания и вечернего тепла.';
-          explanationBe = 'Гэты пачуццёвы і млявы шлейф з выражанай гурманскай салодкасцю ідэальна дапоўніць атмасферу спаткання і вячэрняга цяпла.';
-        } else if (family === 'citrus_fresh' && occasion === 'fresh') {
-          explanation = 'Ультрасвежий взрыв цитрусов и легких акватических брызг подарит абсолютную легкость и тонус в течение дня.';
-          explanationBe = 'Ультрасвежы выбух цытрусаў і лёгкіх акватычных пырскаў падорыць абсалютную лёгкасць і тонус на працягу дня.';
-        } else if (family === 'woody_spicy' && occasion === 'status') {
-          explanation = 'Благородная сухая древесина с глубокими дымными и кожаными нюансами подчеркнет безупречный статус и харизму.';
-          explanationBe = 'Шляхетная сухая драўніна з глыбокімі дымнымі і скуранымі нюансамі падкрэсліць бездакорны статус і харызму.';
-        } else if (family === 'floral_powdery' && occasion === 'everyday') {
-          explanation = 'Деликатный цветочный букет с пудровым обволакивающим мускусом звучит невероятной нежностью утонченной «второй кожи».';
-          explanationBe = 'Дэлікатны кветкавы букет з пудравым мускусам, які ахінае, гучыць неверагоднай пяшчотай вытанчанай «другой скуры».';
-        } else {
-          explanation = `Превосходно отвечает вашему запросу на аромат с преимущественно ${
-            family === 'citrus_fresh' ? 'цитрусовой свежестью' :
-            family === 'sweet_gourmand' ? 'томной сладостью' :
-            family === 'woody_spicy' ? 'древесно-пряным авторитетом' : 'мягким цветочным характером'
-          } для создания невероятного шлейфа.`;
-          
-          explanationBe = `Выдатна адказвае вашаму запыту на водар з пераважна ${
-            family === 'citrus_fresh' ? 'цытрусавай свежасцю' :
-            family === 'sweet_gourmand' ? 'млявай салодкасцю' :
-            family === 'woody_spicy' ? 'драўняна-рэзкім аўтарытэтам' : 'мяккім кветкавым характарам'
-          } для стварэння неверагоднага шлейфу.`;
+        // Penalty if family doesn't match at all
+        let finalMaxScore = genderScore + familyScore + occasionScore + intensityScore;
+        if (!hasDirectFamilyMatch) {
+          finalMaxScore -= 25; // penalty for wrong family preference
         }
+
+        // Match percentage calculation from 40% to 98%
+        const normalizedScore = Math.max(0, Math.min(100, (finalMaxScore / 115) * 100));
+        const microAdjustment = (product.price ? (Number(product.id) % 3) * 0.5 : 0);
+        let matchPercent = Math.min(99, Math.round(50 + (normalizedScore * 0.49) + microAdjustment));
+        if (matchPercent < 40) matchPercent = 40;
 
         return {
           product,
-          match: Math.min(100, Math.max(72, matchPercent)),
-          explanation,
-          explanationBe
+          match: matchPercent,
+          hasDirectFamilyMatch
         };
       });
 
       // Sort by score desc, take top 3
-      const top3 = scored.sort((a, b) => b.match - a.match).slice(0, 3);
-      setResults(top3);
+      const sortedResults = scored
+        .sort((a, b) => b.match - a.match)
+        .slice(0, 3)
+        .map(({ product, match }, idx) => {
+          const explanation = generateBespokeExplanation(product, family, occasion, 'ru', idx);
+          const explanationBe = generateBespokeExplanation(product, family, occasion, 'be', idx);
+          return {
+            product,
+            match,
+            explanation,
+            explanationBe
+          };
+        });
+
+      // Pre-select the first available variant identifier for each product
+      const initialSelected: Record<number, number> = {};
+      sortedResults.forEach(({ product }) => {
+        if (product.variants && product.variants.length > 0 && product.variants[0].id) {
+          initialSelected[product.id] = product.variants[0].id;
+        }
+      });
+      setSelectedVariants(initialSelected);
+
+      setResults(sortedResults);
       setLoadingResults(false);
     }, 1200);
   };
 
   const handleAddScentToCart = (prod: Product) => {
-    // Select first variant (usually 2ml decant) or fallback to any
-    const variantId = prod.variants && prod.variants.length > 0 ? prod.variants[0].id : undefined;
-    addToCart(prod, variantId);
+    const selectedVarId = selectedVariants[prod.id] || (prod.variants && prod.variants.length > 0 ? prod.variants[0].id : undefined);
+    addToCart(prod, selectedVarId);
     
     setSuccessAdded(prev => ({ ...prev, [prod.id]: true }));
     setTimeout(() => {
@@ -559,27 +703,55 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                 </div>
                               </div>
                               
-                              <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-brand-border/20">
-                                <span className="text-xs font-serif font-semibold text-brand-light whitespace-nowrap">
-                                  {product.price} {t('currency')}
-                                </span>
-                                <button
-                                  id={`quiz-add-to-cart-${product.id}`}
-                                  onClick={() => handleAddScentToCart(product)}
-                                  className="flex-1 sm:flex-initial bg-brand-accent text-white hover:bg-brand-accent-hover px-4 py-2.5 text-[10px] uppercase font-semibold tracking-wider transition-colors flex items-center justify-center gap-2"
-                                >
-                                  {successAdded[product.id] ? (
-                                    <>
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                                      <span>{language === 'be' ? 'Дададзена!' : 'Добавлено!'}</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ShoppingBag className="w-3.5 h-3.5" />
-                                      <span>{language === 'be' ? 'У кошык' : 'В корзину'}</span>
-                                    </>
-                                  )}
-                                </button>
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-brand-border/20">
+                                {product.variants && product.variants.length > 0 && (
+                                  <div className="relative min-w-[130px]">
+                                    <select
+                                      value={selectedVariants[product.id] || ''}
+                                      onChange={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        setSelectedVariants(prev => ({ ...prev, [product.id]: val }));
+                                      }}
+                                      className="w-full text-[10px] uppercase font-semibold tracking-wider pr-8 pl-3 py-2 bg-white border border-brand-border/40 hover:border-brand-accent/30 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer rounded-none"
+                                    >
+                                      {product.variants.map((v) => {
+                                        const typeStr = getVariantType(v, language);
+                                        return (
+                                          <option key={v.id} value={v.id} disabled={v.stock === 0}>
+                                            {typeStr} {v.size} {v.stock === 0 ? `(${language === 'be' ? 'Няма' : 'Нет'})` : ''}
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
+                                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-brand-muted">
+                                      <ChevronDown className="w-3 h-3" />
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                <div className="flex items-center gap-3 justify-between sm:justify-start">
+                                  <span className="text-xs font-serif font-semibold text-brand-light whitespace-nowrap min-w-[65px] text-right">
+                                    {(product.variants?.find(v => v.id === selectedVariants[product.id])?.price || product.price)} {t('currency')}
+                                  </span>
+                                  <button
+                                    id={`quiz-add-to-cart-${product.id}`}
+                                    onClick={() => handleAddScentToCart(product)}
+                                    disabled={product.variants?.find(v => v.id === selectedVariants[product.id])?.stock === 0}
+                                    className="flex-1 sm:flex-initial bg-brand-accent text-white hover:bg-brand-accent-hover px-4 py-2.5 text-[10px] uppercase font-semibold tracking-wider transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    {successAdded[product.id] ? (
+                                      <>
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                        <span>{language === 'be' ? 'Дададзена!' : 'Добавлено!'}</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ShoppingBag className="w-3.5 h-3.5" />
+                                        <span>{language === 'be' ? 'У кошык' : 'В корзину'}</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           ))}

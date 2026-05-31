@@ -506,6 +506,22 @@ export default function CartDrawer() {
                                     </span>
                                   )}
                                 </div>
+                                
+                                {/* Custom Bundle Items List */}
+                                {(item as any).customBundleItems && (
+                                  <ul className="mt-2 text-[10px] text-brand-muted/90 bg-white/[0.02] border border-brand-border/30 p-2 space-y-1">
+                                    {(item as any).customBundleItems.map((sub: any, sIdx: number) => (
+                                      <li key={sIdx} className="flex justify-between items-baseline">
+                                        <span className="truncate pr-2">
+                                          {sub.brand} — {sub.name}
+                                        </span>
+                                        <span className="font-mono text-[9px] text-brand-accent shrink-0">
+                                          ({sub.size})
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
                               </div>
                               <div className="flex justify-between items-center mt-3">
                                 <div className="flex items-center gap-3 border border-brand-border/60 rounded-none px-2 py-0.5 bg-brand-bg">

@@ -567,7 +567,7 @@ export default function ProductDetails() {
                       className="overflow-hidden"
                     >
                       <div className="pt-2">
-                        <DecantSizeGuide selectedSize={volumeStr} />
+                        <DecantSizeGuide selectedSize={volumeStr} variantType={selectedVariant?.variant_type} />
                       </div>
                     </motion.div>
                   )}

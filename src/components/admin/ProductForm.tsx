@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Product, Note, ProductVariant } from '../../types';
-import { UploadCloud, RefreshCw, Plus, Trash2, Image as ImageIcon, Tag, Layers } from 'lucide-react';
+import { UploadCloud, RefreshCw, Plus, Trash2, Image as ImageIcon, Tag, Layers, Search, Check, Sparkles, Box } from 'lucide-react';
 import NoteBuilder from './NoteBuilder';
 
 import { uploadImageChunks } from '../../utils/uploadUtils';
@@ -139,7 +139,116 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeTab, setActiveTab] = useState<'basic' | 'media' | 'description' | 'scent' | 'variants' | 'seo'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'media' | 'description' | 'scent' | 'variants' | 'seo' | 'builder'>('basic');
+
+  // Admin Set builder states
+  const [inventProducts, setInventProducts] = useState<Product[]>([]);
+  const [inventSearch, setInventSearch] = useState('');
+  const [selectedBundleItems, setSelectedBundleItems] = useState<{ product: Product; variant: ProductVariant }[]>([]);
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        const items = Array.isArray(data) ? data : (data.products || []);
+        // Only include products with valid decants is nice, but we can list any product
+        setInventProducts(items);
+      })
+      .catch(err => console.error('Error fetching inventory products in form:', err));
+  }, []);
+
+  const handleAutoPopulateSet = () => {
+    if (selectedBundleItems.length === 0) {
+      alert('Пожалуйста, выберите хотя бы один отливант для включения в набор!');
+      return;
+    }
+
+    // 1. Title
+    const brandsInBundle = Array.from(new Set(selectedBundleItems.map(item => item.product.brand)));
+    
+    // Auto title naming
+    const autoTitle = `Набор отливантов: ${brandsInBundle.join(' & ')} (${selectedBundleItems.length} шт.)`;
+
+    // 2. Explanations/Description
+    const itemsListText = selectedBundleItems.map(item => `• ${item.product.brand} — ${item.product.name} (${item.variant.size})`).join('\n');
+    const autoDescription = `Эксклюзивный подарочный набор оригинальной нишевой парфюмерии, бережно укомплектованный нашими аромастилистами.\n\nКаждый отливант снабжен надежным распылителем и информативной карточкой с описанием.\n\nСостав набора:\n${itemsListText}\n\nОтличный вариант для знакомства с легендарными композициями!`;
+    const autoDescriptionBe = `Эксклюзіўны падарункавы набор арыгінальнай нішавай парфумерыі, беражліва укамплектаваны нашымі аромастылістамі.\n\nКожны адлівант забяспечаны надзейным распыляльнікам і інфарматыўнай карткай з апісаннем.\n\nСклад набору:\n${itemsListText}\n\nВыдатны варыянт для знаёмства з легендарнымі кампазіцыямі!`;
+
+    // 3. Merging notes
+    let mergedTop: Note[] = [];
+    let mergedHeart: Note[] = [];
+    let mergedBase: Note[] = [];
+    let mergedAccords: any[] = [];
+
+    selectedBundleItems.forEach(item => {
+      const p = item.product;
+      p.topNotes?.forEach(note => {
+        if (!mergedTop.some(n => n.name.toLowerCase() === note.name.toLowerCase())) {
+          mergedTop.push(note);
+        }
+      });
+      p.heartNotes?.forEach(note => {
+        if (!mergedHeart.some(n => n.name.toLowerCase() === note.name.toLowerCase())) {
+          mergedHeart.push(note);
+        }
+      });
+      p.baseNotes?.forEach(note => {
+        if (!mergedBase.some(n => n.name.toLowerCase() === note.name.toLowerCase())) {
+          mergedBase.push(note);
+        }
+      });
+      p.accords?.forEach(accord => {
+        if (!mergedAccords.some(a => a.name.toLowerCase() === accord.name.toLowerCase())) {
+          mergedAccords.push(accord);
+        }
+      });
+    });
+
+    mergedTop = mergedTop.slice(0, 6);
+    mergedHeart = mergedHeart.slice(0, 6);
+    mergedBase = mergedBase.slice(0, 6);
+    mergedAccords = mergedAccords.slice(0, 5);
+
+    // 4. Calculating variant info and automatic variant listing
+    const originalPriceSum = selectedBundleItems.reduce((sum, item) => {
+      return sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price as any) || 0);
+    }, 0);
+    const suggestedPrice = parseFloat((originalPriceSum * 0.85).toFixed(2));
+
+    const autoSizeLabel = `Сет ${selectedBundleItems.length} шт (${selectedBundleItems[0]?.variant.size || '2мл'})`;
+
+    const newVariant: ProductVariant = {
+      productId: initialData?.id || 0,
+      size: autoSizeLabel,
+      price: suggestedPrice,
+      stock: 50,
+      sku: `SET-${selectedBundleItems.length}S-${Date.now()}`,
+      variant_type: 'decant'
+    };
+
+    // Update form state
+    setFormData(prev => ({
+      ...prev,
+      name: autoTitle,
+      brand: 'Archetype Selection',
+      description: autoDescription,
+      description_be: autoDescriptionBe,
+      imageUrl: selectedBundleItems[0]?.product.imageUrl || prev.imageUrl,
+      price: suggestedPrice.toString(),
+      topNotes: mergedTop,
+      heartNotes: mergedHeart,
+      baseNotes: mergedBase,
+      accords: mergedAccords,
+      tags: 'set, набор, подарок, отливанты',
+      tags_be: 'set, набор, падарунак, адліванты',
+      scentFamilies: Array.from(new Set(selectedBundleItems.flatMap(item => item.product.scentFamilies || []))),
+      variants: [newVariant]
+    }));
+
+    // Switch tab showing results!
+    setActiveTab('basic');
+    alert(`Набор собран! Название, описание, объединенные ноты и аккорды заполнены автоматически со скидкой 15%. Проверьте данные.`);
+  };
 
   const handleFilesUpload = async (files: FileList | File[], targetField: 'imageUrl' | 'gallery' | number) => {
     const fileArray = Array.from(files);
@@ -322,6 +431,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           { id: 'variants', label: 'Варианты' },
           { id: 'description', label: 'Описание' },
           { id: 'scent', label: 'Аромат и Сезонность' },
+          { id: 'builder', label: 'Собрать Набор' },
           { id: 'seo', label: 'SEO' },
         ].map(tab => (
           <button
@@ -739,6 +849,151 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           </div>
         </div>
       </div>
+      </div>
+
+      <div className={activeTab === 'builder' ? 'block' : 'hidden'}>
+        {/* Scent Set Builder Constructor (Admin Tool) */}
+        <div className="bg-white/5 p-6 rounded-3xl border border-brand-border space-y-6 text-left">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-brand-accent animate-pulse" />
+                <h3 className="text-xl font-serif text-brand-light">Конструктор парфюмерных наборов</h3>
+              </div>
+              <p className="text-xs text-brand-muted mt-1">Облегчите составление сетов! Выберите комплектующие продукты, и система сама назовет набор, соберет описание, объединит все их ароматические ноты и добавит готовые варианты в форму.</p>
+            </div>
+            
+            <button
+              type="button"
+              onClick={handleAutoPopulateSet}
+              disabled={selectedBundleItems.length === 0}
+              className="px-5 py-2.5 bg-brand-accent text-white hover:bg-brand-accent-hover text-xs uppercase tracking-wider font-semibold rounded-xl flex items-center gap-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <Check className="w-4 h-4" />
+              <span>Автозаполнить всё</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+            {/* Left side: Selected list */}
+            <div className="md:col-span-5 space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-brand-muted font-mono">Выбранные отливанты в наборе ({selectedBundleItems.length} шт):</h4>
+              
+              <div className="p-4 bg-black/10 border border-brand-border/60 rounded-2xl min-h-[300px] flex flex-col justify-between">
+                <div className="space-y-3">
+                  {selectedBundleItems.length === 0 ? (
+                    <div className="text-center py-16 text-xs text-brand-muted uppercase tracking-widest">
+                      Набор пуст.<br/>Выберите отливанты справа ↗
+                    </div>
+                  ) : (
+                    selectedBundleItems.map((item, idx) => (
+                      <div key={idx} className="flex gap-3 justify-between items-center p-2.5 bg-white/[0.02] border border-brand-border/40 rounded-xl">
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase font-mono text-brand-muted">{item.product.brand}</p>
+                          <h5 className="text-xs text-brand-light font-medium truncate">{item.product.name}</h5>
+                          <span className="text-[9px] text-brand-accent font-mono">{item.variant.size} — {(typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price as any)).toFixed(2)} BYN</span>
+                        </div>
+                        
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBundleItems(prev => prev.filter((_, i) => i !== idx))}
+                          className="p-1 px-2.5 bg-red-400/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-[9px] font-semibold border-none uppercase cursor-pointer"
+                        >
+                          Удалить
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {selectedBundleItems.length > 0 && (
+                  <div className="border-t border-brand-border/40 pt-4 mt-6 space-y-1 text-xs">
+                    <div className="flex justify-between text-brand-muted">
+                      <span>Сумма деталей</span>
+                      <span>{selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price) || 0), 0).toFixed(2)} BYN</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-400 font-medium font-semibold">
+                      <span>Скидка 15%</span>
+                      <span>-{(selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price) || 0), 0) * 0.15).toFixed(2)} BYN</span>
+                    </div>
+                    <div className="flex justify-between text-brand-light font-bold text-sm pt-2 border-t border-white/5">
+                      <span>Итого набора</span>
+                      <span>{(selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price) || 0), 0) * 0.85).toFixed(2)} BYN</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right side: Catalog search & select */}
+            <div className="md:col-span-7 space-y-4">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-3 flex items-center text-brand-muted/70">
+                  <Search className="w-4 h-4" />
+                </span>
+                <input
+                  type="text"
+                  value={inventSearch}
+                  onChange={e => setInventSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-black/20 border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted focus:outline-none focus:border-brand-accent transition-all font-light"
+                  placeholder="Быстрый поиск парфюмерии по названию или бренду..."
+                />
+              </div>
+
+              <div className="bg-black/15 border border-brand-border rounded-2xl p-4 max-h-[350px] overflow-y-auto custom-scrollbar space-y-2">
+                {inventProducts
+                  .filter(p => !inventSearch || p.name.toLowerCase().includes(inventSearch.toLowerCase()) || p.brand.toLowerCase().includes(inventSearch.toLowerCase()))
+                  .slice(0, 30) // Show up to 30 matching products
+                  .map(product => {
+                    // Extract decant variants
+                    const variants = (product.variants || []).filter(v => v.variant_type === 'decant' || v.variant_type === 'splitting' || v.size.toLowerCase().includes('ml'));
+                    
+                    return (
+                      <div key={product.id} className="p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-brand-border/40 rounded-xl space-y-2 last:border-0 pb-3 transition-colors">
+                        <div className="flex justify-between items-baseline">
+                          <div>
+                            <span className="text-[10px] text-brand-muted uppercase font-bold tracking-wider">{product.brand}</span>
+                            <h5 className="text-xs font-semibold text-brand-light leading-tight">{product.name}</h5>
+                          </div>
+                        </div>
+
+                        {variants.length === 0 ? (
+                          <p className="text-[10px] text-brand-muted italic pl-1">Нет доступных отливантов-вариантов</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {variants.map(variant => {
+                              const isSelected = selectedBundleItems.some(item => item.variant.id === variant.id);
+                              return (
+                                <button
+                                  key={variant.id}
+                                  type="button"
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setSelectedBundleItems(prev => prev.filter(item => item.variant.id !== variant.id));
+                                    } else {
+                                      setSelectedBundleItems(prev => [...prev, { product, variant }]);
+                                    }
+                                  }}
+                                  className={`px-2.5 py-1 rounded-lg text-[9px] font-mono tracking-wider transition-all flex items-center gap-1 cursor-pointer select-none ${
+                                    isSelected 
+                                      ? 'bg-brand-accent/25 text-brand-accent border border-brand-accent' 
+                                      : 'bg-white/5 text-brand-muted hover:text-brand-light border border-brand-border/40 hover:border-brand-muted'
+                                  }`}
+                                >
+                                  {variant.size} — {(typeof variant.price === 'number' ? variant.price : parseFloat(variant.price as any)).toFixed(0)} BYN 
+                                  {isSelected && <Check className="w-3 h-3 ml-0.5 text-brand-accent animate-scale-in" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className={activeTab === 'seo' ? 'block' : 'hidden'}>

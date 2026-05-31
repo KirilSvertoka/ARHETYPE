@@ -1,14 +1,20 @@
 import React from 'react';
 import { useLanguage } from './LanguageProvider';
-import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, HelpCircle, Eye, Info, FlaskConical } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Info, FlaskConical } from 'lucide-react';
 
 interface DecantSizeGuideProps {
-  selectedSize: string; // e.g. "2 мл", "5ml", "10 мл"
+  selectedSize: string; // e.g. "2 мл", "5ml", "10 мл", "Остаток"
+  variantType?: string;
 }
 
-export default function DecantSizeGuide({ selectedSize }: DecantSizeGuideProps) {
+export default function DecantSizeGuide({ selectedSize, variantType }: DecantSizeGuideProps) {
   const { language } = useLanguage();
+
+  const isRemainder = 
+    variantType === 'remainder' || 
+    selectedSize.toLowerCase().includes('остаток') || 
+    selectedSize.toLowerCase().includes('астатак');
 
   // Helper to parse numeric volume from size string (e.g. "10мл", "5 ml" -> 5 or 10)
   const parseVolume = (sizeStr: string): number => {
@@ -28,7 +34,7 @@ export default function DecantSizeGuide({ selectedSize }: DecantSizeGuideProps) 
         durationBe: '1–2 тыдні рэгулярнага выкарыстання',
         purposeRu: 'Для первого знакомства. Идеальный объем для раскрытия аромата при разной погоде и настроении без лишних затрат.',
         purposeBe: 'Для першага знаёмства. Ідэальны аб’ём для раскрыцця водару пры розным надвор’і і настроі без лішніх выдаткаў.',
-        comparisonRu: 'размером с мини-помаду (легко поместится в визитницу)',
+        comparisonRu: 'размером с mini-помаду (легко поместится в визитницу)',
         comparisonBe: 'памерам з міні-памаду (лёгка змесціцца ў візітоўніцу)',
         comparisonShortRu: 'Мини-помада',
         comparisonShortBe: 'Міні-памада',
@@ -64,7 +70,7 @@ export default function DecantSizeGuide({ selectedSize }: DecantSizeGuideProps) 
         sprays: vol * 15,
         durationRu: '1.5–2 месяца регулярного использования',
         durationBe: '1.5–2 месяцы рэгулярнага выкарыстання',
-        purposeRu: 'Полноценный мини-флакон. Практичный сезонный объем — идеальный вариант для сумочки, отпуска или в качестве роскошного подарка.',
+        purposeRu: 'Полноценный mini-флакон. Практичный сезонный объем — идеальный вариант для сумочки, отпуска или в качестве роскошного подарка.',
         purposeBe: 'Паўнавартасны міні-флакон. Практычны сезонны аб’ём — ідэальны варыянт для сумачкі, адпачынку ці ў якасці раскошнага падарунка.',
         comparisonRu: 'высотой со стандартную пластиковую банковскую карту',
         comparisonBe: 'вышынёй са стандартную пластыкавую банкаўскую карту',
@@ -90,7 +96,7 @@ export default function DecantSizeGuide({ selectedSize }: DecantSizeGuideProps) 
           : 'Максимальный тревел-формат. Отличный объем для любимого парфюма на длительное время без необходимости частой покупки.',
         purposeBe: isFullBottle
           ? 'Поўнапамерны арыгінальны шэдэўр. Для сапраўдных калекцыянераў і тых, хто знайшоў сваё ідэальнае парфумернае «Я».'
-          : 'Максімальны трэвел-фармат. Выдатны аб’ём для любімага парфуму на працяглы час без неабходнасці частай куплі.',
+          : 'Максімальны трэвел-фармат. Выдатны аб’ём для любімага парфуму на працяглы час без неабходнасці частага куплі.',
         comparisonRu: isFullBottle 
           ? 'полноформатный стеклянный флакон парфюмерного дома' 
           : 'высотой превосходит стандартную кредитную карту',
@@ -110,144 +116,172 @@ export default function DecantSizeGuide({ selectedSize }: DecantSizeGuideProps) 
     }
   };
 
-  const info = getGuideInfo(volume);
+  const info = isRemainder ? {
+    sprays: 0,
+    durationRu: 'Оригинал с коробкой',
+    durationBe: 'Арыгінал з каробкай',
+    purposeRu: 'Покупка остатка во флаконе — это способ приобрести частично заполненный оригинальный брендовый флакон (обычно с фирменной коробкой). Отличный выбор для коллекционеров и тех, кому эстетика оригинального флакона так же важна, как и сам аромат.',
+    purposeBe: 'Купля астатку ва флаконе — гэта спосаб набыць часткова запоўнены арыгінальны брэндавы флакон (звычайна з фірмовай каробкай). Выдатны выбар для калекцыянераў і тых, каму эстэтыка арыгінальнага флакона гэтак жа важная, як і сам ворак.',
+    comparisonRu: 'оригинальный стеклянный флакон парфюмерного дома',
+    comparisonBe: 'арыгінальны шкляны флакон парфумернага дома',
+    comparisonShortRu: 'Флакон бренда',
+    comparisonShortBe: 'Флакон брэнда',
+    spraysTextRu: 'Родной флакон',
+    spraysTextBe: 'Родны флакон',
+    liquidHeight: '40%',
+    bottleHeight: '90px',
+    bottleWidth: '52px',
+    compareHeight: '86px',
+    compareOffset: '0px'
+  } : getGuideInfo(volume);
 
   return (
     <div className="mt-6 border border-brand-border/40 bg-brand-hover/5 p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-4 pb-2 border-b border-brand-border/20">
         <FlaskConical className="w-3.5 h-3.5 text-brand-accent" />
         <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-light">
-          {language === 'be' ? 'Гід па аб\'ёмах адлівантаў' : 'Гид по объемам отливантов'}
+          {isRemainder
+            ? (language === 'be' ? 'Гід па астатках ва флаконах' : 'Гид по остаткам во флаконах')
+            : (language === 'be' ? 'Гід па аб’ёмах адлівантаў' : 'Гид по объемам отливантов')
+          }
         </h4>
-        <span className="ml-auto text-[8px] font-mono text-brand-muted bg-brand-bg px-1.5 py-0.5 border border-brand-border/30">
-          ARCHETYPE SPEC
-        </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
-        {/* Dynamic Interactive Render comparison Column (4/12 width) */}
-        <div className="sm:col-span-5 flex flex-col items-center justify-center bg-brand-bg/60 border border-brand-border/30 p-3 relative overflow-hidden min-h-[160px] select-none">
-          
-          {/* Subtle Technical Grid Lines */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:16px_16px] pointer-events-none" />
-          
-          {/* Graphic Side-by-Side Blueprint */}
-          <div className="flex items-end justify-center gap-10 w-full relative h-[120px] pb-1">
-            
-            {/* Object Comparison Silhouette */}
-            <div className="flex flex-col items-center justify-end relative transition-all duration-300">
+        {/* Visual Comparison Column */}
+        <div className="sm:col-span-5 flex items-center justify-center bg-brand-bg/60 border border-brand-border/20 p-5 min-h-[140px] relative">
+          <div className="flex items-end justify-center gap-8 relative h-[120px]">
+            {/* Comparison Object */}
+            <div className="flex flex-col items-center justify-end relative opacity-60">
               <div 
-                className="border-2 border-brand-light/10 bg-brand-light/3 rounded-[3px] flex items-center justify-center opacity-40 transition-all duration-300"
+                className="border border-brand-light/35 border-dashed bg-brand-light/5 relative flex items-center justify-center text-center p-1"
                 style={{
                   height: info.compareHeight,
-                  width: info.comparisonShortRu.includes('карта') ? '54px' : '16px',
+                  width: '40px',
+                  borderRadius: '4px',
                   marginBottom: '1px'
                 }}
               >
-                <span className="text-[7px] text-center uppercase tracking-normal opacity-80 font-mono scale-[0.8] block px-1 leading-snug">
+                <span className="text-[7.5px] font-mono text-brand-muted tracking-tighter leading-none select-none">
                   {language === 'be' ? info.comparisonShortBe : info.comparisonShortRu}
                 </span>
+                <span className="absolute bottom-1 right-1 text-[6px] font-mono text-brand-muted">
+                  {info.compareHeight === '86px' ? '86мм' : info.compareHeight === '75px' ? '75мм' : '52мм'}
+                </span>
               </div>
-              <span className="text-[8px] font-mono text-brand-muted mt-1 opacity-60">
+              <span className="text-[8px] font-mono text-brand-muted mt-1 select-none whitespace-nowrap">
                 {info.compareHeight === '86px' ? '86 мм' : info.compareHeight === '75px' ? '75 мм' : '52 мм'}
               </span>
             </div>
 
-            {/* Height Connector Dotted Reference line */}
-            <div className="absolute bottom-[20%] left-[25%] right-[25%] border-t border-dashed border-brand-accent/20 pointer-events-none" />
-            <div className="absolute bottom-[60%] left-[25%] right-[25%] border-t border-dashed border-brand-accent/20 pointer-events-none" />
+            {/* Connecting reference lines between bottle heights */}
+            <div className="absolute left-[30px] right-[30px] bottom-[20px] border-t border-dashed border-brand-accent/25 z-0" />
 
-            {/* Atomizer Mockup */}
-            <div className="flex flex-col items-center justify-end relative">
-              
-              {/* Atomizer Bottle Outer Frame */}
+            {/* Brand Bottle or Atomizer Mockup */}
+            <div className="flex flex-col items-center justify-end relative z-10">
               <motion.div 
                 layout
-                className="border border-brand-accent bg-brand-bg/90 rounded-[2px] relative flex flex-col items-center justify-end overflow-hidden shadow-[0_0_15px_rgba(202,138,4,0.03)]"
+                className={`border-2 ${isRemainder ? 'border-brand-accent/85' : 'border-brand-accent'} bg-brand-bg/90 relative flex flex-col items-center justify-end overflow-hidden shadow-[0_0_15px_rgba(202,138,4,0.1)] transition-all duration-300`}
                 style={{
                   height: info.bottleHeight,
                   width: info.bottleWidth,
+                  borderRadius: isRemainder ? '6px' : '4px',
+                  marginBottom: '1px'
                 }}
               >
-                {/* Spray Cap (Metallic Top) */}
-                <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-stone-200 to-stone-400 border-b border-stone-500 flex items-center justify-center select-none shadow-inner">
-                  <div className="w-[1.5px] h-1.5 bg-black/70 rounded-full absolute right-1 top-1" />
-                </div>
+                {/* Cap for normal atomizer */}
+                {!isRemainder && (
+                  <div className="absolute top-0 left-0 right-0 h-4 bg-brand-accent/20 border-b border-brand-accent/30" />
+                )}
 
-                {/* Fragrance Liquid (Dynamic height filled) */}
+                {/* Cap and shoulder design for Remainder Original Bottle */}
+                {isRemainder && (
+                  <>
+                    <div className="absolute top-0 left-[35%] right-[35%] -mt-3 h-3 bg-brand-accent/30 border border-brand-accent/40 rounded-t-[2px]" />
+                    <div className="absolute top-0 left-[20%] right-[20%] h-2.5 bg-brand-accent/20 border-b border-brand-accent/30" />
+                  </>
+                )}
+
+                {/* Liquid fill visual */}
                 <motion.div 
                   initial={{ height: 0 }}
                   animate={{ height: info.liquidHeight }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
-                  className="w-full bg-gradient-to-t from-brand-accent/50 to-brand-accent/15 relative bottom-0 rounded-b-[1px] border-t border-brand-accent/30 flex items-center justify-center"
+                  className="w-full bg-gradient-to-t from-brand-accent/30 to-brand-accent/15 relative overflow-hidden"
                 >
-                  {/* Glowing core/shine */}
-                  <div className="absolute inset-y-0 left-[20%] w-[1.5px] bg-white/20 blur-[0.5px]" />
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-brand-accent/50 opacity-85" />
+                  <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_45%,rgba(255,255,255,0.05)_50%,transparent_55%)] bg-[size:250%_250%] animate-pulse" />
                 </motion.div>
-
-                {/* Straw tube line */}
-                <div className="absolute inset-y-4 w-[1px] bg-white/15 left-[50%] -translate-x-[50%] pointer-events-none" />
-
-                {/* Title badge in micro font sizing */}
-                <div className="absolute top-5 left-0 right-0 text-center select-none pointer-events-none opacity-40">
-                  <p className="text-[5px] font-mono text-white/50 tracking-widest uppercase scale-75">ARCHETYPE</p>
+                
+                {/* Text overlay inside shape */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                  <span className="text-[9px] font-bold font-mono text-brand-light drop-shadow-md tracking-tighter uppercase whitespace-nowrap">
+                    {isRemainder 
+                      ? (language === 'be' ? 'Астатак' : 'Остаток') 
+                      : `${volume} ml`}
+                  </span>
                 </div>
               </motion.div>
 
-              {/* Tag/Info Label for Atomizer */}
-              <motion.span 
-                layout 
-                className="text-[9px] font-mono text-brand-accent font-bold mt-1.5"
-              >
-                {selectedSize}
-              </motion.span>
+              <span className="text-[8px] font-mono text-brand-accent mt-1 select-none font-bold whitespace-nowrap">
+                {isRemainder 
+                  ? (language === 'be' ? 'Астатак' : 'Остаток') 
+                  : (volume === 2 ? '75 мм' : volume === 5 ? '82 мм' : volume === 10 ? '105 мм' : info.bottleHeight)}
+              </span>
             </div>
-
           </div>
         </div>
 
-        {/* Content & Descriptions Column (7/12 width) */}
+        {/* Content & Description Column */}
         <div className="sm:col-span-7 flex flex-col justify-between h-full space-y-3.5">
           <div className="space-y-2">
             
-            {/* Highlights metrics */}
+            {/* Quick Metrics Cards */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-brand-hover/10 p-2.5 border border-brand-border/30">
                 <span className="text-[8px] font-mono text-brand-muted uppercase tracking-wider block">
-                  {language === 'be' ? 'КЛАС ПАСАДЦЫ' : 'ОБЪЕМ РАСПЫЛЕНИЙ'}
+                  {isRemainder ? (language === 'be' ? 'ФАРМАТ ВЫПУСКУ' : 'ФОРМАТ ВЫПУСКА') : (language === 'be' ? 'ОБ’ЁМ РАСПЫЛЕННЯЎ' : 'ОБЪЕМ РАСПЫЛЕНИЙ')}
                 </span>
-                <span className="text-sm font-semibold text-brand-light font-sans mt-0.5 block">
+                <span className="text-sm font-semibold text-brand-light font-sans mt-0.5 block truncate">
                   {language === 'be' ? info.spraysTextBe : info.spraysTextRu}
                 </span>
               </div>
               <div className="bg-brand-hover/10 p-2.5 border border-brand-border/30">
                 <span className="text-[8px] font-mono text-brand-muted uppercase tracking-wider block">
-                  {language === 'be' ? 'НА СКОЛЬКІ ХОПІЦЬ' : 'ПРИМЕРНЫЙ СРОК'}
+                  {isRemainder ? (language === 'be' ? 'АСАБЛІВАСЦЬ' : 'ОСОБЕННОСТЬ') : (language === 'be' ? 'НА СКОЛЬКІ ХОПІЦЬ' : 'ПРИМЕРНЫЙ СРОК')}
                 </span>
-                <span className="text-xs font-semibold text-brand-light font-sans mt-0.5 block leading-tight">
+                <span className="text-xs font-semibold text-brand-light font-sans mt-0.5 block leading-tight truncate">
                   {language === 'be' ? info.durationBe : info.durationRu}
                 </span>
               </div>
             </div>
 
-            {/* Purpose and details */}
+            {/* Recommended Usage Description */}
             <div className="mt-2.5 pt-1 space-y-1">
               <span className="text-[8px] font-bold text-brand-accent uppercase tracking-wider block">
-                {language === 'be' ? 'УЛАСЦІВАСЦІ І ПРЫЗНАЧЭННЕ' : 'РЕКОМЕНДАЦИЯ ПАРФЮМЕРА'}
+                {isRemainder ? (language === 'be' ? 'ПРА АСТАТАК ВА ФЛАКОНЕ' : 'ОБ ОСТАТКЕ ВО ФЛАКОНЕ') : (language === 'be' ? 'УЛАСЦІВАСЦІ І ПРЫЗНАЧЭННЕ' : 'РЕКОМЕНДАЦИЯ ПАРФЮМЕРА')}
               </span>
               <p className="text-[11px] text-brand-light/90 leading-relaxed font-light font-serif italic text-balance">
                 {language === 'be' ? info.purposeBe : info.purposeRu}
               </p>
             </div>
 
-            {/* Scale comparison phrase */}
+            {/* Comparison Phrase */}
             <div className="text-[10px] text-brand-muted flex items-start gap-1.5 pt-1.5 border-t border-brand-border/20">
               <Info className="w-3 h-3 text-brand-accent shrink-0 mt-0.5" />
               <span>
-                {language === 'be' 
-                  ? `Атамайзер Archetype вышынёй ` 
-                  : `Фирменный атомазер Archetype `}
-                <strong>{language === 'be' ? info.comparisonBe : info.comparisonRu}</strong>.
+                {isRemainder ? (
+                  language === 'be' 
+                    ? `Пастаўляецца ў арыгінальным шкляным флаконе першапачатковага аб'ёму брэнда (звычайна з фірмовай каробкай).` 
+                    : `Поставляется в оригинальном стеклянном флаконе изначального объема бренда (обычно с фирменной коробкой).`
+                ) : (
+                  <>
+                    {language === 'be' 
+                      ? `Атамайзер Archetype вышынёй ` 
+                      : `Фирменный атомайзер Archetype `}
+                    <strong>{language === 'be' ? info.comparisonBe : info.comparisonRu}</strong>.
+                  </>
+                )}
               </span>
             </div>
 
