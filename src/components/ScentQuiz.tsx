@@ -171,11 +171,11 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
         let genderScore = 0;
         if (gender === 'female') {
           if (product.gender === 'Female') genderScore = 35;
-          else if (product.gender === 'Unisex') genderScore = 20;
+          else if (product.gender === 'Unisex') genderScore = 32; // Boosted so they recommend if matching other characteristics nicely
           else genderScore = -20; // Heavy penalty for opposite gender
         } else if (gender === 'male') {
           if (product.gender === 'Male') genderScore = 35;
-          else if (product.gender === 'Unisex') genderScore = 20;
+          else if (product.gender === 'Unisex') genderScore = 32; // Boosted so they recommend if matching other characteristics nicely
           else genderScore = -20; // Heavy penalty
         } else { // unisex choice
           if (product.gender === 'Unisex') genderScore = 35;
@@ -698,6 +698,13 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                     <span className="text-[10px] tracking-widest text-brand-muted font-sans font-semibold uppercase">
                                       {product.brand}
                                     </span>
+                                    {gender !== 'unisex' && product.gender === 'Unisex' && (
+                                      <span className="text-[8px] font-sans font-bold uppercase tracking-wider text-amber-600 bg-amber-500/5 px-2 py-0.5 border border-amber-500/15">
+                                        {match >= 75 
+                                          ? (language === 'be' ? 'Унісекс — падыходзіць для вас' : 'Унисекс — подходит для вас')
+                                          : (language === 'be' ? 'Унісекс — выдатна падыходзіць' : 'Унисекс — отлично подходит')}
+                                      </span>
+                                    )}
                                   </div>
                                   <h4 className="font-serif text-sm sm:text-base font-semibold text-brand-light leading-snug">
                                     {product.name}
