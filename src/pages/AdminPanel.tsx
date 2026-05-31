@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Product, Order, User, Review, CMSPage, HomeConfig } from '../types';
-import { LogOut, Lock, LayoutDashboard, ShoppingBag, Package, Users, MessageSquare, FileText, BarChart3, AlertCircle, RefreshCw, Settings, Home, Menu, X } from 'lucide-react';
+import { LogOut, Lock, LayoutDashboard, ShoppingBag, Package, Users, MessageSquare, FileText, BarChart3, AlertCircle, RefreshCw, Settings, Home, Menu, X, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../components/ThemeProvider';
 
@@ -14,6 +14,7 @@ import CMSView from '../components/admin/CMSView';
 import ReportsView from '../components/admin/ReportsView';
 import PromoCodesView from '../components/admin/PromoCodesView';
 import AbandonedCartsView from '../components/admin/AbandonedCartsView';
+import ChangelogView from '../components/admin/ChangelogView';
 import { Tag, ShoppingCart, Star } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -22,7 +23,7 @@ export default function AdminPanel() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'orders' | 'customers' | 'reviews' | 'cms-general' | 'cms-home' | 'cms-pages' | 'cms-contacts' | 'reports' | 'promo' | 'carts'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'orders' | 'customers' | 'reviews' | 'cms-general' | 'cms-home' | 'cms-pages' | 'cms-contacts' | 'reports' | 'promo' | 'carts' | 'changelog'>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -279,6 +280,7 @@ export default function AdminPanel() {
             { id: 'carts', label: 'Брошенные корзины', icon: ShoppingCart },
             { id: 'reviews', label: 'Отзывы', icon: Star },
             { id: 'reports', label: 'Отчеты', icon: BarChart3 },
+            { id: 'changelog', label: 'Журнал изменений', icon: History },
           ].map(tab => (
             <button
               key={tab.id}
@@ -338,6 +340,7 @@ export default function AdminPanel() {
               {activeTab === 'cms-general' && 'О компании (Общее)'}
               {activeTab === 'cms-home' && 'Главная страница'}
               {activeTab === 'cms-pages' && 'Информационные страницы'}
+              {activeTab === 'changelog' && 'Журнал изменений'}
             </h2>
           </div>
           <div className="flex items-center gap-3">
@@ -432,6 +435,7 @@ export default function AdminPanel() {
               {activeTab === 'cms-home' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="home" />}
               {activeTab === 'cms-pages' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="pages" />}
               {activeTab === 'reports' && <ReportsView token={token!} />}
+              {activeTab === 'changelog' && <ChangelogView />}
             </motion.div>
           </AnimatePresence>
         </div>
