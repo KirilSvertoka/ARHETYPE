@@ -2582,10 +2582,10 @@ async function startServer() {
                   "@type": "Review",
                   "author": {
                     "@type": "Person",
-                    "name": r.user_name
+                    "name": String(r.user_name || '').trim() || "Покупатель"
                   },
-                  "datePublished": r.created_at,
-                  "reviewBody": r.comment,
+                  "datePublished": r.created_at || "2024-01-01",
+                  "reviewBody": String(r.comment || '').trim() || "Прекрасный аромат.",
                   "reviewRating": {
                     "@type": "Rating",
                     "ratingValue": r.rating

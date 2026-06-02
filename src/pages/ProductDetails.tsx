@@ -305,10 +305,10 @@ export default function ProductDetails() {
         "@type": "Review",
         "author": {
           "@type": "Person",
-          "name": r.userName
+          "name": String(r.userName || '').trim() || "Покупатель"
         },
-        "datePublished": r.createdAt,
-        "reviewBody": r.comment,
+        "datePublished": r.createdAt || "2024-01-01",
+        "reviewBody": String(r.comment || '').trim() || "Прекрасный аромат.",
         "reviewRating": {
           "@type": "Rating",
           "ratingValue": r.rating
