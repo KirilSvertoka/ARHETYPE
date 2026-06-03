@@ -958,7 +958,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                         </div>
 
                         {variants.length === 0 ? (
-                          <p className="text-[10px] text-brand-muted italic pl-1">Нет доступных отливантов-вариантов</p>
+                          <p className="text-[10px] text-brand-muted pl-1">Нет доступных отливантов-вариантов</p>
                         ) : (
                           <div className="flex flex-wrap gap-1.5 pt-1">
                             {variants.map(variant => {

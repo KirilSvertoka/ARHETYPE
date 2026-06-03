@@ -261,7 +261,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
               <span className="text-[8px] font-bold text-brand-accent uppercase tracking-wider block">
                 {isRemainder ? (language === 'be' ? 'ПРА АСТАТАК ВА ФЛАКОНЕ' : 'ОБ ОСТАТКЕ ВО ФЛАКОНЕ') : (language === 'be' ? 'УЛАСЦІВАСЦІ І ПРЫЗНАЧЭННЕ' : 'РЕКОМЕНДАЦИЯ ПАРФЮМЕРА')}
               </span>
-              <p className="text-[11px] text-brand-light/90 leading-relaxed font-light font-serif italic text-balance">
+              <p className="text-[11px] text-brand-light/90 leading-relaxed font-light font-serif text-balance">
                 {language === 'be' ? info.purposeBe : info.purposeRu}
               </p>
             </div>

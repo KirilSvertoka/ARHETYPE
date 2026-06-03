@@ -67,7 +67,7 @@ export default function Reviews() {
                   <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'text-amber-400 fill-amber-400' : 'text-brand-border'}`} />
                 ))}
               </div>
-              <p className="text-brand-muted italic mb-6 flex-1">"{review.comment}"</p>
+              <p className="text-brand-muted mb-6 flex-1">"{review.comment}"</p>
               <div className="flex items-center justify-between border-t border-brand-border pt-4 mt-auto">
                 <span className="font-medium text-brand-light">{review.userName}</span>
                 <span className="text-xs uppercase tracking-wider text-brand-muted">{(review as any).productName}</span>
@@ -77,7 +77,7 @@ export default function Reviews() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-brand-muted italic">{t('noReviews')}</p>
+          <p className="text-brand-muted">{t('noReviews')}</p>
         </div>
       )}
     </motion.div>

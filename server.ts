@@ -1405,7 +1405,7 @@ app.get('/api/products', (req, res) => {
         where += " AND (v_cat.size LIKE '%ml' AND CAST(v_cat.size AS INTEGER) <= 20)";
       } else if (category === 'set') {
         joins += ' JOIN product_variants v_cat ON p.id = v_cat.product_id';
-        where += " AND v_cat.size LIKE '%set%'";
+        where += " AND (v_cat.size LIKE '%set%' OR v_cat.size LIKE '%Сет%' OR v_cat.size LIKE '%набор%' OR p.tags LIKE '%set%' OR p.tags LIKE '%набор%')";
       } else {
         let concentrationValues: string[] = [];
         switch (category) {

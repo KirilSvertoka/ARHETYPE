@@ -222,7 +222,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                     <div className="py-8 text-center sm:text-left">
                       <p className="text-brand-muted text-sm font-light mb-2">
                         {language === 'be' ? 'Нічога не знойдзена па запыце' : 'Ничего не найдено по запросу'}{' '}
-                        <span className="text-brand-accent italic font-medium">"{query}"</span>
+                        <span className="text-brand-accent font-medium">"{query}"</span>
                       </p>
                       <p className="text-xs text-brand-muted/70 font-light">
                         {language === 'be' 

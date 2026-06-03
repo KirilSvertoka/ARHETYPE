@@ -377,7 +377,6 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
             
             <div className="max-w-xl text-center md:text-left space-y-4 relative z-10">
               <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-semibold tracking-[0.3em] text-brand-accent px-2.5 py-1 bg-brand-accent/5">
-                <Sparkles className="w-3 h-3" />
                 {language === 'be' ? 'ІНТЭРАКТЫЎНЫ ПАДБОР' : 'ИНТЕРАКТИВНЫЙ ПОДБОР'}
               </span>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-brand-light leading-snug">
@@ -421,7 +420,6 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
               <div className="p-6 border-b border-brand-border/40 flex justify-between items-center bg-[#FAF9F6]">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-brand-accent" />
                     <span className="text-[10px] font-semibold tracking-widest text-brand-accent uppercase">
                       {language === 'be' ? 'Водарны квіз' : 'Парфюмерный квиз'}
                     </span>
@@ -712,7 +710,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                   
                                   {/* Explanation block - beautiful block design to handle wrap nicely */}
                                   <div className="pt-2">
-                                    <p className="text-[11px] sm:text-xs text-brand-muted font-serif italic leading-relaxed pl-3 border-l-2 border-brand-accent/30">
+                                    <p className="text-[11px] sm:text-xs text-brand-muted font-serif leading-relaxed pl-3 border-l-2 border-brand-accent/30">
                                       {language === 'be' ? explanationBe : explanation}
                                     </p>
                                   </div>

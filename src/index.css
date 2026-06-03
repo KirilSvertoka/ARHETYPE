@@ -3,6 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  --font-sans: "Montserrat", sans-serif;
   --font-serif: "Playfair Display", serif;
   --font-oranienbaum: "Playfair Display", serif;
   --font-arsenica: "Playfair Display", serif;
@@ -19,6 +20,7 @@
 body {
   background-color: var(--color-brand-bg);
   color: var(--color-brand-light);
+  font-family: var(--font-sans), sans-serif;
 }
 
 /* Hide spin-buttons in Chrome, Safari, Edge, Opera */

@@ -185,7 +185,7 @@ export default function FAQManager({ token }: FAQManagerProps) {
                         {faq.question}
                       </h4>
                       {faq.question_be && (
-                        <p className="text-xs text-brand-muted mt-0.5 italic font-light">
+                        <p className="text-xs text-brand-muted mt-0.5 font-light">
                           BE: {faq.question_be}
                         </p>
                       )}

@@ -961,7 +961,7 @@ export default function ProductDetails() {
                       </div>
                     </div>
                     
-                    <p className="text-xs text-brand-light font-light leading-relaxed pl-9 break-words whitespace-pre-wrap font-serif italic text-brand-light/90">
+                    <p className="text-xs text-brand-light font-light leading-relaxed pl-9 break-words whitespace-pre-wrap font-serif text-brand-light/90">
                       "{review.comment}"
                     </p>
                     
@@ -975,7 +975,7 @@ export default function ProductDetails() {
               </div>
             ) : (
               <div className="py-12 border border-dashed border-brand-border/40 text-center rounded-none bg-brand-hover/5">
-                <p className="text-xs text-brand-muted italic font-medium">
+                <p className="text-xs text-brand-muted font-medium">
                   {language === 'be' 
                     ? 'Пакуль няма водгукаў на гэты тавар. Вы будзеце першым!' 
                     : 'Пока нет отзывов на этот товар. Поделитесь своим мнением первым!'}

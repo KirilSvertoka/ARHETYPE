@@ -636,7 +636,7 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                     </div>
                   ))}
                   {(localGeneralSettings.socialLinks || []).length === 0 && (
-                    <p className="text-xs text-brand-muted italic text-center py-4">Нет дополнительных ссылок. Нажмите "Добавить ссылку", чтобы расширить блок в шапке и подвале.</p>
+                    <p className="text-xs text-brand-muted text-center py-4">Нет дополнительных ссылок. Нажмите "Добавить ссылку", чтобы расширить блок в шапке и подвале.</p>
                   )}
                 </div>
               </div>
