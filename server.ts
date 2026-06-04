@@ -67,13 +67,25 @@ app.use('/uploads', express.static(uploadDir));
 
 // Explicit favicon handles for robots
 app.get('/favicon.ico', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'favicon.png'));
+  const isProd = process.env.NODE_ENV === 'production';
+  const favPath = isProd 
+    ? path.join(process.cwd(), 'dist', 'favicon.png')
+    : path.join(process.cwd(), 'public', 'favicon.png');
+  res.sendFile(favPath);
 });
 app.get('/apple-touch-icon.png', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'favicon.png'));
+  const isProd = process.env.NODE_ENV === 'production';
+  const favPath = isProd 
+    ? path.join(process.cwd(), 'dist', 'favicon.png')
+    : path.join(process.cwd(), 'public', 'favicon.png');
+  res.sendFile(favPath);
 });
 app.get('/apple-touch-icon-precomposed.png', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'favicon.png'));
+  const isProd = process.env.NODE_ENV === 'production';
+  const favPath = isProd 
+    ? path.join(process.cwd(), 'dist', 'favicon.png')
+    : path.join(process.cwd(), 'public', 'favicon.png');
+  res.sendFile(favPath);
 });
 
 // Simple in-memory session store

@@ -145,6 +145,71 @@ export default function Contacts() {
         {blocks}
       </motion.div>
 
+      {/* Реквизиты и Юридическая информация */}
+      {(settings?.unp || settings?.bankDetails || settings?.address) && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="max-w-4xl mx-auto mb-24 p-8 sm:p-10 bg-brand-bg/35 backdrop-blur-md border border-brand-border rounded-none text-left"
+        >
+          <div className="mb-8 border-b border-brand-border/60 pb-4">
+            <h2 className="text-2xl font-serif text-brand-light">
+              {language === 'ru' ? 'Реквизиты и юридическая информация' : 'Рэквізіты і юрыдычная інфармацыя'}
+            </h2>
+            <p className="text-[10px] text-brand-muted mt-1 uppercase tracking-widest">
+              {language === 'ru' ? 'Регистрационные данные интернет-магазина' : 'Рэгістрацыйныя дадзеныя інтэрнэт-крамы'}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+            <div className="space-y-4 text-left">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-brand-accent block mb-1">
+                  {language === 'ru' ? 'Продавец' : 'Прадавец'}
+                </span>
+                <p className="text-brand-light font-medium text-base">
+                  {language === 'ru' ? 'Индивидуальный предприниматель (ИП)' : 'Індывідуальны прадпрымальнік (ІП)'}
+                </p>
+              </div>
+
+              {settings?.unp && (
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-brand-accent block mb-1">
+                    {language === 'ru' ? 'Учётный номер плательщика (УНП)' : 'Уліковы нумар плацельшчыка (УНП)'}
+                  </span>
+                  <p className="text-brand-light font-mono text-base font-semibold">{settings.unp}</p>
+                </div>
+              )}
+
+              {settings?.address && (
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-brand-accent block mb-1">
+                    {language === 'ru' ? 'Юридический адрес' : 'Юрыдычны адрас'}
+                  </span>
+                  <p className="text-brand-light text-base leading-relaxed">
+                    {language === 'ru' ? settings.address : (settings.address_be || settings.address)}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4 text-left">
+              {settings?.bankDetails && (
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-brand-accent block mb-1">
+                    {language === 'ru' ? 'Платежные реквизиты и ЕРИП' : 'Плацежныя рэквізіты і ЕРЫП'}
+                  </span>
+                  <div className="text-brand-light text-sm leading-relaxed whitespace-pre-line bg-brand-bg/20 p-4 border border-brand-border/40 font-mono">
+                    {settings.bankDetails}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {settings?.showContactsSocials !== false && socialLinks.length > 0 && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
