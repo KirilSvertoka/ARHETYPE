@@ -461,6 +461,50 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
               </div>
             </div>
           </div>
+
+          <div className="space-y-4 pt-6 border-t border-brand-border">
+            <h4 className="border-l-2 border-brand-accent pl-4 text-sm font-medium text-brand-muted uppercase tracking-wider">Интеграция с Поисковыми Системами (Яндекс / Google)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white/5 p-5 rounded-2xl text-left">
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] uppercase font-bold text-brand-muted block">Верификация Яндекс.Вебмастер</label>
+                <input 
+                  type="text" 
+                  value={localGeneralSettings.yandexVerification || ''} 
+                  onChange={e => setLocalGeneralSettings({...localGeneralSettings, yandexVerification: e.target.value})} 
+                  placeholder="напр. 6e3fdf89b9d4e21a" 
+                  className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted focus:border-brand-accent outline-none animate-none" 
+                  id="seo_yandex_verify"
+                />
+                <span className="text-[9px] text-brand-muted leading-tight block mt-1">Отобразится в meta-теге, а также будет отвечать по ссылке /yandex_[код].html</span>
+              </div>
+              
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] uppercase font-bold text-brand-muted block">Верификация Google Search Console</label>
+                <input 
+                  type="text" 
+                  value={localGeneralSettings.googleVerification || ''} 
+                  onChange={e => setLocalGeneralSettings({...localGeneralSettings, googleVerification: e.target.value})} 
+                  placeholder="напр. AaBbCcDdEeFf_GgHhIiJj" 
+                  className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted focus:border-brand-accent outline-none animate-none" 
+                  id="seo_google_verify"
+                />
+                <span className="text-[9px] text-brand-muted leading-tight block mt-1">Отобразится в meta-теге, а также будет отвечать по ссылке /google[код].html</span>
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] uppercase font-bold text-brand-muted block">Номер счетчика Яндекс.Метрика</label>
+                <input 
+                  type="text" 
+                  value={localGeneralSettings.yandexMetrica || ''} 
+                  onChange={e => setLocalGeneralSettings({...localGeneralSettings, yandexMetrica: e.target.value})} 
+                  placeholder="напр. 98765432" 
+                  className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted focus:border-brand-accent outline-none animate-none" 
+                  id="seo_yandex_counter"
+                />
+                <span className="text-[9px] text-brand-muted leading-tight block mt-1">Подключит аналитику и Вебвизор, что ускорит индексацию в Яндекс и повысит позиции за счет отслеживания поведенческих факторов.</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

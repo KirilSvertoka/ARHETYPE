@@ -233,6 +233,9 @@ export interface GeneralSettings {
   stat3Label_be?: string;
   seoTitle?: string;
   seoDescription?: string;
+  yandexVerification?: string;
+  googleVerification?: string;
+  yandexMetrica?: string;
   showContactsEmail?: boolean;
   showContactsPhone?: boolean;
   showContactsAddress?: boolean;

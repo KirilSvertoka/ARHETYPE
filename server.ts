@@ -916,7 +916,7 @@ app.get('/robots.txt', (req, res) => {
   const cleanAdminPath = adminPathEnv.startsWith('/') ? adminPathEnv : `/${adminPathEnv}`;
   
   res.type('text/plain');
-  res.send(`User-agent: *
+  res.send(`User-agent: Yandex
 Disallow: /api/
 Disallow: /forbidden
 Disallow: /502
@@ -927,8 +927,32 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /wishlist
 Disallow: /cart
-Disallow: /*?
-Disallow: /*_
+Disallow: /*?*sort=
+Disallow: /*?*search=
+Disallow: /*?*token=
+Disallow: /*?*utm_
+Disallow: /*?*gclid=
+Disallow: /*?*yclid=
+Clean-param: sort&search&token&utm_source&utm_medium&utm_campaign&gclid&yclid /catalog/
+Clean-param: sort&search&token&utm_source&utm_medium&utm_campaign&gclid&yclid /catalog
+
+User-agent: *
+Disallow: /api/
+Disallow: /forbidden
+Disallow: /502
+Disallow: /500
+Disallow: ${cleanAdminPath}
+Disallow: ${cleanAdminPath}/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /wishlist
+Disallow: /cart
+Disallow: /*?*sort=
+Disallow: /*?*search=
+Disallow: /*?*token=
+Disallow: /*?*utm_
+Disallow: /*?*gclid=
+Disallow: /*?*yclid=
 
 Sitemap: ${domain}/sitemap.xml
 `);
@@ -1165,6 +1189,37 @@ app.get('/api/feeds/google.xml', (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send('Error generating Google feed');
+  }
+});
+
+// Search Console / Yandex Webmaster Verification file endpoints
+app.get('/yandex_:code.html', (req, res) => {
+  try {
+    const code = req.params.code;
+    const settingsVal = db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}';
+    const genSet = JSON.parse(settingsVal);
+    if (code && genSet.yandexVerification && genSet.yandexVerification.trim().toLowerCase().includes(code.toLowerCase())) {
+      res.type('text/html').send(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body>Verification: yandex_${code}</body></html>`);
+    } else {
+      res.status(404).send('Not Found');
+    }
+  } catch (e) {
+    res.status(500).send('Error verifying');
+  }
+});
+
+app.get('/google:code.html', (req, res) => {
+  try {
+    const code = req.params.code;
+    const settingsVal = db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}';
+    const genSet = JSON.parse(settingsVal);
+    if (code && genSet.googleVerification && genSet.googleVerification.trim().toLowerCase().includes(code.toLowerCase())) {
+      res.type('text/html').send(`google-site-verification: google${code}.html`);
+    } else {
+      res.status(404).send('Not Found');
+    }
+  } catch (e) {
+    res.status(500).send('Error verifying');
   }
 });
 
@@ -2488,9 +2543,9 @@ async function startServer() {
       };
       ldJson.push(orgSchema, websiteSchema);
 
-      let customTitle = "АРХЕТИП | Купить оригинальную нишевую парфюмерию на распив и во флаконах в Беларуси";
-      let customDescription = "Эксклюзивная селективная парфюмерия на распив (отливанты) и во флаконах в Беларуси. Только оригинальные ароматы с быстрой доставкой по Минску, Гродно и всем регионам.";
-      let customKeywords = "купить парфюм, нишевая парфюмерия, селективные духи, распив парфюмерии беларусь, отливанты минск, парфюм гродно, оригинальные духи купить, духи на распив, аромабоксы";
+      let customTitle = genSet.seoTitle || "АРХЕТИП | Нишевая парфюмерия в Гродно и Беларуси — Купить оригинальные духи на распив";
+      let customDescription = genSet.seoDescription || "Эксклюзивная оригинальная нишевая и селективная парфюмерия в Гродно на распив (отливанты) и в оригинальных флаконах с доставкой по Минску, Гродно и всей Беларуси. Гарантия оригинальности.";
+      let customKeywords = "нишевый парфюм гродно, купить парфюм в гродно, нишевая парфюмерия беларусь, селективные духи, распив парфюмерии, отливанты купить беларусь, оригинальные духи гродно, интернет магазин духов гродно";
       let customImage = `${domain}/favicon.png`;
 
       if (req.path.startsWith('/catalog/')) {
@@ -2638,9 +2693,9 @@ async function startServer() {
               };
               ldJson.push(productSchema, breadcrumbSchema);
               
-              customTitle = `${product.brand} ${product.name} — Купить отливант на распив и оригинал | АРХЕТИП`;
-              customDescription = (product.description || '').substring(0, 150).trim() + "... Оригинальная нишевая парфюмерия с удобным распивом на выбор и быстрой доставкой.";
-              customKeywords = `${product.brand}, ${product.name}, оригинальный ${product.name}, купить ${product.name} в беларуси, духи на распив, отливанты`;
+              customTitle = `${product.brand} ${product.name} — Купить отливант на распив и оригинал в Гродно | АРХЕТИП`;
+              customDescription = `Купить оригинальные духи ${product.brand} ${product.name} на распив (отливанты от 2 мл) в Гродно с быстрой доставкой по всей Беларуси. ${product.description ? product.description.substring(0, 140).trim() + '...' : ''}`;
+              customKeywords = `${product.brand} ${product.name} купить, оригинальные духи гродно, распив парфюмерии гродно, отливант ${product.name}, парфюм ${product.brand} беларусь`;
               customImage = (product.imageUrl || '').startsWith('http') ? product.imageUrl : domain + (product.imageUrl || '/favicon.png');
             }
           }
@@ -2717,13 +2772,13 @@ async function startServer() {
         
         if (filterParts.length > 0) {
           const suffix = filterParts.join(', ');
-          customTitle = `${suffix} — купить оригинальный парфюм на распив | АРХЕТИП`;
-          customDescription = `Вся оригинальная селективная парфюмерия (${suffix}) в магазине АРХЕТИП. Только оригиналы, удобный распив на выбор, быстрая доставка по Минску, Гродно и Беларуси.`;
+          customTitle = `${suffix} — купить оригинальный парфюм на распив в Гродно | АРХЕТИП`;
+          customDescription = `Вся оригинальная селективная парфюмерия (${suffix}) в магазине АРХЕТИП. Только оригиналы, удобный распив на выбор, быстрая доставка по Гродно, Минску и всей Беларуси.`;
         } else {
-          customTitle = "Каталог селективного и нишевого парфюма — Купить отливанты с доставкой по РБ | АРХЕТИП";
-          customDescription = "Каталог оригинальных селективных духов от лучших нишевых брендов (Tom Ford, Byredo, Kilian, Kurkdjian, Le Labo) в объемах 2, 5, 10 и 100 мл. Доставка по всей Беларуси.";
+          customTitle = "Каталог селективного и нишевого парфюма в Гродно — Купить отливанты с доставкой | АРХЕТИП";
+          customDescription = "Каталог оригинальных селективных духов от лучших нишевых брендов (Tom Ford, Byredo, Kilian, Le Labo) в Гродно. Удобный распив в проверенные отливанты. Быстрая доставка по Беларуси.";
         }
-        customKeywords = "каталог парфюма, нишевые бренды, оригинальные духи купить в беларуси, заказать отливанты, селективная парфюмерия каталог, распив духи";
+        customKeywords = "каталог парфюма гродно, нишевые бренды гродно, оригинальные духи купить в беларуси, заказать отливанты гродно, селективная парфюмерия каталог, распив духи";
 
         const catalogBreadcrumb = {
           "@context": "https://schema.org",
@@ -2885,6 +2940,55 @@ async function startServer() {
                         req.path === '/502' ||
                         req.path === '/500';
 
+      // Build optimized canonical URL to allow indexation of key category/brand pages while avoiding duplicate garbage parameters
+      let canonicalUrl = `${domain}${req.path}`;
+      if (req.path === '/catalog' || req.path === '/catalog/') {
+        const canonicalParams = new URLSearchParams();
+        const brand = req.query.brand ? String(req.query.brand) : '';
+        const category = req.query.category ? String(req.query.category) : '';
+        const gender = req.query.gender ? String(req.query.gender) : '';
+        const family = req.query.family ? String(req.query.family) : '';
+        
+        if (brand) canonicalParams.set('brand', brand);
+        if (category) canonicalParams.set('category', category);
+        if (gender) canonicalParams.set('gender', gender);
+        if (family) canonicalParams.set('family', family);
+        
+        const queryString = canonicalParams.toString();
+        canonicalUrl = queryString ? `${domain}/catalog?${queryString}` : `${domain}/catalog`;
+      }
+
+      // Check for search engine verification codes in config
+      const yandexMetaTag = genSet.yandexVerification ? `\n        <meta name="yandex-verification" content="${genSet.yandexVerification.trim()}" />` : '';
+      const googleMetaTag = genSet.googleVerification ? `\n        <meta name="google-site-verification" content="${genSet.googleVerification.trim()}" />` : '';
+
+      // Check and build Yandex.Metrika tracking counter
+      let yandexMetricaScript = '';
+      if (genSet.yandexMetrica && genSet.yandexMetrica.trim()) {
+        const metricaId = parseInt(genSet.yandexMetrica.trim(), 10);
+        if (!isNaN(metricaId)) {
+          yandexMetricaScript = `
+        <!-- Yandex.Metrika counter -->
+        <script type="text/javascript" >
+           (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+           m[i].l=1*new Date();
+           for (var j = 0; j < t.length; j++) {if (t[j].name === r) { return; }}
+           k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+           (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+           ym(${metricaId}, "init", {
+                clickmap:true,
+                trackLinks:true,
+                accurateTrackBounce:true,
+                webvisor:true
+           });
+        </script>
+        <noscript><div><img src="https://mc.yandex.ru/watch/${metricaId}" style="position:absolute; left:-9999px;" alt="" referrerPolicy="no-referrer" /></div></noscript>
+        <!-- /Yandex.Metrika counter -->
+          `;
+        }
+      }
+
       // Replace duplicate-prone elements
       html = html.replace(/<title>[^<]*<\/title>/i, `<title>${customTitle}</title>`);
       html = html.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${customDescription}" />`);
@@ -2892,13 +2996,13 @@ async function startServer() {
       const robotsMeta = isNoIndex ? '\n        <meta name="robots" content="noindex, nofollow" />' : '';
 
       const finalMetaTags = `
-        <meta name="keywords" content="${customKeywords}" />${robotsMeta}
+        <meta name="keywords" content="${customKeywords}" />${robotsMeta}${yandexMetaTag}${googleMetaTag}${yandexMetricaScript}
         <meta property="og:title" content="${customTitle}" />
         <meta property="og:description" content="${customDescription}" />
         <meta property="og:image" content="${customImage}" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="${domain}${req.path}" />
-        <link rel="canonical" href="${domain}${req.path}" />
+        <link rel="canonical" href="${canonicalUrl}" />
         <link rel="icon" href="${domain}/favicon.png" type="image/png" />
         <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="${domain}/favicon.png" />
