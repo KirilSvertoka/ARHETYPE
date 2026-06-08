@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Moon, Sun, Instagram, Send, Mail, ShoppingBag, Heart, Menu, X, ChevronDown, Search, Phone, MessageSquare, PhoneCall, MessageCircle, MapPin, Youtube, Facebook, Globe } from 'lucide-react';
+import { Moon, Sun, Instagram, Send, Mail, ShoppingBag, Heart, Menu, X, ChevronDown, Search, Phone, MessageSquare, PhoneCall, MessageCircle, MapPin, Youtube, Facebook, Globe, Cookie } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useState, useEffect, useRef } from 'react';
 import { HomeConfig, GeneralSettings } from '../types';
@@ -28,6 +28,7 @@ export default function Layout() {
   const [isMobileCatalogOpen, setIsMobileCatalogOpen] = useState(false);
   const catalogRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showCookieBanner, setShowCookieBanner] = useState(false);
 
   // Track scroll position for weightless sticky header
   useEffect(() => {
@@ -58,6 +59,22 @@ export default function Layout() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [catalogRef]);
+
+  // Check cookie consent after mount
+  useEffect(() => {
+    const consent = localStorage.getItem('archetype_cookie_consent');
+    if (!consent) {
+      const timer = setTimeout(() => {
+        setShowCookieBanner(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleAcceptCookies = () => {
+    localStorage.setItem('archetype_cookie_consent', 'accepted');
+    setShowCookieBanner(false);
+  };
 
   // Update html lang attribute
   useEffect(() => {
@@ -535,6 +552,40 @@ export default function Layout() {
       </footer>
         </div>
       )}
+
+      <AnimatePresence>
+        {showCookieBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md bg-brand-bg/95 backdrop-blur-md border border-brand-border p-6 rounded-none shadow-[0_15px_40px_rgba(0,0,0,0.6)] z-[100] text-left"
+          >
+            <div className="space-y-4">
+              <div className="flex items-center gap-2.5">
+                <Cookie className="w-4 h-4 text-brand-accent" />
+                <span className="text-[10px] text-brand-accent uppercase tracking-[0.2em] font-semibold block">
+                  {language === 'be' ? 'Выкарыстанне Cookie' : 'Использование файлов Cookie'}
+                </span>
+              </div>
+              <p className="text-xs text-brand-muted leading-relaxed font-light">
+                {language === 'be' 
+                  ? 'Мы выкарыстоўваем файлы cookie для паляпшэння працы гэтага сайта, аналізу трафіку і персаналізацыі кантэнту. Працягваючы выкарыстоўваць сайт, вы пагаджаецеся з выкарыстаннем файлаў cookie.'
+                  : 'Мы используем файлы cookie для улучшения работы этого сайта, анализа трафика и персонализации контента. Продолжая использовать сайт, вы соглашаетесь с использованием файлов cookie.'}
+              </p>
+              <div className="flex items-center gap-4 pt-1">
+                <button
+                  onClick={handleAcceptCookies}
+                  className="flex-1 py-3 px-6 bg-brand-accent hover:bg-brand-accent-hover text-white text-[10px] font-semibold uppercase tracking-[0.2em] cursor-pointer transition-all duration-200"
+                >
+                  {language === 'be' ? 'Прыняць' : 'Принять'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
