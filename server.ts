@@ -455,7 +455,8 @@ const migrations = [
   "ALTER TABLE products ADD COLUMN heartNotesDuration TEXT",
   "ALTER TABLE products ADD COLUMN heartNotesDuration_be TEXT",
   "ALTER TABLE products ADD COLUMN baseNotesDuration TEXT",
-  "ALTER TABLE products ADD COLUMN baseNotesDuration_be TEXT"
+  "ALTER TABLE products ADD COLUMN baseNotesDuration_be TEXT",
+  "ALTER TABLE products ADD COLUMN set_items TEXT DEFAULT '[]'"
 ];
 
 // Populate newly added fields
@@ -1395,6 +1396,7 @@ app.get('/api/products/:slug', (req, res) => {
       accords: JSON.parse(product.accords || '[]'),
       tags: JSON.parse(product.tags || '[]'),
       tags_be: JSON.parse(product.tags_be || '[]'),
+      setItems: JSON.parse(product.set_items || '[]'),
       variants
     };
     res.json(result);
@@ -1558,6 +1560,7 @@ app.get('/api/products', (req, res) => {
         season: JSON.parse(p.season || '[]'),
         seoTitle: p.seo_title,
         seoDescription: p.seo_description,
+        setItems: JSON.parse(p.set_items || '[]'),
         variants
       };
     });
@@ -2123,13 +2126,13 @@ app.get('/api/stats/views-over-time', requireAuth, (req, res) => {
 });
 
 app.post('/api/products', requireAuth, (req, res) => {
-  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be } = req.body;
+  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
   const slug = slugify(`${brand}-${name}`);
   
   try {
     const insert = db.prepare(`
-      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, created_at, updated_at)
-      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage, @topNotesDuration, @topNotesDuration_be, @heartNotesDuration, @heartNotesDuration_be, @baseNotesDuration, @baseNotesDuration_be, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, set_items, created_at, updated_at)
+      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage, @topNotesDuration, @topNotesDuration_be, @heartNotesDuration, @heartNotesDuration_be, @baseNotesDuration, @baseNotesDuration_be, @setItems, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `);
     
     const result = insert.run({
@@ -2158,6 +2161,7 @@ app.post('/api/products', requireAuth, (req, res) => {
       heartNotesDuration_be: heartNotesDuration_be || null,
       baseNotesDuration: baseNotesDuration || null,
       baseNotesDuration_be: baseNotesDuration_be || null,
+      setItems: JSON.stringify(setItems || []),
       slug
     });
     
@@ -2192,7 +2196,7 @@ app.delete('/api/products/:id', requireAuth, (req, res) => {
 
 app.put('/api/products/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be } = req.body;
+  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
   const slug = slugify(`${brand}-${name}`);
   
   try {
@@ -2202,6 +2206,7 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
           price = @price, topNotes = @topNotes, heartNotes = @heartNotes, baseNotes = @baseNotes, accords = @accords, gender = @gender,
           scentFamilies = @scentFamilies, scentFamilies_be = @scentFamilies_be, concentration = @concentration, stockThreshold = @stockThreshold, tags = @tags, tags_be = @tags_be, slug = @slug, season = @season, seo_title = @seoTitle, seo_description = @seoDescription, longevity = @longevity, sillage = @sillage,
           topNotesDuration = @topNotesDuration, topNotesDuration_be = @topNotesDuration_be, heartNotesDuration = @heartNotesDuration, heartNotesDuration_be = @heartNotesDuration_be, baseNotesDuration = @baseNotesDuration, baseNotesDuration_be = @baseNotesDuration_be,
+          set_items = @setItems,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = @id
     `).run({
@@ -2230,6 +2235,7 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
       heartNotesDuration_be: heartNotesDuration_be || null,
       baseNotesDuration: baseNotesDuration || null,
       baseNotesDuration_be: baseNotesDuration_be || null,
+      setItems: JSON.stringify(setItems || []),
       slug
     });
 

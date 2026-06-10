@@ -86,6 +86,7 @@ export interface Product {
   heartNotesDuration_be?: string;
   baseNotesDuration?: string;
   baseNotesDuration_be?: string;
+  setItems?: Array<{ id: number; brand: string; name: string; size: string }>;
 }
 
 export interface User {

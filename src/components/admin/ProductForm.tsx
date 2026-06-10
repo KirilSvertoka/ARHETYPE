@@ -132,7 +132,8 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     heartNotesDuration: (initialData as any)?.heartNotesDuration || '',
     heartNotesDuration_be: (initialData as any)?.heartNotesDuration_be || '',
     baseNotesDuration: (initialData as any)?.baseNotesDuration || '',
-    baseNotesDuration_be: (initialData as any)?.baseNotesDuration_be || ''
+    baseNotesDuration_be: (initialData as any)?.baseNotesDuration_be || '',
+    setItems: initialData?.setItems || []
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -146,16 +147,61 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
   const [inventSearch, setInventSearch] = useState('');
   const [selectedBundleItems, setSelectedBundleItems] = useState<{ product: Product; variant: ProductVariant }[]>([]);
 
+  const [customSetName, setCustomSetName] = useState(initialData?.setItems && initialData?.setItems.length > 0 ? initialData.name : '');
+  const [customSetPrice, setCustomSetPrice] = useState(initialData?.setItems && initialData?.setItems.length > 0 ? initialData.price?.toString() : '');
+  const [customSetVolumeLabel, setCustomSetVolumeLabel] = useState(initialData?.setItems && initialData?.setItems.length > 0 ? (initialData.variants?.[0]?.size || '') : '');
+
   useEffect(() => {
     fetch('/api/products')
       .then(res => res.json())
       .then(data => {
         const items = Array.isArray(data) ? data : (data.products || []);
-        // Only include products with valid decants is nice, but we can list any product
         setInventProducts(items);
+
+        if (initialData?.setItems && initialData.setItems.length > 0) {
+          const loadedBundleItems = initialData.setItems.map(setItem => {
+            const matchedProduct = items.find((p: any) => p.id === setItem.id);
+            if (matchedProduct) {
+              const matchedVariant = (matchedProduct.variants || []).find((v: any) => v.size === setItem.size) || {
+                id: Math.floor(Math.random() * 1000000),
+                productId: setItem.id,
+                size: setItem.size || '5мл',
+                price: matchedProduct.price || 0,
+                stock: 50,
+                sku: ''
+              };
+              return {
+                product: matchedProduct,
+                variant: {
+                  ...matchedVariant,
+                  size: setItem.size
+                }
+              };
+            } else {
+              return {
+                product: {
+                  id: setItem.id,
+                  brand: setItem.brand,
+                  name: setItem.name,
+                  price: 0,
+                  imageUrl: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop',
+                  description: '', topNotes: [], heartNotes: [], baseNotes: [], slug: '', gender: 'Unisex', scentFamilies: [], concentration: 'EDP', stockThreshold: 10, tags: []
+                } as any,
+                variant: {
+                  productId: setItem.id,
+                  size: setItem.size,
+                  price: 0,
+                  stock: 50,
+                  sku: ''
+                }
+              };
+            }
+          });
+          setSelectedBundleItems(loadedBundleItems);
+        }
       })
       .catch(err => console.error('Error fetching inventory products in form:', err));
-  }, []);
+  }, [initialData]);
 
   const handleAutoPopulateSet = () => {
     if (selectedBundleItems.length === 0) {
@@ -167,7 +213,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     const brandsInBundle = Array.from(new Set(selectedBundleItems.map(item => item.product.brand)));
     
     // Auto title naming
-    const autoTitle = `Набор отливантов: ${brandsInBundle.join(' & ')} (${selectedBundleItems.length} шт.)`;
+    const autoTitle = customSetName || `Набор отливантов: ${brandsInBundle.join(' & ')} (${selectedBundleItems.length} шт.)`;
 
     // 2. Explanations/Description
     const itemsListText = selectedBundleItems.map(item => `• ${item.product.brand} — ${item.product.name} (${item.variant.size})`).join('\n');
@@ -214,17 +260,25 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       return sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price as any) || 0);
     }, 0);
     const suggestedPrice = parseFloat((originalPriceSum * 0.85).toFixed(2));
+    const finalPrice = parseFloat(customSetPrice) || suggestedPrice;
 
-    const autoSizeLabel = `Сет ${selectedBundleItems.length} шт (${selectedBundleItems[0]?.variant.size || '2мл'})`;
+    const autoSizeLabel = customSetVolumeLabel || `Сет ${selectedBundleItems.length} шт (${selectedBundleItems[0]?.variant.size || '2мл'})`;
 
     const newVariant: ProductVariant = {
       productId: initialData?.id || 0,
       size: autoSizeLabel,
-      price: suggestedPrice,
+      price: finalPrice,
       stock: 50,
       sku: `SET-${selectedBundleItems.length}S-${Date.now()}`,
       variant_type: 'decant'
     };
+
+    const setItemsToSave = selectedBundleItems.map(item => ({
+      id: item.product.id,
+      brand: item.product.brand,
+      name: item.product.name,
+      size: item.variant.size
+    }));
 
     // Update form state
     setFormData(prev => ({
@@ -234,7 +288,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       description: autoDescription,
       description_be: autoDescriptionBe,
       imageUrl: selectedBundleItems[0]?.product.imageUrl || prev.imageUrl,
-      price: suggestedPrice.toString(),
+      price: finalPrice.toString(),
       topNotes: mergedTop,
       heartNotes: mergedHeart,
       baseNotes: mergedBase,
@@ -242,12 +296,13 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       tags: 'set, набор, подарок, отливанты',
       tags_be: 'set, набор, падарунак, адліванты',
       scentFamilies: Array.from(new Set(selectedBundleItems.flatMap(item => item.product.scentFamilies || []))),
-      variants: [newVariant]
+      variants: [newVariant],
+      setItems: setItemsToSave
     }));
 
     // Switch tab showing results!
     setActiveTab('basic');
-    alert(`Набор собран! Название, описание, объединенные ноты и аккорды заполнены автоматически со скидкой 15%. Проверьте данные.`);
+    alert(`Набор собран! Настройки набора применены в основную форму (Проверьте поля на вкладке Основное и Варианты).`);
   };
 
   const handleFilesUpload = async (files: FileList | File[], targetField: 'imageUrl' | 'gallery' | number) => {
@@ -376,7 +431,8 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
         ...v,
         price: v.price,
         stock: typeof v.stock === 'string' ? parseInt(v.stock) : v.stock
-      }))
+      })),
+      setItems: formData.setItems || []
     };
 
     try {
@@ -877,7 +933,74 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
             {/* Left side: Selected list */}
             <div className="md:col-span-5 space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-brand-muted font-mono">Выбранные отливанты в наборе ({selectedBundleItems.length} шт):</h4>
+              {/* Custom Set Configuration Panel */}
+              <div className="bg-black/20 border border-brand-border/65 p-4 rounded-xl space-y-4">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-brand-accent font-mono flex items-center gap-1.5">
+                  <span>⚙️</span> Настройка результирующей карточки:
+                </h4>
+                
+                <div className="space-y-3 text-xs">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-mono uppercase text-brand-muted block">Название набора:</label>
+                    <input
+                      type="text"
+                      value={customSetName}
+                      onChange={e => setCustomSetName(e.target.value)}
+                      className="w-full px-3 py-2 bg-black/45 border border-brand-border/80 rounded-lg text-xs text-brand-light placeholder:text-brand-muted/65 focus:outline-none focus:border-brand-accent"
+                      placeholder="Например: Аромабокс Люксовые Ароматы"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono uppercase text-brand-muted block">Стоимость (BYN):</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={customSetPrice}
+                        onChange={e => setCustomSetPrice(e.target.value)}
+                        className="w-full px-3 py-2 bg-black/45 border border-brand-border/80 rounded-lg text-xs text-brand-light placeholder:text-brand-muted/65 focus:outline-none focus:border-brand-accent"
+                        placeholder="Например: 125.00"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-mono uppercase text-brand-muted block">Объем / Вариант-лейбл:</label>
+                      <input
+                        type="text"
+                        value={customSetVolumeLabel}
+                        onChange={e => setCustomSetVolumeLabel(e.target.value)}
+                        className="w-full px-3 py-2 bg-black/45 border border-brand-border/80 rounded-lg text-xs text-brand-light placeholder:text-brand-muted/65 focus:outline-none focus:border-brand-accent"
+                        placeholder="Например: Сет 3 шт x 5мл"
+                      />
+                    </div>
+                  </div>
+
+                  {selectedBundleItems.length > 0 && (
+                    <div className="pt-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const brandsInBundle = Array.from(new Set(selectedBundleItems.map(item => item.product.brand)));
+                          const autoTitle = `Набор отливантов: ${brandsInBundle.join(' & ')} (${selectedBundleItems.length} шт.)`;
+                          const originalPriceSum = selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price as any) || 0), 0);
+                          const suggestedPrice = parseFloat((originalPriceSum * 0.85).toFixed(2));
+                          const autoSizeLabel = `Сет ${selectedBundleItems.length} шт (${selectedBundleItems[0]?.variant?.size || '5мл'})`;
+                          
+                          setCustomSetName(autoTitle);
+                          setCustomSetPrice(suggestedPrice.toString());
+                          setCustomSetVolumeLabel(autoSizeLabel);
+                        }}
+                        className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-brand-muted hover:text-brand-light text-[8px] uppercase tracking-wider font-mono rounded transition-colors"
+                      >
+                        🔄 Сбросить к авто-значениям
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <h4 className="text-xs font-bold uppercase tracking-widest text-brand-muted font-mono pt-2">Выбранные отливанты в наборе ({selectedBundleItems.length} шт):</h4>
               
               <div className="p-4 bg-black/10 border border-brand-border/60 rounded-2xl min-h-[300px] flex flex-col justify-between">
                 <div className="space-y-3">
@@ -887,20 +1010,52 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                     </div>
                   ) : (
                     selectedBundleItems.map((item, idx) => (
-                      <div key={idx} className="flex gap-3 justify-between items-center p-2.5 bg-white/[0.02] border border-brand-border/40 rounded-xl">
-                        <div className="min-w-0">
-                          <p className="text-[10px] uppercase font-mono text-brand-muted">{item.product.brand}</p>
-                          <h5 className="text-xs text-brand-light font-medium truncate">{item.product.name}</h5>
-                          <span className="text-[9px] text-brand-accent font-mono">{item.variant.size} — {(typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price as any)).toFixed(2)} BYN</span>
+                      <div key={idx} className="flex flex-col p-3 bg-white/[0.02] border border-brand-border/40 rounded-xl space-y-2 text-left">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[9px] uppercase font-mono text-brand-muted">{item.product.brand}</p>
+                            <h5 className="text-xs text-brand-light font-medium truncate">{item.product.name}</h5>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onClick={() => setSelectedBundleItems(prev => prev.filter((_, i) => i !== idx))}
+                            className="p-1 px-2.5 bg-red-400/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-[9px] font-semibold border-none uppercase cursor-pointer shrink-0"
+                          >
+                            Удалить
+                          </button>
                         </div>
-                        
-                        <button
-                          type="button"
-                          onClick={() => setSelectedBundleItems(prev => prev.filter((_, i) => i !== idx))}
-                          className="p-1 px-2.5 bg-red-400/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-[9px] font-semibold border-none uppercase cursor-pointer"
-                        >
-                          Удалить
-                        </button>
+
+                        {/* Interactive Adaptation of Volumes and Prices */}
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-brand-border/20">
+                          <div className="space-y-0.5">
+                            <span className="text-[8px] uppercase font-mono tracking-wider text-brand-muted block">Объем в наборе:</span>
+                            <input
+                              type="text"
+                              value={item.variant.size}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setSelectedBundleItems(prev => prev.map((it, i) => i === idx ? { ...it, variant: { ...it.variant, size: val } } : it));
+                              }}
+                              className="w-full px-2 py-1 bg-black/40 border border-brand-border/40 rounded text-[10px] text-brand-light focus:outline-none focus:border-brand-accent"
+                              placeholder="Например: 5мл"
+                            />
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[8px] uppercase font-mono tracking-wider text-brand-muted block">Цена за ед. (BYN):</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={item.variant.price}
+                              onChange={e => {
+                                const val = parseFloat(e.target.value) || 0;
+                                setSelectedBundleItems(prev => prev.map((it, i) => i === idx ? { ...it, variant: { ...it.variant, price: val } } : it));
+                              }}
+                              className="w-full px-2 py-1 bg-black/40 border border-brand-border/40 rounded text-[10px] text-brand-light focus:outline-none focus:border-brand-accent"
+                              placeholder="Например: 35"
+                            />
+                          </div>
+                        </div>
                       </div>
                     ))
                   )}

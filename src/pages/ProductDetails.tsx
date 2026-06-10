@@ -13,6 +13,29 @@ import RecentlyViewed from '../components/RecentlyViewed';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { trackViewItem, trackAddToCart, trackGoal } from '../utils/analytics';
 
+const slugifyHelper = (text: string) => {
+  const cyrillicToLatinMap: Record<string, string> = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+    'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+    'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts',
+    'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu',
+    'я': 'ya', 'і': 'i', 'ў': 'u'
+  };
+
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .split('')
+    .map(char => cyrillicToLatinMap[char] || char)
+    .join('')
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+};
+
 interface FlyingItem {
   id: number;
   x: number;
@@ -575,6 +598,38 @@ export default function ProductDetails() {
               </div>
             )}
           </div>
+
+          {product.setItems && product.setItems.length > 0 && (
+            <div className="my-6 p-5 border border-brand-border bg-white/[0.01]/10 space-y-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-brand-accent animate-pulse" />
+                <h4 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-muted">
+                  {language === 'be' ? 'Састаў набору (Аромабокса):' : 'Содержимое набора (Аромабокса):'}
+                </h4>
+              </div>
+              <div className="space-y-2.5">
+                {product.setItems.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 border border-brand-border/60 bg-white/[0.01] hover:bg-white/[0.03] hover:border-brand-accent/40 transition-all">
+                    <div className="min-w-0 flex-1 pr-3">
+                      <span className="text-[9px] uppercase tracking-wider font-mono text-brand-muted block">{item.brand}</span>
+                      <span className="text-xs text-brand-light font-medium block truncate">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="px-2 py-0.5 bg-brand-accent/15 border border-brand-accent/30 text-[9px] font-mono font-medium text-brand-accent uppercase tracking-wider">
+                        {item.size || '5 мл'}
+                      </span>
+                      <Link 
+                        to={`/catalog/${slugifyHelper(`${item.brand}-${item.name}`)}`}
+                        className="text-[10px] tracking-wider uppercase font-mono text-brand-muted hover:text-brand-light transition-colors border-b border-brand-border/40 hover:border-brand-light/80"
+                      >
+                        {language === 'be' ? 'Падрабязней' : 'Подробнее'}
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {selectedVariant?.variant_type === 'remainder' ? (
             <div className="mt-8 pt-8 border-t border-brand-border space-y-6">
