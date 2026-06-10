@@ -23,6 +23,8 @@ export default function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
+  const adminPath = (import.meta as any).env.VITE_ADMIN_PATH?.replace(/^\//, '') || 'admin';
+  const isAdminPage = location.pathname === `/${adminPath}` || location.pathname.startsWith(`/${adminPath}/`) || location.pathname === '/forbidden';
   const [isLoading, setIsLoading] = useState(location.pathname === '/');
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isMobileCatalogOpen, setIsMobileCatalogOpen] = useState(false);
@@ -195,6 +197,16 @@ export default function Layout() {
       </div>
     );
   };
+
+  if (isAdminPage) {
+    return (
+      <div className="min-h-screen bg-brand-bg text-brand-light font-sans selection:bg-brand-accent/50 transition-colors duration-300 flex flex-col">
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <>

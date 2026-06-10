@@ -212,7 +212,7 @@ export default function Home() {
 
       {/* 1. LUXURIOUS FULL-SCREEN HERO BANNER */}
       <section 
-        className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-black flex items-center"
+        className="relative h-[calc(100vh-4rem)] h-[calc(100dvh-4rem)] w-full overflow-hidden bg-black flex items-center"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -244,7 +244,7 @@ export default function Home() {
             )}
             
             {/* Direct Content Frame positioned elegantly at the bottom */}
-            <div className="absolute inset-x-0 bottom-[18%] sm:bottom-[15%] px-4 sm:px-6 z-10 flex flex-col items-center justify-end text-center">
+            <div className="absolute inset-x-0 bottom-28 sm:bottom-32 px-4 sm:px-6 z-10 flex flex-col items-center justify-end text-center">
               
               {/* Main Titles / Inscriptions (Only if administrator has written titles and titles are not hidden) */}
               {!config.hero.hideTitles && (
@@ -292,7 +292,7 @@ export default function Home() {
 
             {/* Slider Dots Indicator */}
             {config.hero.slides.length > 1 && (
-              <div className="absolute bottom-[10%] sm:bottom-[8%] left-1/2 -translate-x-1/2 z-25 flex gap-2.5 items-center">
+              <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 z-25 flex gap-2.5 items-center">
                 {config.hero.slides.map((_, idx) => (
                   <button
                     key={idx}
