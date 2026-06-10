@@ -185,7 +185,68 @@ export default function PromoCodesView({ token }: PromoCodesViewProps) {
       )}
 
       <div className="bg-white/5 rounded-3xl border border-brand-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Card View */}
+        <div className="block md:hidden divide-y divide-brand-border">
+          {promoCodes.length === 0 ? (
+            <div className="p-8 text-center text-brand-muted">Промокоды не найдены</div>
+          ) : (
+            promoCodes.map((code) => (
+              <div key={code.id} className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-sm font-mono font-bold text-brand-light bg-brand-accent/10 border border-brand-accent/20 px-2.5 py-1 rounded-lg">
+                      {code.code}
+                    </span>
+                    <span className="text-xs text-brand-muted block mt-2 text-[10px] uppercase tracking-wide">
+                      {code.validFrom ? new Date(code.validFrom).toLocaleDateString() : '—'}
+                      {' - '}
+                      {code.validUntil ? new Date(code.validUntil).toLocaleDateString() : '—'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-semibold text-brand-light block">
+                      {code.discountType === 'percentage' ? `${code.discountValue}%` : `${code.discountValue} BYN`}
+                    </span>
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider ${
+                      code.status === 'Active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                    }`}>
+                      {code.status === 'Active' ? 'Активен' : 'Неактивен'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 p-3 bg-white/[0.01] border border-brand-border/40 rounded-xl text-xs">
+                  <div>
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-brand-muted block">Мин. заказ</span>
+                    <span className="font-medium text-brand-light">{code.minOrderAmount ? `${code.minOrderAmount} BYN` : 'Без лимита'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-mono tracking-wider text-brand-muted block">Лимит</span>
+                    <span className="font-medium text-brand-light">{code.usedCount} / {code.usageLimit || '∞'}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <button 
+                    onClick={() => handleEdit(code)} 
+                    className="p-2.5 bg-white/5 hover:bg-white/10 text-brand-light rounded-xl border border-brand-border/60 transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(code.id)} 
+                    className="p-2.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-xl border border-red-500/20 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm text-brand-light">
             <thead className="bg-white/5 text-xs uppercase text-brand-muted font-medium">
               <tr>

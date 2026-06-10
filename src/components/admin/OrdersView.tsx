@@ -27,7 +27,65 @@ export default function OrdersView({ orders, token, onUpdate, loading, paginatio
 
   return (
     <div className="bg-white/5 rounded-3xl border border-brand-border shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Mobile Grid/Card View */}
+      <div className="block md:hidden divide-y divide-brand-border">
+        {orders.length === 0 ? (
+          <div className="p-8 text-center text-brand-muted">Заказы не найдены.</div>
+        ) : (
+          orders.map(order => (
+            <div key={order.id} className="p-4 space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-xs font-mono font-bold text-brand-light block">#{order.id.toString().padStart(6, '0')}</span>
+                  <p className="text-xs text-brand-muted mt-0.5">{new Date(order.createdAt || Date.now()).toLocaleDateString()}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-semibold text-brand-accent font-mono block">{order.total} BYN</span>
+                  <span className={`inline-block mt-1 px-2 py-0.5 rounded-lg text-[10px] font-medium ${
+                    order.status === 'Delivered' ? 'bg-emerald-500/20 text-emerald-400' :
+                    order.status === 'Cancelled' ? 'bg-red-500/20 text-red-400' :
+                    'bg-amber-500/20 text-amber-400'
+                  }`}>
+                    {order.status === 'New' ? 'Новый' :
+                     order.status === 'Processing' ? 'В обработке' :
+                     order.status === 'Shipped' ? 'Отправлен' :
+                     order.status === 'Delivered' ? 'Доставлен' :
+                     order.status === 'Cancelled' ? 'Отменен' : order.status}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-2.5 bg-white/[0.02] border border-brand-border/40 rounded-xl space-y-1">
+                <p className="text-xs font-medium text-brand-light truncate">{order.customerName}</p>
+                <p className="text-[10px] text-brand-muted truncate">{order.customerEmail}</p>
+                {order.items && order.items.length > 0 && (
+                  <p className="text-[10px] text-brand-muted font-mono mt-1 border-t border-brand-border/20 pt-1">
+                    {order.items.map((it: any) => `${it.brand} ${it.name} (${it.size}) x${it.quantity}`).join(', ')}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-1">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-brand-muted">Статус:</span>
+                <select 
+                  value={order.status}
+                  onChange={(e) => updateStatus(order.id, e.target.value as any)}
+                  className="text-xs bg-black/40 text-brand-light border border-brand-border rounded-xl px-3 py-1.5 focus:outline-none focus:border-brand-accent"
+                >
+                  <option value="New" className="bg-brand-bg">Новый</option>
+                  <option value="Processing" className="bg-brand-bg">В обработке</option>
+                  <option value="Shipped" className="bg-brand-bg">Отправлен</option>
+                  <option value="Delivered" className="bg-brand-bg">Доставлен</option>
+                  <option value="Cancelled" className="bg-brand-bg">Отменен</option>
+                </select>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-left">
           <thead>
             <tr className="bg-white/5 border-b border-brand-border">

@@ -465,44 +465,46 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between border-b border-brand-border pb-4 pt-4 gap-4">
-        <h2 className="text-xl font-serif text-brand-light">{initialData ? 'Редактировать аромат' : 'Новый аромат'}</h2>
-        <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto no-scrollbar">
-          <button type="button" onClick={onCancel} className="text-sm text-brand-muted hover:text-brand-light px-4 py-2 border border-brand-border rounded-xl whitespace-nowrap">Отмена</button>
-          <button 
-            type="submit" 
-            disabled={submitting}
-            className="px-6 py-2 bg-brand-accent text-white rounded-xl text-sm font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-70 flex items-center gap-2 whitespace-nowrap"
-          >
-            {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            <span>Сохранить</span>
-          </button>
+      <div className="sticky top-0 z-50 bg-brand-bg/95 backdrop-blur-md border-b border-brand-border/60 pb-3 pt-3 space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <h2 className="text-xl font-serif text-brand-light">{initialData ? 'Редактировать аромат' : 'Новый аромат'}</h2>
+          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto no-scrollbar">
+            <button type="button" onClick={onCancel} className="text-sm text-brand-muted hover:text-brand-light px-4 py-2 border border-brand-border rounded-xl whitespace-nowrap">Отмена</button>
+            <button 
+              type="submit" 
+              disabled={submitting}
+              className="px-6 py-2 bg-brand-accent text-white rounded-xl text-sm font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-70 flex items-center gap-2 whitespace-nowrap"
+            >
+              {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              <span>Сохранить</span>
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="flex flex-wrap gap-2 border-b border-brand-border pb-4">
-        {[
-          { id: 'basic', label: 'Основное' },
-          { id: 'media', label: 'Медиа' },
-          { id: 'variants', label: 'Варианты' },
-          { id: 'description', label: 'Описание' },
-          { id: 'scent', label: 'Аромат и Сезонность' },
-          { id: 'builder', label: 'Собрать Набор' },
-          { id: 'seo', label: 'SEO' },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-              activeTab === tab.id 
-                ? 'bg-brand-accent text-white' 
-                : 'bg-white/5 text-brand-muted hover:text-brand-light hover:bg-white/10'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          {[
+            { id: 'basic', label: 'Основное' },
+            { id: 'media', label: 'Медиа' },
+            { id: 'variants', label: 'Варианты' },
+            { id: 'description', label: 'Описание' },
+            { id: 'scent', label: 'Аромат и Сезонность' },
+            { id: 'builder', label: 'Собрать Набор' },
+            { id: 'seo', label: 'SEO' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors shrink-0 ${
+                activeTab === tab.id 
+                  ? 'bg-brand-accent text-white' 
+                  : 'bg-white/5 text-brand-muted hover:text-brand-light hover:bg-white/10'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={activeTab === 'basic' ? 'block' : 'hidden'}>

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Product, Order, User, Review, CMSPage, HomeConfig } from '../types';
-import { LogOut, Lock, LayoutDashboard, ShoppingBag, Package, Users, MessageSquare, FileText, BarChart3, AlertCircle, RefreshCw, Settings, Home, Menu, X, History } from 'lucide-react';
+import { 
+  LogOut, Lock, LayoutDashboard, ShoppingBag, Package, Users, 
+  MessageSquare, FileText, BarChart3, AlertCircle, RefreshCw, 
+  Settings, Home, Menu, X, History, Tag, ShoppingCart, Star 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../components/ThemeProvider';
 
@@ -15,7 +19,6 @@ import ReportsView from '../components/admin/ReportsView';
 import PromoCodesView from '../components/admin/PromoCodesView';
 import AbandonedCartsView from '../components/admin/AbandonedCartsView';
 import ChangelogView from '../components/admin/ChangelogView';
-import { Tag, ShoppingCart, Star } from 'lucide-react';
 
 export default function AdminPanel() {
   const { theme } = useTheme();

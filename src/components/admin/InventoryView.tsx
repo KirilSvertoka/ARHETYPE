@@ -98,7 +98,64 @@ export default function InventoryView({ products, loading, token, onUpdate, onAu
       </div>
 
       <div className="bg-white/5 rounded-2xl shadow-sm border border-brand-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Grid/Card View (visible on small screens) */}
+        <div className="block md:hidden divide-y divide-brand-border">
+          {loading ? (
+            <div className="p-8 text-center text-brand-muted">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
+              Загрузка...
+            </div>
+          ) : paginatedProducts.length === 0 ? (
+            <div className="p-8 text-center text-brand-muted">Товары не найдены.</div>
+          ) : (
+            paginatedProducts.map(product => {
+              const stockSum = product.variants?.reduce((acc: number, v: any) => acc + v.stock, 0) || 0;
+              const isLowStock = stockSum <= product.stockThreshold;
+              return (
+                <div key={product.id} className="p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <img src={product.imageUrl} alt="" className="w-14 h-14 rounded-xl object-cover bg-white/10 shrink-0" referrerPolicy="no-referrer" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] uppercase tracking-wider font-mono text-brand-muted">{product.brand}</span>
+                      <h4 className="font-semibold text-brand-light text-sm line-clamp-2 leading-tight">{product.name}</h4>
+                      <div className="text-xs font-semibold text-brand-light mt-1">{product.price} BYN</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider ${
+                      isLowStock
+                        ? 'bg-red-500/10 text-red-400 border border-red-500/15'
+                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
+                    }`}>
+                      {stockSum} в наличии
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setEditingProduct(product)} 
+                        className="p-2.5 text-brand-muted hover:text-white bg-white/5 rounded-xl border border-brand-border/60 transition-colors"
+                        title="Редактировать"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(product.id)} 
+                        className="p-2.5 text-red-400 hover:text-white bg-red-500/10 hover:bg-red-500 rounded-xl border border-red-500/25 transition-colors"
+                        title="Удалить"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table View (visible on medium & large screens) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-white/5 border-b border-brand-border">
@@ -148,10 +205,10 @@ export default function InventoryView({ products, loading, token, onUpdate, onAu
         </div>
         {totalPages > 1 && (
           <div className="px-6 py-4 bg-white/5 border-t border-brand-border flex items-center justify-between">
-            <div className="text-sm text-brand-muted">Страница {currentPage} из {totalPages}</div>
+            <div className="text-sm text-brand-muted font-mono">Страница <span className="text-brand-light font-bold">{currentPage}</span> из {totalPages}</div>
             <div className="flex items-center gap-2">
-              <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 text-brand-light"><ChevronLeft className="w-4 h-4" /></button>
-              <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)} className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-50 text-brand-light"><ChevronRight className="w-4 h-4" /></button>
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} className="p-2 rounded-xl border border-brand-border hover:bg-white/10 disabled:opacity-50 text-brand-light transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+              <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)} className="p-2 rounded-xl border border-brand-border hover:bg-white/10 disabled:opacity-50 text-brand-light transition-colors"><ChevronRight className="w-4 h-4" /></button>
             </div>
           </div>
         )}
