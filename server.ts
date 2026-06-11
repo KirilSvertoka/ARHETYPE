@@ -2493,6 +2493,67 @@ app.post('/api/callback', async (req, res) => {
 
 // SiteMap generation rules should be top-level routes
 
+function isPathValid(reqPath: string): boolean {
+  try {
+    let p = reqPath || '/';
+    if (p.includes('?')) {
+      p = p.split('?')[0];
+    }
+    if (p.length > 1 && p.endsWith('/')) {
+      p = p.slice(0, -1);
+    }
+
+    const validStaticRoutes = [
+      '/',
+      '/catalog',
+      '/contacts',
+      '/about',
+      '/reviews',
+      '/wishlist',
+      '/forbidden',
+      '/502',
+      '/500'
+    ];
+
+    if (validStaticRoutes.includes(p)) {
+      return true;
+    }
+
+    const adminPathEnv = process.env.VITE_ADMIN_PATH || 'admin';
+    const cleanAdminPath = adminPathEnv.startsWith('/') ? adminPathEnv : `/${adminPathEnv}`;
+    const cleanAdminPathTrimmed = cleanAdminPath.endsWith('/') ? cleanAdminPath.slice(0, -1) : cleanAdminPath;
+    
+    if (p === cleanAdminPathTrimmed || p === '/admin') {
+      return true;
+    }
+
+    if (p.startsWith('/catalog/')) {
+      const slug = p.substring('/catalog/'.length);
+      if (!slug) return false;
+      const product = db.prepare('SELECT id FROM products WHERE slug = ? OR id = ?').get(slug, slug);
+      if (product) {
+        return true;
+      }
+      return false;
+    }
+
+    if (p.startsWith('/p/')) {
+      const id = p.substring('/p/'.length);
+      if (!id) return false;
+      if (id === 'faq' || id === 'delivery' || id === 'returns') return true;
+      const page = db.prepare('SELECT id FROM cms_pages WHERE id = ?').get(id);
+      if (page) {
+        return true;
+      }
+      return false;
+    }
+  } catch (error) {
+    console.error('Error validating request path:', error);
+    return true;
+  }
+  return false;
+}
+
 async function startServer() {
   const PORT = 3000;
 
@@ -3035,7 +3096,12 @@ async function startServer() {
         html = await vite.transformIndexHtml(req.originalUrl, html);
       }
 
-      res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      let httpStatus = 200;
+      if (!isPathValid(req.path)) {
+        httpStatus = 404;
+      }
+
+      res.status(httpStatus).set({ 'Content-Type': 'text/html' }).end(html);
     } catch (e) {
       next(e);
     }

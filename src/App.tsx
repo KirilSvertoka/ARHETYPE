@@ -59,6 +59,7 @@ export default function App() {
                     <Route path="contacts" element={<Contacts />} />
                     <Route path="about" element={<About />} />
                     <Route path="p/:id" element={<Page />} />
+                    <Route path="reviews" element={<Reviews />} />
                     <Route path="wishlist" element={<Wishlist />} />
                     <Route path={adminPath} element={<AdminPanel />} />
                     <Route path="forbidden" element={<Forbidden />} />
