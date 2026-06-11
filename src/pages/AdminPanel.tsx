@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Product, Order, User, Review, CMSPage, HomeConfig } from '../types';
 import { 
   LogOut, Lock, LayoutDashboard, ShoppingBag, Package, Users, 
   MessageSquare, FileText, BarChart3, AlertCircle, RefreshCw, 
-  Settings, Home, Menu, X, History, Tag, ShoppingCart, Star 
+  Settings, Home, Menu, X, History, Tag, ShoppingCart, Star,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../components/ThemeProvider';
@@ -274,6 +276,14 @@ export default function AdminPanel() {
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 no-scrollbar">
+          <Link
+            to="/"
+            className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-brand-accent hover:bg-brand-accent/10 transition-colors flex items-center gap-3 border border-brand-accent/20 mb-4 group shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <span>Вернуться на сайт</span>
+          </Link>
+
           {[
             { id: 'dashboard', label: 'Сводка', icon: LayoutDashboard },
             { id: 'orders', label: 'Заказы', icon: ShoppingBag },
@@ -347,6 +357,15 @@ export default function AdminPanel() {
             </h2>
           </div>
           <div className="flex items-center gap-3">
+            <Link 
+              to="/" 
+              className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 border border-brand-border/60 rounded-xl text-xs font-semibold text-brand-light transition-all flex items-center gap-1.5 shadow-sm active:scale-95 shrink-0"
+              title="Перейти на главную страницу сайта"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>На сайт</span>
+            </Link>
+
             <button 
               onClick={() => {
                 switch (activeTab) {

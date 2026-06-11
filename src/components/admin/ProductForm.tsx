@@ -259,7 +259,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     const originalPriceSum = selectedBundleItems.reduce((sum, item) => {
       return sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price as any) || 0);
     }, 0);
-    const suggestedPrice = parseFloat((originalPriceSum * 0.85).toFixed(2));
+    const suggestedPrice = parseFloat(originalPriceSum.toFixed(2));
     const finalPrice = parseFloat(customSetPrice) || suggestedPrice;
 
     const autoSizeLabel = customSetVolumeLabel || `Сет ${selectedBundleItems.length} шт (${selectedBundleItems[0]?.variant.size || '2мл'})`;
@@ -986,7 +986,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                           const brandsInBundle = Array.from(new Set(selectedBundleItems.map(item => item.product.brand)));
                           const autoTitle = `Набор отливантов: ${brandsInBundle.join(' & ')} (${selectedBundleItems.length} шт.)`;
                           const originalPriceSum = selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price as any) || 0), 0);
-                          const suggestedPrice = parseFloat((originalPriceSum * 0.85).toFixed(2));
+                          const suggestedPrice = parseFloat(originalPriceSum.toFixed(2));
                           const autoSizeLabel = `Сет ${selectedBundleItems.length} шт (${selectedBundleItems[0]?.variant?.size || '5мл'})`;
                           
                           setCustomSetName(autoTitle);
