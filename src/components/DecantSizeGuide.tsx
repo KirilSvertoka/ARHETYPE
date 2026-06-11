@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { Info, FlaskConical } from 'lucide-react';
 
 interface DecantSizeGuideProps {
-  selectedSize: string; // e.g. "2 мл", "5ml", "10 мл", "Остаток"
+  selectedSize: string; // e.g. "2 мл", "5ml", "10 мл", "Остаток", "СЕТ 5 ШТ ПО 2 МЛ"
   variantType?: string;
 }
 
@@ -14,89 +14,134 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
   const isRemainder = 
     variantType === 'remainder' || 
     selectedSize.toLowerCase().includes('остаток') || 
-    selectedSize.toLowerCase().includes('астатак');
+    selectedSize.toLowerCase().includes('остаток во флаконе');
 
-  // Helper to parse numeric volume from size string (e.g. "10мл", "5 ml" -> 5 or 10)
-  const parseVolume = (sizeStr: string): number => {
-    if (!sizeStr) return 5;
-    const num = parseFloat(sizeStr.replace(/[^0-9.]/g, ''));
-    return isNaN(num) ? 5 : num;
+  // Helper to parse complex size/volume logic
+  const parseSizeDetails = (sizeStr: string) => {
+    if (!sizeStr) return { isSet: false, setCount: 1, singleVolume: 5 };
+    
+    const sizeClean = sizeStr.toLowerCase().trim();
+    
+    // Pattern 1: e.g. "СЕТ 5 ШТ ПО 2 МЛ" / "5 шт по 2 мл" / "сет 5 шт по 2мл"
+    const matchSetP1 = sizeClean.match(/(?:сет|набор|комплект)?\s*(\d+)\s*(?:шт|шт\.)?\s*(?:по)\s*(\d+(?:\.\d+)?)\s*(?:мл|ml)/i);
+    if (matchSetP1) {
+      return {
+        isSet: true,
+        setCount: parseInt(matchSetP1[1], 10),
+        singleVolume: parseFloat(matchSetP1[2])
+      };
+    }
+    
+    // Pattern 2: e.g. "5х2 мл" or "5 x 2 мл" or "5x2ml"
+    const matchSetP2 = sizeClean.match(/(?:^|\s)(\d+)\s*[xх*×]\s*(\d+(?:\.\d+)?)\s*(?:мл|ml)/i);
+    if (matchSetP2) {
+      return {
+        isSet: true,
+        setCount: parseInt(matchSetP2[1], 10),
+        singleVolume: parseFloat(matchSetP2[2])
+      };
+    }
+
+    // Pattern 3: e.g. "сет 5 по 2" or "сет 5 шт по 2"
+    const matchSetP3 = sizeClean.match(/(?:сет|набор|комплект)\s+(\d+)\s+(?:шт\s+)?(?:по\s+)?(\d+(?:\.\d+)?)/i);
+    if (matchSetP3) {
+      return {
+        isSet: true,
+        setCount: parseInt(matchSetP3[1], 10),
+        singleVolume: parseFloat(matchSetP3[2])
+      };
+    }
+
+    // Pattern 4: any number + ml/ml, e.g. "отливант 10 мл" -> 10, "сет из 5 шт - 2мл"
+    const lastNumMatch = sizeClean.match(/(\d+(?:\.\d+)?)\s*(?:мл|ml)/);
+    if (lastNumMatch) {
+      return {
+        isSet: false,
+        setCount: 1,
+        singleVolume: parseFloat(lastNumMatch[1])
+      };
+    }
+
+    // Pattern 5: if it contains set/сет/набор, and has some numbers, e.g. "сет 5 шт"
+    const allNumbers = sizeClean.match(/\d+(?:\.\d+)?/g);
+    if (allNumbers && allNumbers.length >= 2) {
+      const isLikelySet = sizeClean.includes('сет') || sizeClean.includes('набор') || sizeClean.includes('комплект') || sizeClean.includes('шт') || sizeClean.includes('x') || sizeClean.includes('х');
+      if (isLikelySet) {
+        return {
+          isSet: true,
+          setCount: parseInt(allNumbers[0], 10),
+          singleVolume: parseFloat(allNumbers[1])
+        };
+      }
+    }
+
+    if (allNumbers && allNumbers.length === 1) {
+      return {
+        isSet: false,
+        setCount: 1,
+        singleVolume: parseFloat(allNumbers[0])
+      };
+    }
+
+    // Fallback: default to 5ml
+    return {
+      isSet: false,
+      setCount: 1,
+      singleVolume: 5
+    };
   };
 
-  const volume = parseVolume(selectedSize);
+  const { isSet, setCount, singleVolume } = parseSizeDetails(selectedSize);
+  const totalVolume = isSet ? setCount * singleVolume : singleVolume;
 
   // Determine size category and metadata
-  const getGuideInfo = (vol: number) => {
-    if (vol <= 3) {
-      return {
-        sprays: vol * 15,
-        durationRu: '1–2 недели регулярного использования',
-        durationBe: '1–2 тыдні рэгулярнага выкарыстання',
-        purposeRu: 'Для первого знакомства. Идеальный объем для раскрытия аромата при разной погоде и настроении без лишних затрат.',
-        purposeBe: 'Для першага знаёмства. Ідэальны аб’ём для раскрыцця водару пры розным надвор’і і настроі без лішніх выдаткаў.',
-        comparisonRu: 'размером с mini-помаду (легко поместится в визитницу)',
-        comparisonBe: 'памерам з міні-памаду (лёгка змесціцца ў візітоўніцу)',
-        comparisonShortRu: 'Мини-помада',
-        comparisonShortBe: 'Міні-памада',
-        spraysTextRu: '≈ 30 распылений',
-        spraysTextBe: '≈ 30 распыленняў',
+  const getGuideInfo = (singleVol: number, totalVol: number) => {
+    // 1. Get visual metrics based on single bottle size
+    let visualInfo;
+    if (singleVol <= 3) {
+      visualInfo = {
         liquidHeight: '28%',
         bottleHeight: '60px',
         bottleWidth: '16px',
         compareHeight: '52px',
-        compareOffset: '14px'
+        compareOffset: '14px',
+        comparisonRu: 'размером с mini-помаду (легко поместится в визитницу)',
+        comparisonBe: 'памерам з міні-памаду (лёгка змесціцца ў візітоўніцу)',
+        comparisonShortRu: 'Мини-помада',
+        comparisonShortBe: 'Міні-памада',
       };
-    } else if (vol <= 6) {
-      return {
-        sprays: vol * 15,
-        durationRu: '3–4 недели регулярного использования',
-        durationBe: '3–4 тыдні рэгулярнага выкарыстання',
-        purposeRu: 'Для детального разнашивания. Хватит, чтобы полноценно прочувствовать шлейф, стойкость во всех фазах и решить, ваш ли это аромат.',
-        purposeBe: 'Для дэталёвага разношвання. Хопіць, каб паўнавартасна адчуць шлейф, стойкасць ва ўсіх фазах і вырашыць, ці ваш гэта ворад.',
-        comparisonRu: 'высотой с классический блеск для губ / зажигалку',
-        comparisonBe: 'вышынёй з класічны бляск для вуснаў / запальнічку',
-        comparisonShortRu: 'Классическая помада',
-        comparisonShortBe: 'Класічная памада',
-        spraysTextRu: '≈ 75 распылений',
-        spraysTextBe: '≈ 75 распыленняў',
+    } else if (singleVol <= 6) {
+      visualInfo = {
         liquidHeight: '52%',
         bottleHeight: '82px',
         bottleWidth: '18px',
         compareHeight: '75px',
-        compareOffset: '8px'
+        compareOffset: '8px',
+        comparisonRu: 'высотой с классический блеск для губ / зажигалку',
+        comparisonBe: 'вышынёй з класічны бляск для вуснаў / запальнічку',
+        comparisonShortRu: 'Классическая помада',
+        comparisonShortBe: 'Класічная памада',
       };
-    } else if (vol <= 15) {
-      return {
-        sprays: vol * 15,
-        durationRu: '1.5–2 месяца регулярного использования',
-        durationBe: '1.5–2 месяцы рэгулярнага выкарыстання',
-        purposeRu: 'Полноценный mini-флакон. Практичный сезонный объем — идеальный вариант для сумочки, отпуска или в качестве роскошного подарка.',
-        purposeBe: 'Паўнавартасны міні-флакон. Практычны сезонны аб’ём — ідэальны варыянт для сумачкі, адпачынку ці ў якасці раскошнага падарунка.',
-        comparisonRu: 'высотой со стандартную пластиковую банковскую карту',
-        comparisonBe: 'вышынёй са стандартную пластыкавую банкаўскую карту',
-        comparisonShortRu: 'Банковская карта',
-        comparisonShortBe: 'Банкаўская карта',
-        spraysTextRu: '≈ 150 распылений',
-        spraysTextBe: '≈ 150 распыленняў',
+    } else if (singleVol <= 15) {
+      visualInfo = {
         liquidHeight: '78%',
         bottleHeight: '105px',
         bottleWidth: '22px',
         compareHeight: '86px',
-        compareOffset: '0px'
+        compareOffset: '0px',
+        comparisonRu: 'высотой со стандартную plastic-карту банковского формата',
+        comparisonBe: 'вышынёй са стандартную пластыкавую банкаўскую карту',
+        comparisonShortRu: 'Банковская карта',
+        comparisonShortBe: 'Банкаўская карта',
       };
     } else {
-      // Larger decants/bottles (e.g. 20ml, 30ml, 100ml)
-      const isFullBottle = vol >= 30;
-      return {
-        sprays: vol * 15,
-        durationRu: `${Math.round(vol / 5)}–${Math.round(vol / 4)} мес. регулярного использования`,
-        durationBe: `${Math.round(vol / 5)}–${Math.round(vol / 4)} мес. рэгулярнага выкарыстання`,
-        purposeRu: isFullBottle 
-          ? 'Полноразмерный оригинальный шедевр. Для истинных коллекционеров и тех, кто нашел свое идеальное парфюмерное «Я».'
-          : 'Максимальный тревел-формат. Отличный объем для любимого парфюма на длительное время без необходимости частой покупки.',
-        purposeBe: isFullBottle
-          ? 'Поўнапамерны арыгінальны шэдэўр. Для сапраўдных калекцыянераў і тых, хто знайшоў сваё ідэальнае парфумернае «Я».'
-          : 'Максімальны трэвел-фармат. Выдатны аб’ём для любімага парфуму на працяглы час без неабходнасці частага куплі.',
+      const isFullBottle = singleVol >= 30;
+      visualInfo = {
+        liquidHeight: '85%',
+        bottleHeight: '120px',
+        bottleWidth: isFullBottle ? '45px' : '28px',
+        compareHeight: '86px',
+        compareOffset: '0px',
         comparisonRu: isFullBottle 
           ? 'полноформатный стеклянный флакон парфюмерного дома' 
           : 'высотой превосходит стандартную кредитную карту',
@@ -105,15 +150,80 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
           : 'вышынёй пераўзыходзіць стандартную крэдытную карту',
         comparisonShortRu: 'Пластиковая карта',
         comparisonShortBe: 'Пластыкавая карта',
-        spraysTextRu: `≈ ${vol * 15} распылений`,
-        spraysTextBe: `≈ ${vol * 15} распыленняў`,
-        liquidHeight: '85%',
-        bottleHeight: '120px',
-        bottleWidth: isFullBottle ? '45px' : '28px',
-        compareHeight: '86px',
-        compareOffset: '0px'
       };
     }
+
+    // 2. Get active duration / usage stats based on total volume of set/bottle
+    let usageInfo;
+    const totalSprays = Math.round(totalVol * 15);
+    
+    if (totalVol <= 3) {
+      usageInfo = {
+        sprays: totalSprays,
+        durationRu: '1–2 недели регулярного использования',
+        durationBe: '1–2 тыдні рэгулярнага выкарыстання',
+        purposeRu: isSet 
+          ? `Набор из ${setCount} мини-отливантов. Идеальный объем для раскрытия ароматов без лишних затрат.`
+          : 'Для первого знакомства. Идеальный объем для раскрытия аромата при разной погоде и настроении без лишних затрат.',
+        purposeBe: isSet
+          ? `Набор з ${setCount} міні-адлівантаў. Ідэальны аб’ём для раскрыцця водараў без лішніх выдаткаў.`
+          : 'Для першага знакомства. Ідэальны аб’ём для раскрыцця водару пры розным надвор’і і настроі без лішніх выдаткаў.',
+        spraysTextRu: `≈ ${totalSprays} распылений`,
+        spraysTextBe: `≈ ${totalSprays} распыленняў`,
+      };
+    } else if (totalVol <= 6) {
+      usageInfo = {
+        sprays: totalSprays,
+        durationRu: '3–4 недели регулярного использования',
+        durationBe: '3–4 тыдні рэгулярнага выкарыстання',
+        purposeRu: isSet
+          ? `Подарочный сет из ${setCount} отливантов. Хватит, чтобы полноценно прочувствовать шлейф и раскрытие каждого парфюма.`
+          : 'Для детального разнашивания. Хватит, чтобы полноценно прочувствовать шлейф, стойкость во всех фазах и решить, ваш ли это аромат.',
+        purposeBe: isSet
+          ? `Падарункавы сэт з ${setCount} адлівантаў. Хопіць, каб паўнавартасна адчуць шлейф і раскрыццё кожнага парфуму.`
+          : 'Для дэталёвага разношвання. Хопіць, каб паўнавартасна адчуць шлейф, стойкасць ва ўсіх фазах и вырашыць, ці ваш гэта ворад.',
+        spraysTextRu: `≈ ${totalSprays} распылений`,
+        spraysTextBe: `≈ ${totalSprays} распыленняў`,
+      };
+    } else if (totalVol <= 15) {
+      usageInfo = {
+        sprays: totalSprays,
+        durationRu: '1.5–2 месяца регулярного использования',
+        durationBe: '1.5–2 месяцы рэгулярнага выкарыстання',
+        purposeRu: isSet
+          ? `Роскошная коллекция из ${setCount} отливантов общего объема ${totalVol} мл. Сезонный запас для сумочки, отпуска или подарка.`
+          : 'Полноценный mini-флакон. Практичный сезонный объем — идеальный вариант для сумочки, отпуска или в качестве роскошного подарка.',
+        purposeBe: isSet
+          ? `Раскошная калекцыя з ${setCount} адлівантаў агульнага аб'ёму ${totalVol} мл. Сезонны запас для сумачкі, адпачынку ці падарунка.`
+          : 'Паўнавартасны міні-флакон. Практычны сезонны аб’ём — ідэальны варыянт для сумачкі, адпуск ці ў якасці раскошнага падарунка.',
+        spraysTextRu: `≈ ${totalSprays} распылений`,
+        spraysTextBe: `≈ ${totalSprays} распыленняў`,
+      };
+    } else {
+      const isFullBottle = totalVol >= 30;
+      usageInfo = {
+        sprays: totalSprays,
+        durationRu: `${Math.round(totalVol / 5)}–${Math.round(totalVol / 4)} мес. регулярного использования`,
+        durationBe: `${Math.round(totalVol / 5)}–${Math.round(totalVol / 4)} мес. рэгулярнага выкарыстання`,
+        purposeRu: isSet
+          ? `Максимальный парфюмерный бокс (${setCount} шт по ${singleVolume} мл). Идеален для глубокого знакомства с парфюмерным гардеробом.`
+          : isFullBottle 
+            ? 'Полноразмерный оригинальный шедевр. Для истинных коллекционеров и тех, кто нашел свое идеальное парфюмерное «Я».'
+            : 'Максимальный тревел-формат. Отличный объем для любимого парфюма на длительное время без необходимости частой покупки.',
+        purposeBe: isSet
+          ? `Максімальны парфумерны бокс (${setCount} шт па ${singleVolume} мл). Ідэальны для глыбокага знаёмства з парфумерным гардэробам.`
+          : isFullBottle
+            ? 'Поўнапамерны арыгінальны шэдэўр. Для сапраўдных калекцыянераў і тых, хто знайшоў сваё ідэальнае парфумернае «Я».'
+            : 'Максімальны трэвел-фармат. Выдатны аб’ём для любімага парфуму на працяглы час без неабходнасці частага куплі.',
+        spraysTextRu: `≈ ${totalSprays} распылений`,
+        spraysTextBe: `≈ ${totalSprays} распыленняў`,
+      };
+    }
+
+    return {
+      ...visualInfo,
+      ...usageInfo
+    };
   };
 
   const info = isRemainder ? {
@@ -121,7 +231,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
     durationRu: 'Оригинал с коробкой',
     durationBe: 'Арыгінал з каробкай',
     purposeRu: 'Покупка остатка во флаконе — это способ приобрести частично заполненный оригинальный брендовый флакон (обычно с фирменной коробкой). Отличный выбор для коллекционеров и тех, кому эстетика оригинального флакона так же важна, как и сам аромат.',
-    purposeBe: 'Купля астатку ва флаконе — гэта спосаб набыць часткова запоўнены арыгінальны брэндавы флакон (звычайна з фірмовай каробкай). Выдатны выбар для калекцыянераў і тых, каму эстэтыка арыгінальнага флакона гэтак жа важная, як і сам ворак.',
+    purposeBe: 'Купля астатку ва флаконе — гэта спосаб набыць часткова запоўнены арыгінальны брэндавы флакон (звычайна з фірмовай каробкай). Выдатны выбар для калекцыянераў і тых, каму эстэтыка арыгінальнага флакона гэтак жа важная, как і сам ворак.',
     comparisonRu: 'оригинальный стеклянный флакон парфюмерного дома',
     comparisonBe: 'арыгінальны шкляны флакон парфумернага дома',
     comparisonShortRu: 'Флакон бренда',
@@ -133,7 +243,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
     bottleWidth: '52px',
     compareHeight: '86px',
     compareOffset: '0px'
-  } : getGuideInfo(volume);
+  } : getGuideInfo(singleVolume, totalVolume);
 
   return (
     <div className="mt-6 border border-brand-border/40 bg-brand-hover/5 p-4 sm:p-5">
@@ -218,7 +328,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
                   <span className="text-[9px] font-bold font-mono text-brand-light drop-shadow-md tracking-tighter uppercase whitespace-nowrap">
                     {isRemainder 
                       ? (language === 'be' ? 'Астатак' : 'Остаток') 
-                      : `${volume} ml`}
+                      : (isSet ? `${setCount}×${singleVolume} мл` : `${singleVolume} мл`)}
                   </span>
                 </div>
               </motion.div>
@@ -226,7 +336,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
               <span className="text-[8px] font-mono text-brand-accent mt-1 select-none font-bold whitespace-nowrap">
                 {isRemainder 
                   ? (language === 'be' ? 'Астатак' : 'Остаток') 
-                  : (volume === 2 ? '75 мм' : volume === 5 ? '82 мм' : volume === 10 ? '105 мм' : info.bottleHeight)}
+                  : (singleVolume <= 3 ? '75 мм' : singleVolume <= 6 ? '82 мм' : singleVolume <= 15 ? '105 мм' : '120 мм')}
               </span>
             </div>
           </div>
