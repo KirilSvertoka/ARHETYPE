@@ -418,9 +418,15 @@ export default function Home() {
           ).map((brand, bIdx) => {
             const isActive = bIdx === activeBrandIdx;
             return (
-              <div
+              <Link
+                to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
                 key={brand.name + '-strip-' + bIdx}
-                onMouseEnter={() => setActiveBrandIdx(bIdx)}
+                onClick={(e) => {
+                  if (!isActive) {
+                    e.preventDefault();
+                    setActiveBrandIdx(bIdx);
+                  }
+                }}
                 className={`relative h-full flex-1 border-r border-white/5 cursor-pointer overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] select-none group/strip ${
                   isActive ? 'flex-[1.5] bg-zinc-900' : 'hover:flex-[1.25] hover:bg-zinc-900/60 bg-zinc-950'
                 }`}
@@ -457,7 +463,7 @@ export default function Home() {
 
                 {/* Clean glassmorphic border reflection */}
                 <div className="absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-white/5 to-transparent pointer-events-none" />
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -474,9 +480,15 @@ export default function Home() {
             ).map((brand, bIdx) => {
               const isActive = bIdx === activeBrandIdx;
               return (
-                <button
+                <Link
+                  to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
                   key={brand.name + '-mob-' + bIdx}
-                  onClick={() => setActiveBrandIdx(bIdx)}
+                  onClick={(e) => {
+                    if (!isActive) {
+                      e.preventDefault();
+                      setActiveBrandIdx(bIdx);
+                    }
+                  }}
                   className={`relative flex-shrink-0 min-w-[75px] h-[38px] border overflow-hidden transition-all duration-300 flex items-center justify-center px-3 rounded-none ${
                     isActive ? 'border-brand-accent bg-zinc-900/90' : 'border-white/10 bg-zinc-950/90'
                   }`}
@@ -486,7 +498,7 @@ export default function Home() {
                   }`}>
                     {language === 'be' && brand.name_be ? brand.name_be : brand.name}
                   </span>
-                </button>
+                </Link>
               );
             })}
           </div>
