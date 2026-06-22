@@ -367,40 +367,60 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
 
   return (
     <>
-      {/* Dynamic Scent Quiz Banner Card */}
-      <section className="py-12 bg-gradient-to-b from-brand-bg to-brand-hover/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative border border-brand-accent/20 bg-[#FAF9F6] p-8 sm:p-12 md:p-16 flex flex-col md:flex-row items-center gap-8 justify-between overflow-hidden shadow-sm">
-            
-            {/* Subtle background atmospheric blur */}
-            <div className="absolute right-0 top-0 w-72 h-72 bg-brand-accent/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-            
-            <div className="max-w-xl text-center md:text-left space-y-4 relative z-10">
-              <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-semibold tracking-[0.3em] text-brand-accent px-2.5 py-1 bg-brand-accent/5">
-                {language === 'be' ? 'ІНТЭРАКТЫЎНЫ ПАДБОР' : 'ИНТЕРАКТИВНЫЙ ПОДБОР'}
-              </span>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-brand-light leading-snug">
-                {language === 'be' ? 'Знайдзіце свой парфюмерны Архетып' : 'Найдите свой парфюмерный Архетип'}
-              </h2>
-              <p className="text-xs sm:text-sm text-brand-muted font-light leading-relaxed">
-                {language === 'be' 
-                  ? 'Пройдзеце кароткі тэст з 4 пытанняў, і нашы алгарытмы з дакладнасцю вызначаць 3 ідэальных для вас водару з калекцыі.'
-                  : 'Пройдите короткий тест из 4 вопросов, и наши алгоритмы с точностью определят 3 идеальных для вас аромата из коллекции.'}
-              </p>
-            </div>
-            
-            <div className="shrink-0 relative z-10">
-              <button 
-                id="start-scent-quiz-btn"
-                onClick={() => { setIsOpen(true); resetQuiz(); }}
-                className="bg-brand-light text-white hover:bg-brand-accent px-8 py-4 text-xs font-semibold uppercase tracking-[0.2em] rounded-none transition-all duration-300 transform hover:scale-[1.02] active:scale-98 shadow-sm flex items-center gap-3.5"
-              >
-                <span>{language === 'be' ? 'Падабраць водар' : 'Подобрать аромат'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+      {/* Immersive Full-Screen Scent Quiz Poster */}
+      <section className="relative w-full h-[550px] md:h-[80vh] lg:h-screen min-h-[500px] overflow-hidden bg-zinc-950 border-b border-brand-border/40 flex flex-col items-center justify-center select-none">
+        
+        {/* Cinematic atmospheric background image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1600&auto=format&fit=crop"
+            alt=""
+            className="w-full h-full object-cover select-none pointer-events-none brightness-[0.35]"
+            referrerPolicy="no-referrer"
+          />
+          {/* Subtle gradient overlays for deep cinematic contrast and reading comfort */}
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-zinc-950/80" />
+          <div className="absolute inset-0 bg-black/40" />
         </div>
+
+        {/* Ambient background glow */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-accent/5 rounded-full blur-[120px] pointer-events-none" />
+
+        {/* Center content container */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+          className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-6 md:space-y-8 flex flex-col items-center"
+        >
+          <span className="inline-flex items-center gap-2 text-[10px] sm:text-xs uppercase font-mono tracking-[0.35em] text-brand-accent">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
+            {language === 'be' ? 'ІНТЭРАКТЫЎНЫ ПАДБОР' : 'ИНТЕРАКТИВНЫЙ ПОДБОР'}
+          </span>
+          
+          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif text-white font-extralight tracking-[0.05em] uppercase leading-[1.1] max-w-3xl">
+            {language === 'be' ? 'Знайдзіце свой парфумерны Архетып' : 'Найдите свой парфюмерный Архетип'}
+          </h2>
+          
+          <p className="text-xs sm:text-sm md:text-base text-zinc-400 font-extralight tracking-[0.02em] font-sans leading-relaxed max-w-2xl px-4">
+            {language === 'be' 
+              ? 'Пройдзеце кароткі тэст з 4 пытанняў, і нашы алгарытмы з дакладнасцю вызначаць 3 ідэальных для вас водару з калекцыі.'
+              : 'Пройдите короткий тест из 4 вопросов, и наши алгоритмы с точностью определят 3 идеальных для вас аромата из коллекции.'}
+          </p>
+
+          <div className="pt-4 dynamic-button-wrapper">
+            <button 
+              id="start-scent-quiz-btn"
+              onClick={() => { setIsOpen(true); resetQuiz(); }}
+              className="group relative px-10 py-5 bg-transparent text-white border border-brand-accent/40 hover:border-brand-accent hover:text-white text-xs font-semibold uppercase tracking-[0.25em] rounded-none transition-all duration-300 overflow-hidden flex items-center gap-3.5 cursor-pointer"
+            >
+              <div className="absolute inset-0 w-0 bg-brand-accent/10 transition-all duration-300 ease-out group-hover:w-full" />
+              <span className="relative z-10">{language === 'be' ? 'Падабраць водар' : 'Подобрать аромат'}</span>
+              <ArrowRight className="w-4 h-4 relative z-10 text-brand-accent transition-transform duration-300 group-hover:translate-x-1" />
+            </button>
+          </div>
+        </motion.div>
       </section>
 
       {/* QUIZ WIZARD DIALOG OVERLAY */}

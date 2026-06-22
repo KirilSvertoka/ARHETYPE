@@ -422,8 +422,8 @@ export default function Home() {
                   </AnimatePresence>
                 </div>
 
-                {/* Brand details overlay - lowered down, elegant, and thin typography */}
-                <div className="absolute bottom-16 left-6 md:bottom-24 md:left-12 lg:left-16 z-20 max-w-xs md:max-w-md pointer-events-none">
+                {/* Brand details overlay - elevated on mobile to avoid overlapping with bottom switcher */}
+                <div className="absolute bottom-36 left-6 md:bottom-24 md:left-12 lg:left-16 z-20 max-w-xs md:max-w-md pointer-events-none">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={activeBrandIdx}
@@ -541,70 +541,81 @@ export default function Home() {
 
       {/* 3. STYLISH GRID OF NEW ARRIVALS */}
       {newArrivals.length > 0 && (
-        <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-16 gap-4">
-            <div className="max-w-xl">
-              <p className="text-xs uppercase tracking-[0.3em] text-brand-accent font-semibold mb-3">
-                {language === 'be' ? 'НОВЫЯ ДАДАТКІ' : 'НОВЫЕ ПОСТУПЛЕНИЯ'}
-              </p>
-              <h2 className="text-3xl md:text-5xl font-serif text-brand-light leading-tight">
-                {language === 'be' ? 'Свежыя паступленні' : 'Свежие поступления'}
-              </h2>
-              <p className="text-sm text-brand-muted mt-3 font-light leading-relaxed">
-                {language === 'be' 
-                  ? 'Эксклюзіўныя водарныя шэдэўры, адабраныя нашымі экспертамі для вашых незабыўных момантаў.' 
-                  : 'Эксклюзивные селективные творения, отобранные нашими экспертами для ваших незабываемых образов.'}
-              </p>
-            </div>
-            
-            <Link 
-              to="/catalog" 
-              className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-brand-muted hover:text-brand-accent transition-all duration-300 group shrink-0 pb-1 border-b border-brand-border/40 hover:border-brand-accent"
-            >
-              <span>{language === 'be' ? 'Глядзець увесь каталог' : 'Смотреть весь каталог'}</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-            {newArrivals.map((product, pIdx) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.6, delay: pIdx * 0.08 }}
-                className="rounded-none overflow-hidden"
+        <section className="py-24 md:py-32 w-full bg-zinc-950 text-white border-b border-brand-border/40 relative overflow-hidden select-none">
+          {/* Accent atmospheric warm background lights */}
+          <div className="absolute right-0 top-1/4 w-[400px] h-[400px] bg-brand-accent/[0.03] rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute left-[-100px] bottom-10 w-[500px] h-[500px] bg-zinc-900/40 rounded-full blur-[150px] pointer-events-none" />
+          
+          <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-16 w-full">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-20 gap-8">
+              <div className="max-w-2xl space-y-4">
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-[0.35em] text-brand-accent animate-pulse">
+                  <span className="w-1 h-1 rounded-full bg-brand-accent" />
+                  {language === 'be' ? 'НОВЫЯ ДАДАТКІ' : 'НОВЫЕ ПОСТУПЛЕНИЯ'}
+                </span>
+                <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif text-white font-extralight tracking-[0.05em] uppercase leading-none">
+                  {language === 'be' ? 'Свежыя паступленні' : 'Свежие поступления'}
+                </h2>
+                <p className="text-xs sm:text-sm text-zinc-400 font-extralight tracking-[0.02em] leading-relaxed max-w-xl">
+                  {language === 'be' 
+                    ? 'Эксклюзіўныя водарныя шэдэўры, адабраныя нашымі экспертамі для вашых незабыўных момантаў.' 
+                    : 'Эксклюзивные селективные творения, отобранные нашими экспертами для ваших незабываемых образов.'}
+                </p>
+              </div>
+              
+              <Link 
+                to="/catalog" 
+                className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-400 hover:text-white transition-all duration-300 group shrink-0 pb-1 border-b border-white/10 hover:border-brand-accent cursor-pointer"
               >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
+                <span>{language === 'be' ? 'Глядзець увесь каталог' : 'Смотреть весь каталог'}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-brand-accent transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+              {newArrivals.map((product, pIdx) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.8, delay: pIdx * 0.1 }}
+                  className="rounded-none overflow-hidden border border-white/[0.03] hover:border-brand-accent/20 transition-colors"
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </div>
           </div>
         </section>
       )}
 
       {/* Promo Image Gallery */}
       {config.promoImages && config.promoImages.length > 0 && (
-        <section className="pb-24 pt-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {config.promoImages.map((img, idx) => (
-              <motion.div 
-                key={idx}
-                initial={{ opacity: 0, scale: 0.98 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="aspect-square md:aspect-[16/10] rounded-none overflow-hidden border border-brand-border/30"
-              >
-                <img 
-                  src={img} 
-                  alt={`Promo Highlight ${idx + 1}`} 
-                  className="w-full h-full object-cover hover:scale-[1.03] transition-transform duration-1000 ease-out"
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
-                />
-              </motion.div>
-            ))}
+        <section className="py-24 w-full bg-zinc-950 border-b border-brand-border/40 select-none overflow-hidden">
+          <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-16 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+              {config.promoImages.map((img, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, delay: idx * 0.15 }}
+                  className="aspect-square md:aspect-[16/10] rounded-none overflow-hidden border border-white/[0.03] hover:border-brand-accent/25 transition-all duration-500 relative group"
+                >
+                  <img 
+                    src={img} 
+                    alt={`Promo Highlight ${idx + 1}`} 
+                    className="w-full h-full object-cover group-hover:scale-[1.04] brightness-90 group-hover:brightness-100 transition-all duration-[1.5s] ease-out"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
+                  {/* Chic frame reflection */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none opacity-60" />
+                </motion.div>
+              ))}
+            </div>
           </div>
         </section>
       )}
