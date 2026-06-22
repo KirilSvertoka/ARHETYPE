@@ -367,24 +367,22 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
 
   return (
     <>
-      {/* Immersive Full-Screen Scent Quiz Poster */}
-      <section className="relative w-full h-[550px] md:h-[80vh] lg:h-screen min-h-[500px] overflow-hidden bg-zinc-950 border-b border-brand-border/40 flex flex-col items-center justify-center select-none">
+      {/* Immersive Full-Screen Scent Quiz Poster (Light Theme Luxury Style) */}
+      <section className="relative w-full h-[550px] md:h-[80vh] lg:h-screen min-h-[500px] overflow-hidden bg-brand-bg border-b border-brand-border/40 flex flex-col items-center justify-center select-none animate-fade-in">
         
-        {/* Cinematic atmospheric background image */}
-        <div className="absolute inset-0 z-0">
+        {/* Subtle, beautiful ambient image background */}
+        <div className="absolute inset-0 z-0 opacity-15 mix-blend-multiply">
           <img
-            src="https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1600&auto=format&fit=crop"
+            src="https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=1600&auto=format&fit=crop"
             alt=""
-            className="w-full h-full object-cover select-none pointer-events-none brightness-[0.35]"
+            className="w-full h-full object-cover select-none pointer-events-none contrast-105 grayscale"
             referrerPolicy="no-referrer"
           />
-          {/* Subtle gradient overlays for deep cinematic contrast and reading comfort */}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-zinc-950/80" />
-          <div className="absolute inset-0 bg-black/40" />
         </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-bg via-brand-bg/90 to-brand-bg/40 z-0" />
 
-        {/* Ambient background glow */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-accent/5 rounded-full blur-[120px] pointer-events-none" />
+        {/* Ambient warm glow of luxury */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-accent/[0.02] rounded-full blur-[140px] pointer-events-none" />
 
         {/* Center content container */}
         <motion.div 
@@ -399,11 +397,11 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
             {language === 'be' ? 'ІНТЭРАКТЫЎНЫ ПАДБОР' : 'ИНТЕРАКТИВНЫЙ ПОДБОР'}
           </span>
           
-          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif text-white font-extralight tracking-[0.05em] uppercase leading-[1.1] max-w-3xl">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif text-brand-light font-extralight tracking-[0.05em] uppercase leading-[1.15] max-w-3xl">
             {language === 'be' ? 'Знайдзіце свой парфумерны Архетып' : 'Найдите свой парфюмерный Архетип'}
           </h2>
           
-          <p className="text-xs sm:text-sm md:text-base text-zinc-400 font-extralight tracking-[0.02em] font-sans leading-relaxed max-w-2xl px-4">
+          <p className="text-xs sm:text-sm md:text-base text-brand-muted font-extralight tracking-[0.02em] font-sans leading-relaxed max-w-2xl px-4">
             {language === 'be' 
               ? 'Пройдзеце кароткі тэст з 4 пытанняў, і нашы алгарытмы з дакладнасцю вызначаць 3 ідэальных для вас водару з калекцыі.'
               : 'Пройдите короткий тест из 4 вопросов, и наши алгоритмы с точностью определят 3 идеальных для вас аромата из коллекции.'}
@@ -413,44 +411,46 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
             <button 
               id="start-scent-quiz-btn"
               onClick={() => { setIsOpen(true); resetQuiz(); }}
-              className="group relative px-10 py-5 bg-transparent text-white border border-brand-accent/40 hover:border-brand-accent hover:text-white text-xs font-semibold uppercase tracking-[0.25em] rounded-none transition-all duration-300 overflow-hidden flex items-center gap-3.5 cursor-pointer"
+              className="group relative px-10 py-5 bg-transparent text-brand-light border border-brand-accent/40 hover:border-brand-accent hover:text-white text-xs font-semibold uppercase tracking-[0.25em] rounded-none transition-all duration-500 overflow-hidden flex items-center gap-3.5 cursor-pointer"
             >
-              <div className="absolute inset-0 w-0 bg-brand-accent/10 transition-all duration-300 ease-out group-hover:w-full" />
+              <div className="absolute inset-0 w-0 bg-brand-accent transition-all duration-300 ease-out group-hover:w-full" />
               <span className="relative z-10">{language === 'be' ? 'Падабраць водар' : 'Подобрать аромат'}</span>
-              <ArrowRight className="w-4 h-4 relative z-10 text-brand-accent transition-transform duration-300 group-hover:translate-x-1" />
+              <ArrowRight className="w-4 h-4 relative z-10 text-brand-accent transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white" />
             </button>
           </div>
         </motion.div>
       </section>
 
-      {/* QUIZ WIZARD DIALOG OVERLAY */}
+      {/* QUIZ WIZARD DIALOG OVERLAY - RE-DESIGNED TO FIT PREMIUM LIGHT THEME */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+            <div className="fixed inset-0" onClick={() => setIsOpen(false)} />
+            
             <motion.div 
               id="scent-quiz-modal"
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              initial={{ opacity: 0, scale: 0.97, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              exit={{ opacity: 0, scale: 0.97, y: 15 }}
               transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-              className="bg-brand-bg border border-brand-border/40 w-full max-w-3xl h-[90vh] md:h-auto max-h-[700px] flex flex-col justify-between shadow-2xl relative"
+              className="bg-brand-bg border border-brand-border/60 w-full max-w-3xl h-[90vh] md:h-auto max-h-[720px] flex flex-col justify-between shadow-2xl relative rounded-none z-10"
             >
               
-              {/* Header */}
-              <div className="p-6 border-b border-brand-border/40 flex justify-between items-center bg-[#FAF9F6]">
+              {/* Luxury Header */}
+              <div className="p-6 md:p-8 border-b border-brand-border flex justify-between items-center bg-brand-bg">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-semibold tracking-widest text-brand-accent uppercase">
+                    <span className="text-[9px] uppercase tracking-[0.3em] text-brand-accent font-semibold leading-none block">
                       {language === 'be' ? 'Водарны квіз' : 'Парфюмерный квиз'}
                     </span>
                   </div>
-                  <h3 className="font-serif text-lg text-brand-light">
+                  <h3 className="font-serif text-lg sm:text-2xl font-light text-brand-light tracking-wide uppercase leading-tight">
                     {language === 'be' ? stepTitles[currentStep].be : stepTitles[currentStep].ru}
                   </h3>
                 </div>
                 <button 
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 hover:bg-brand-hover border border-transparent hover:border-brand-border/30 transition-all rounded-none"
+                  className="p-2 hover:bg-brand-hover border border-transparent hover:border-brand-border transition-all duration-300 rounded-none cursor-pointer"
                 >
                   <X className="w-5 h-5 text-brand-muted hover:text-brand-light" />
                 </button>
@@ -458,29 +458,29 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
 
               {/* Progress Indicator for steps 1-4 */}
               {currentStep < 4 && (
-                <div className="w-full bg-brand-border/10 h-1">
+                <div className="w-full bg-brand-border h-[2px]">
                   <motion.div 
                     initial={{ width: '0%' }}
                     animate={{ width: `${(currentStep / 3) * 100}%` }}
-                    className="bg-brand-accent h-full transition-all duration-300"
+                    className="bg-brand-accent h-[2px] transition-all duration-300"
                   />
                 </div>
               )}
 
               {/* Steps Body */}
-              <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+              <div className="p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar bg-brand-bg">
                 <AnimatePresence mode="wait">
                   
                   {/* STEP 1: GENDER */}
                   {currentStep === 0 && (
                     <motion.div 
-                      key="step0"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="space-y-4"
+                       key="step0"
+                       initial={{ opacity: 0, x: 15 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       exit={{ opacity: 0, x: -15 }}
+                       className="space-y-4"
                     >
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-2">
                         {[
                           { id: 'female', title: 'Для неё', desc: 'Утонченные женственные сочетания', titleBe: 'Для яе', descBe: 'Вытанчаныя жаноцкія спалучэнні', icon: Gift },
                           { id: 'male', title: 'Для него', desc: 'Харизматичные мужские акценты', titleBe: 'Для яго', descBe: 'Харызматычныя мужчынскія акцэнты', icon: Crown },
@@ -491,26 +491,30 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                           return (
                             <button
                               key={opt.id}
-                              onClick={() => { setGender(opt.id); setTimeout(handleNext, 200); }}
-                              className={`p-6 border text-center flex flex-col items-center justify-center gap-3.5 group transition-all relative ${
+                              onClick={() => { setGender(opt.id); setTimeout(handleNext, 250); }}
+                              className={`p-8 border text-center flex flex-col items-center justify-center gap-4 transition-all duration-300 relative cursor-pointer group rounded-none ${
                                 selected 
-                                  ? 'border-brand-accent bg-brand-accent/[0.02]' 
-                                  : 'border-brand-border/65 hover:border-brand-accent/50 hover:bg-brand-hover/10'
+                                  ? 'border-brand-accent bg-brand-accent/[0.03] shadow-xs' 
+                                  : 'border-brand-border hover:border-brand-accent/50 hover:bg-brand-hover/30'
                               }`}
                             >
-                              <div className={`p-3 rounded-full transition-colors ${selected ? 'bg-brand-accent text-white' : 'bg-brand-hover/30 text-brand-muted group-hover:text-brand-accent'}`}>
-                                <IconComp className="w-5 h-5" />
+                              <div className={`p-4 rounded-none border transition-all duration-300 ${
+                                selected 
+                                  ? 'bg-brand-accent text-white border-brand-accent' 
+                                  : 'border-brand-border bg-transparent text-brand-muted group-hover:text-brand-accent group-hover:border-brand-accent/40'
+                              }`}>
+                                <IconComp className="w-5 h-5 stroke-[1.25]" />
                               </div>
-                              <div>
-                                <h4 className="font-serif text-sm font-medium text-brand-light leading-none mb-1">
+                              <div className="space-y-1">
+                                <h4 className="font-serif text-sm sm:text-base font-light tracking-widest text-brand-light uppercase">
                                   {language === 'be' ? opt.titleBe : opt.title}
                                 </h4>
-                                <p className="text-[10px] text-brand-muted lowercase leading-normal">
+                                <p className="text-[10px] text-brand-muted font-sans font-light tracking-wide max-w-[160px] leading-relaxed">
                                   {language === 'be' ? opt.descBe : opt.desc}
                                 </p>
                               </div>
                               {selected && (
-                                <span className="absolute top-2 right-2 bg-brand-accent text-white p-0.5 rounded-full">
+                                <span className="absolute top-3 right-3 bg-brand-accent text-white p-0.5 rounded-none flex items-center justify-center">
                                   <Check className="w-3 h-3" />
                                 </span>
                               )}
@@ -525,9 +529,9 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                   {currentStep === 1 && (
                     <motion.div 
                       key="step1"
-                      initial={{ opacity: 0, x: 20 }}
+                      initial={{ opacity: 0, x: 15 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
+                      exit={{ opacity: 0, x: -15 }}
                       className="space-y-4"
                     >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
@@ -535,33 +539,37 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                           { id: 'everyday', title: 'Офис / На каждый день', desc: 'Легкие, ненавязчивые спутники дня', titleBe: 'Офіс / На кожны дзень', descBe: 'Лёгкія, непатрабавальныя спадарожнікі дня', icon: Briefcase },
                           { id: 'date', title: 'Свидание / Вечер', desc: 'Чувственные сладковатые молекулы', titleBe: 'Спатканне / Вечар', descBe: 'Пачуццёвыя саладкавыя малекулы', icon: Flame },
                           { id: 'fresh', title: 'Спорт / Сорбет свежести', desc: 'Энергичный заряд цитрусов и воды', titleBe: 'Спорт / Сарбет свежасці', descBe: 'Энергічны зарад цытрусаў і вады', icon: Droplets },
-                          { id: 'status', title: 'Особый случай / Статус', desc: 'Глубокие кожаные и удовые ароматы', titleBe: 'Асаблівы выпадак / Статус', descBe: 'Глыбокія скураныя і ўдавыя водары', icon: Crown }
+                          { id: 'status', title: 'Особый случай / Status', desc: 'Глубокие кожаные и удовые ароматы', titleBe: 'Асаблівы выпадак / Status', descBe: 'Глыбокія скураныя і ўдавыя водары', icon: Crown }
                         ].map(opt => {
                           const IconComp = opt.icon;
                           const selected = occasion === opt.id;
                           return (
                             <button
                               key={opt.id}
-                              onClick={() => { setOccasion(opt.id); setTimeout(handleNext, 200); }}
-                              className={`p-5 border text-left flex items-start gap-4 transition-all relative ${
+                              onClick={() => { setOccasion(opt.id); setTimeout(handleNext, 250); }}
+                              className={`p-6 border text-left flex items-start gap-4 transition-all duration-300 relative rounded-none cursor-pointer group ${
                                 selected 
-                                  ? 'border-brand-accent bg-brand-accent/[0.02]' 
-                                  : 'border-brand-border/65 hover:border-brand-accent/50 hover:bg-brand-hover/10'
+                                  ? 'border-brand-accent bg-brand-accent/[0.03]' 
+                                  : 'border-brand-border hover:border-brand-accent/50 hover:bg-brand-hover/30'
                               }`}
                             >
-                              <div className={`p-2.5 shrink-0 transition-colors ${selected ? 'bg-brand-accent text-white' : 'bg-brand-hover/30 text-brand-muted'}`}>
-                                <IconComp className="w-4 h-4" />
+                              <div className={`p-3 rounded-none border transition-colors duration-300 shrink-0 ${
+                                selected 
+                                  ? 'bg-brand-accent text-white border-brand-accent' 
+                                  : 'border-brand-border bg-transparent text-brand-muted group-hover:text-brand-accent group-hover:border-brand-accent/40'
+                              }`}>
+                                <IconComp className="w-4 h-4 stroke-[1.25]" />
                               </div>
                               <div className="space-y-1">
-                                <h4 className="font-serif text-sm font-medium text-brand-light max-w-[180px]">
+                                <h4 className="font-serif text-sm font-medium text-brand-light uppercase tracking-wider">
                                   {language === 'be' ? opt.titleBe : opt.title}
                                 </h4>
-                                <p className="text-[10px] text-brand-muted leading-snug">
+                                <p className="text-[10px] text-brand-muted font-sans font-light tracking-wide leading-relaxed">
                                   {language === 'be' ? opt.descBe : opt.desc}
                                 </p>
                               </div>
                               {selected && (
-                                <span className="absolute top-2 right-2 bg-brand-accent text-white p-0.5 rounded-full">
+                                <span className="absolute top-3 right-3 bg-brand-accent text-white p-0.5 rounded-none flex items-center justify-center">
                                   <Check className="w-3 h-3" />
                                 </span>
                               )}
@@ -576,9 +584,9 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                   {currentStep === 2 && (
                     <motion.div 
                       key="step2"
-                      initial={{ opacity: 0, x: 20 }}
+                      initial={{ opacity: 0, x: 15 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
+                      exit={{ opacity: 0, x: -15 }}
                       className="space-y-4"
                     >
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
@@ -592,21 +600,21 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                           return (
                             <button
                               key={opt.id}
-                              onClick={() => { setFamily(opt.id); setTimeout(handleNext, 200); }}
-                              className={`p-5 border text-left flex flex-col justify-center gap-1.5 transition-all relative ${
+                              onClick={() => { setFamily(opt.id); setTimeout(handleNext, 250); }}
+                              className={`p-6 border text-left flex flex-col justify-center gap-2 transition-all duration-300 relative rounded-none cursor-pointer group ${
                                 selected 
-                                  ? 'border-brand-accent bg-brand-accent/[0.02]' 
-                                  : 'border-brand-border/65 hover:border-brand-accent/50 hover:bg-brand-hover/10'
+                                  ? 'border-brand-accent bg-brand-accent/[0.03]' 
+                                  : 'border-brand-border hover:border-brand-accent/50 hover:bg-brand-hover/30'
                               }`}
                             >
-                              <h4 className="font-serif text-sm font-medium text-brand-light">
+                              <h4 className="font-serif text-sm font-medium text-brand-light uppercase tracking-wider">
                                 {language === 'be' ? opt.titleBe : opt.title}
                               </h4>
-                              <p className="text-[10px] text-brand-muted leading-tight leading-relaxed">
+                              <p className="text-[10px] text-brand-muted font-sans font-light tracking-wide leading-relaxed">
                                 {language === 'be' ? opt.descBe : opt.desc}
                               </p>
                               {selected && (
-                                <span className="absolute top-2 right-2 bg-brand-accent text-white p-0.5 rounded-full">
+                                <span className="absolute top-3 right-3 bg-brand-accent text-white p-0.5 rounded-none flex items-center justify-center">
                                   <Check className="w-3 h-3" />
                                 </span>
                               )}
@@ -621,12 +629,12 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                   {currentStep === 3 && (
                     <motion.div 
                       key="step3"
-                      initial={{ opacity: 0, x: 20 }}
+                      initial={{ opacity: 0, x: 15 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
+                      exit={{ opacity: 0, x: -15 }}
                       className="space-y-4"
                     >
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-2">
                         {[
                           { id: 'subtle', title: 'Деликатный', desc: 'Шепот интимного мускуса близко к коже', titleBe: 'Дэлікатны', descBe: 'Шэпт інтымнага мускусу блізка да скуры' },
                           { id: 'moderate', title: 'Элегантный', desc: 'Заметный, но изысканный классический шлейф', titleBe: 'Элегантны', descBe: 'Заўважны, але вытанчаны класічны шлейф' },
@@ -637,23 +645,27 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                             <button
                               key={opt.id}
                               onClick={() => setIntensity(opt.id)}
-                              className={`p-6 border text-center flex flex-col items-center justify-center gap-3 transition-all relative ${
+                              className={`p-6 border text-center flex flex-col items-center justify-center gap-3.5 transition-all duration-300 relative rounded-none cursor-pointer group ${
                                 selected 
-                                  ? 'border-brand-accent bg-brand-accent/[0.02]' 
-                                  : 'border-brand-border/65 hover:border-brand-accent/50 hover:bg-brand-hover/10'
+                                  ? 'border-brand-accent bg-brand-accent/[0.03]' 
+                                  : 'border-brand-border hover:border-brand-accent/50 hover:bg-brand-hover/30'
                               }`}
                             >
-                              <span className="text-[9px] uppercase tracking-widest text-brand-accent font-semibold">{opt.id === 'bold' ? '★★★' : opt.id === 'moderate' ? '★★' : '★'}</span>
+                              <div className="flex gap-1 items-center justify-center">
+                                {[...Array(opt.id === 'bold' ? 3 : opt.id === 'moderate' ? 2 : 1)].map((_, i) => (
+                                  <span key={i} className="text-brand-accent font-serif text-[13px] leading-none">★</span>
+                                ))}
+                              </div>
                               <div>
-                                <h4 className="font-serif text-sm font-medium text-brand-light mb-1">
+                                <h4 className="font-serif text-sm font-medium text-brand-light uppercase tracking-wider mb-1">
                                   {language === 'be' ? opt.titleBe : opt.title}
                                 </h4>
-                                <p className="text-[10px] text-brand-muted leading-tight leading-relaxed max-w-[150px] mx-auto uppercase tracking-wide">
+                                <p className="text-[10px] text-brand-muted font-sans font-light tracking-wide leading-relaxed max-w-[150px] mx-auto uppercase">
                                   {language === 'be' ? opt.descBe : opt.desc}
                                 </p>
                               </div>
                               {selected && (
-                                <span className="absolute top-2 right-2 bg-brand-accent text-white p-0.5 rounded-full">
+                                <span className="absolute top-3 right-3 bg-brand-accent text-white p-0.5 rounded-none flex items-center justify-center">
                                   <Check className="w-3 h-3" />
                                 </span>
                               )}
@@ -674,35 +686,35 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                     >
                       {loadingResults ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                          <div className="w-12 h-12 rounded-full border-2 border-brand-accent/20 border-t-brand-accent animate-spin" />
-                          <p className="text-xs uppercase tracking-widest text-brand-muted">
+                          <div className="w-12 h-12 rounded-none border-2 border-brand-accent/20 border-t-brand-accent animate-spin" />
+                          <p className="text-[10px] uppercase tracking-widest text-brand-muted font-mono">
                             {language === 'be' ? 'Аналізуем інгрэдыенты калекцыі...' : 'Анализируем ингредиенты коллекции...'}
                           </p>
                         </div>
                       ) : results.length === 0 ? (
-                        <div className="text-center py-12 space-y-4">
+                        <div className="text-center py-12 space-y-4 bg-brand-bg">
                           <p className="text-sm text-brand-muted">
                             {language === 'be' ? 'Выбачайце, па вашым запыце нічога не знойдзена.' : 'Извините, по вашему запросу ничего не найдено.'}
                           </p>
-                          <button onClick={resetQuiz} className="text-xs uppercase tracking-widest text-brand-accent underline">
+                          <button onClick={resetQuiz} className="text-[10px] uppercase font-bold tracking-widest text-brand-accent underline cursor-pointer">
                             {language === 'be' ? 'Пачаць наноў' : 'Начать заново'}
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-5 max-h-[460px] overflow-y-auto pr-1.5 custom-scrollbar">
+                        <div className="space-y-5 max-h-[440px] overflow-y-auto pr-1.5 custom-scrollbar bg-brand-bg">
                           {results.map(({ product, match, explanation, explanationBe }, idx) => (
                             <div 
                               key={product.id}
-                              className="border border-brand-border/30 p-5 flex flex-col md:flex-row gap-6 items-start md:items-stretch justify-between text-left group hover:border-brand-accent/20 transition-all bg-white relative"
+                              className="border border-brand-border p-5 flex flex-col md:flex-row gap-6 items-start md:items-stretch justify-between text-left group hover:border-brand-accent/35 transition-all bg-brand-bg relative rounded-none"
                             >
                               {/* Left column: image and description */}
                               <div className="flex gap-5 flex-1 min-w-0 items-start">
                                 {/* Product Image with match badge overlay */}
-                                <div className="shrink-0 aspect-square w-20 h-20 sm:w-24 sm:h-24 relative overflow-hidden border border-brand-border/20 bg-brand-hover/5 shadow-xs">
+                                <div className="shrink-0 aspect-square w-20 h-20 sm:w-24 sm:h-24 relative overflow-hidden border border-brand-border bg-transparent shadow-xs">
                                   <img 
                                     src={product.imageUrl} 
                                     alt={product.name} 
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                     referrerPolicy="no-referrer"
                                   />
                                   <div className="absolute top-1.5 left-1.5 bg-brand-accent text-white text-[8px] font-bold px-1.5 py-0.5 tracking-wider font-sans uppercase">
@@ -717,7 +729,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                       {product.brand}
                                     </span>
                                     {gender !== 'unisex' && product.gender === 'Unisex' && (
-                                      <span className="text-[8px] font-sans font-bold uppercase tracking-wider text-amber-600 bg-amber-500/5 px-2 py-0.5 border border-amber-500/15">
+                                      <span className="text-[8px] font-sans font-bold uppercase tracking-wider text-amber-800 bg-amber-500/5 px-2 py-0.5 border border-amber-500/15">
                                         {match >= 75 
                                           ? (language === 'be' ? 'Унісекс — падыходзіць для вас' : 'Унисекс — подходит для вас')
                                           : (language === 'be' ? 'Унісекс — выдатна падыходзіць' : 'Унисекс — отлично подходит')}
@@ -728,7 +740,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                     {product.name}
                                   </h4>
                                   
-                                  {/* Explanation block - beautiful block design to handle wrap nicely */}
+                                  {/* Explanation block */}
                                   <div className="pt-2">
                                     <p className="text-[11px] sm:text-xs text-brand-muted font-serif leading-relaxed pl-3 border-l-2 border-brand-accent/30">
                                       {language === 'be' ? explanationBe : explanation}
@@ -737,8 +749,8 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                 </div>
                               </div>
                               
-                              {/* Right column: Action section (selector and add to cart) */}
-                              <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-stretch md:items-end justify-between sm:justify-start md:justify-center gap-4 w-full md:w-auto shrink-0 border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-6 border-brand-border/20">
+                              {/* Right column: Action section */}
+                              <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-stretch md:items-end justify-between sm:justify-start md:justify-center gap-4 w-full md:w-auto shrink-0 border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-6 border-brand-border/40">
                                 {product.variants && product.variants.length > 0 && (
                                   <div className="relative w-full sm:w-48 md:w-[160px]">
                                     <span className="absolute -top-3.5 left-0 text-[8px] font-mono text-brand-muted uppercase tracking-wider block">
@@ -750,7 +762,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                         const val = parseInt(e.target.value);
                                         setSelectedVariants(prev => ({ ...prev, [product.id]: val }));
                                       }}
-                                      className="w-full text-[10px] uppercase font-semibold tracking-wider pr-8 pl-3 py-2.5 bg-white border border-brand-border/40 hover:border-brand-accent/30 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer rounded-none"
+                                      className="w-full text-[10px] uppercase font-semibold tracking-wider pr-8 pl-3 py-2.5 bg-brand-bg border border-brand-border hover:border-brand-accent/50 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer rounded-none"
                                     >
                                       {product.variants.map((v) => {
                                         const typeStr = getVariantType(v, language);
@@ -775,7 +787,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                     id={`quiz-add-to-cart-${product.id}`}
                                     onClick={() => handleAddScentToCart(product)}
                                     disabled={product.variants?.find(v => v.id === selectedVariants[product.id])?.stock === 0}
-                                    className="bg-brand-accent text-white hover:bg-brand-accent-hover h-10 px-6 text-[10px] uppercase font-semibold tracking-wider transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 min-w-[120px]"
+                                    className="bg-brand-accent text-white hover:bg-brand-accent-hover h-10 px-6 text-[10px] uppercase font-semibold tracking-wider transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 min-w-[125px] cursor-pointer rounded-none"
                                   >
                                     {successAdded[product.id] ? (
                                       <>
@@ -794,8 +806,8 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                             </div>
                           ))}
                           
-                          {/* Scentbox Promo Card inside results to suggest boxed discovery match */}
-                          <div className="p-4 border border-brand-accent/20 bg-brand-accent/[0.01] flex flex-col sm:flex-row items-center gap-4 justify-between mt-6 text-center sm:text-left">
+                          {/* Scentbox Promo Card inside results */}
+                          <div className="p-5 border border-brand-accent/20 bg-brand-accent/[0.01] flex flex-col sm:flex-row items-center gap-4 justify-between mt-6 text-center sm:text-left rounded-none">
                             <div className="space-y-1">
                               <h5 className="font-serif text-xs font-semibold text-brand-accent uppercase tracking-widest">
                                 {language === 'be' ? 'Хочаце паспрабаваць усё адразу?' : 'Хотите попробовать всё сразу?'}
@@ -812,11 +824,10 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                 if (onOrderBoxClick) {
                                   onOrderBoxClick();
                                 } else {
-                                  // Open cart after some delay to let them see
                                   setIsCartOpen(true);
                                 }
                               }}
-                              className="text-[10px] uppercase tracking-wider text-brand-accent hover:text-brand-accent-hover font-semibold shrink-0 py-2 border-b border-brand-accent hover:border-brand-accent-hover"
+                              className="text-[10px] uppercase tracking-wider text-brand-accent hover:text-brand-accent-hover font-semibold shrink-0 py-2 border-b border-brand-accent hover:border-brand-accent-hover cursor-pointer"
                             >
                               {language === 'be' ? 'Скласці Бокс' : 'Создать Бокс'}
                             </button>
@@ -830,19 +841,19 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
               </div>
 
               {/* Wizard Footer Controls */}
-              <div className="p-5 border-t border-brand-border/40 bg-[#FAF9F6] flex justify-between items-center text-xs">
+              <div className="p-5 md:p-6 border-t border-brand-border bg-brand-bg flex justify-between items-center text-xs">
                 {currentStep < 4 ? (
                   <>
                     <button
                       onClick={handleBack}
                       disabled={currentStep === 0}
-                      className="px-4 py-2 border border-brand-border/40 text-brand-muted hover:text-brand-light disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-widest text-[9px] rounded-none flex items-center gap-2"
+                      className="px-5 py-3 border border-brand-border text-brand-muted hover:text-brand-light disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-[0.2em] text-[9px] rounded-none flex items-center gap-2 bg-transparent transition-all cursor-pointer"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       <span>{language === 'be' ? 'Назад' : 'Назад'}</span>
                     </button>
                     
-                    <span className="text-[10px] tracking-widest text-brand-muted font-sans font-medium uppercase">
+                    <span className="text-[10px] tracking-[0.25em] text-brand-muted font-mono font-medium uppercase text-center flex-1 sm:flex-initial">
                       {language === 'be' ? 'Пытанне' : 'Вопрос'} {currentStep + 1} / 4
                     </span>
 
@@ -854,24 +865,24 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                         (currentStep === 2 && !family) ||
                         (currentStep === 3 && !intensity)
                       }
-                      className="px-5 py-2.5 bg-brand-light text-white hover:bg-brand-accent uppercase tracking-widest text-[9px] rounded-none flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="px-6 py-3 bg-brand-light text-white hover:bg-brand-accent uppercase tracking-[0.2em] text-[9px] rounded-none flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                     >
                       <span>{language === 'be' ? 'Далей' : 'Далее'}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </>
                 ) : (
-                  <div className="w-full flex justify-between">
+                  <div className="w-full flex justify-between gap-4">
                     <button
                       onClick={resetQuiz}
-                      className="px-5 py-2.5 border border-brand-border/40 text-brand-light hover:text-brand-accent uppercase tracking-widest text-[9px] rounded-none"
+                      className="px-5 py-3 border border-brand-border text-brand-light hover:text-brand-accent uppercase tracking-[0.2em] text-[9px] rounded-none bg-transparent transition-all cursor-pointer"
                     >
                       {language === 'be' ? 'Пачаць наноў' : 'Начать заново'}
                     </button>
                     
                     <button
                       onClick={() => { setIsOpen(false); setIsCartOpen(true); }}
-                      className="px-6 py-2.5 bg-brand-accent text-white hover:bg-brand-accent-hover uppercase tracking-widest text-[9px] rounded-none"
+                      className="px-6 py-3 bg-brand-accent text-white hover:bg-brand-accent-hover uppercase tracking-[0.2em] text-[9px] rounded-none transition-all cursor-pointer"
                     >
                       {language === 'be' ? 'Перайсці ў кошык' : 'Перейти в корзину'}
                     </button>
