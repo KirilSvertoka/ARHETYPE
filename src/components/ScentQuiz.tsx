@@ -73,14 +73,53 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
   ): string => {
     const isBe = lang === 'be';
     
+    // Check if it is a set product
+    const isSetProduct = (product.setItems && product.setItems.length > 0) || 
+                         (product.tags || []).some(t => t.toLowerCase() === 'set' || t.toLowerCase() === 'набор') || 
+                         product.name.toLowerCase().includes('набор') || 
+                         product.name.toLowerCase().includes('сет') || 
+                         product.name.toLowerCase().includes('set');
+
+    const brand = product.brand;
+    const name = product.name;
+
+    if (isSetProduct) {
+      if (isBe) {
+        let context = 'выдатна дапоўніць ваш вобраз';
+        if (selectedOccasion === 'everyday') context = 'ідэальна падыходзіць на кожны дзень і для працы';
+        else if (selectedOccasion === 'date') context = 'зачаруе і створыць рамантычную атмасферу вечарам';
+        else if (selectedOccasion === 'fresh') context = 'падорыць доўгачаканую свежасць і прыліў бадзёрасці';
+        else if (selectedOccasion === 'status') context = 'падкрэсліць вытанчаны стыль і асаблівы статус';
+
+        let famStr = 'вытанчанага набору';
+        if (selectedFamily === 'citrus_fresh') famStr = 'цудоўнай калекцыяй цытрусавых і свежых мотараў';
+        else if (selectedFamily === 'sweet_gourmand') famStr = 'раскошным салодкім гурманскім спалучэннем';
+        else if (selectedFamily === 'woody_spicy') famStr = 'высакароднымі драўняна-рэзкімі мініяцюрамі';
+        else if (selectedFamily === 'floral_powdery') famStr = 'далікатным кветкава-пудравым букетам';
+
+        return `Тэматычны сэт ${name} ад ${brand} аб'ядноўвае адборныя кампазіцыі, якія раскрываюцца ${famStr}. Гэты гатовы набор ${context}.`;
+      } else {
+        let context = 'великолепно подчеркнет ваш образ';
+        if (selectedOccasion === 'everyday') context = 'создаст безупречный и деликатный офисный стиль на каждый день';
+        else if (selectedOccasion === 'date') context = 'окружит вас притягательной, теплой атмосферой вечернего свидания';
+        else if (selectedOccasion === 'fresh') context = 'подарит ощущение живительной прохлады, чистоты и легкости';
+        else if (selectedOccasion === 'status') context = 'выгодно выделит ваш безупречный вкус и высокий статус';
+
+        let famStr = 'изысканого парфюмерного сета';
+        if (selectedFamily === 'citrus_fresh') famStr = 'потрясающим сочетанием цитрусовых и водных оттенков';
+        else if (selectedFamily === 'sweet_gourmand') famStr = 'соблазнительными сладкими гурманскими мотивами';
+        else if (selectedFamily === 'woody_spicy') famStr = 'благородными древесными и пряными аккордами';
+        else if (selectedFamily === 'floral_powdery') famStr = 'изящным пудрово-цветочным букетом';
+
+        return `Готовый сет ${name} от ${brand} объединяет культовые селективные композиции, раскрывающиеся ${famStr}. Этот аромабокс ${context}.`;
+      }
+    }
+
     // Extract notes
     const topNotes = (product.topNotes || []).slice(0, 2).map(n => isBe && n.name_be ? n.name_be.toLowerCase() : n.name.toLowerCase());
     const heartNotes = (product.heartNotes || []).slice(0, 2).map(n => isBe && n.name_be ? n.name_be.toLowerCase() : n.name.toLowerCase());
     const baseNotes = (product.baseNotes || []).slice(0, 2).map(n => isBe && n.name_be ? n.name_be.toLowerCase() : n.name.toLowerCase());
     const accords = (product.accords || []).slice(0, 2).map(a => isBe && a.name_be ? a.name_be.toLowerCase() : a.name.toLowerCase());
-
-    const brand = product.brand;
-    const name = product.name;
 
     // Use (product.id + idx) as a seed to ensure high variety
     const patternId = (product.id + idx) % 4;
@@ -150,6 +189,36 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
       // Mathematical matching algorithms
       const scored = allProducts.map(product => {
         // Construct detailed lowcase product text for searchable match
+        const isSetProduct = (product.setItems && product.setItems.length > 0) || 
+                             (product.tags || []).some(t => t.toLowerCase() === 'set' || t.toLowerCase() === 'набор') || 
+                             product.name.toLowerCase().includes('набор') || 
+                             product.name.toLowerCase().includes('сет') || 
+                             product.name.toLowerCase().includes('set');
+
+        // Retrieve sub-products information if it is a set
+        let subProductsText = '';
+        if (isSetProduct && product.setItems && product.setItems.length > 0) {
+          product.setItems.forEach(item => {
+            const matchedSub = allProducts.find(p => p.id === item.id || (p.name.toLowerCase() === item.name.toLowerCase() && p.brand.toLowerCase() === item.brand.toLowerCase()));
+            if (matchedSub) {
+              subProductsText += ' ' + [
+                matchedSub.name,
+                matchedSub.brand,
+                matchedSub.description,
+                matchedSub.description_be,
+                ...(matchedSub.scentFamilies || []),
+                ...(matchedSub.scentFamilies_be || []),
+                ...(matchedSub.accords || []).map(a => a.name),
+                ...(matchedSub.topNotes || []).map(n => n.name),
+                ...(matchedSub.heartNotes || []).map(n => n.name),
+                ...(matchedSub.baseNotes || []).map(n => n.name),
+                ...(matchedSub.tags || []),
+                ...(matchedSub.tags_be || [])
+              ].map(t => (t || '').toLowerCase()).join(' ');
+            }
+          });
+        }
+
         const productText = [
           product.name,
           product.brand,
@@ -162,7 +231,8 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
           ...(product.heartNotes || []).map(n => n.name),
           ...(product.baseNotes || []).map(n => n.name),
           ...(product.tags || []),
-          ...(product.tags_be || [])
+          ...(product.tags_be || []),
+          subProductsText
         ].map(t => (t || '').toLowerCase()).join(' ');
 
         const checkKeywords = (keywords: string[]) => keywords.some(kw => productText.includes(kw));
@@ -424,16 +494,16 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
       {/* QUIZ WIZARD DIALOG OVERLAY - RE-DESIGNED TO FIT PREMIUM LIGHT THEME */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-            <div className="fixed inset-0" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-brand-bg md:bg-black/80 md:backdrop-blur-md">
+            <div className="fixed inset-0 hidden md:block" onClick={() => setIsOpen(false)} />
             
             <motion.div 
               id="scent-quiz-modal"
-              initial={{ opacity: 0, scale: 0.97, y: 15 }}
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97, y: 15 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-              className="bg-brand-bg border border-brand-border/60 w-full max-w-3xl h-[90vh] md:h-auto max-h-[720px] flex flex-col justify-between shadow-2xl relative rounded-none z-10"
+              exit={{ opacity: 0, scale: 0.98, y: 10 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 240 }}
+              className="bg-brand-bg w-full h-[100dvh] md:h-[90vh] md:max-w-4xl md:border md:border-brand-border/60 flex flex-col justify-between shadow-2xl relative rounded-none z-10 overflow-hidden"
             >
               
               {/* Luxury Header */}
@@ -708,7 +778,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                               className="border border-brand-border p-5 flex flex-col md:flex-row gap-6 items-start md:items-stretch justify-between text-left group hover:border-brand-accent/35 transition-all bg-brand-bg relative rounded-none"
                             >
                               {/* Left column: image and description */}
-                              <div className="flex gap-5 flex-1 min-w-0 items-start">
+                              <div className="flex flex-col sm:flex-row gap-5 flex-1 min-w-0 items-start">
                                 {/* Product Image with match badge overlay */}
                                 <div className="shrink-0 aspect-square w-20 h-20 sm:w-24 sm:h-24 relative overflow-hidden border border-brand-border bg-transparent shadow-xs">
                                   <img 
@@ -728,6 +798,12 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                     <span className="text-[10px] tracking-widest text-brand-muted font-sans font-semibold uppercase">
                                       {product.brand}
                                     </span>
+                                    {/* Set check badge */}
+                                    {((product.setItems && product.setItems.length > 0) || (product.tags || []).some(t => t.toLowerCase() === 'set' || t.toLowerCase() === 'набор') || product.name.toLowerCase().includes('набор') || product.name.toLowerCase().includes('сет') || product.name.toLowerCase().includes('set')) && (
+                                      <span className="text-[8px] font-sans font-bold uppercase tracking-wider text-sky-800 bg-sky-500/5 px-2 py-0.5 border border-sky-500/15">
+                                        {language === 'be' ? 'Гатовы набор / Арамасэт' : 'Готовый набор / Аромасет'}
+                                      </span>
+                                    )}
                                     {gender !== 'unisex' && product.gender === 'Unisex' && (
                                       <span className="text-[8px] font-sans font-bold uppercase tracking-wider text-amber-800 bg-amber-500/5 px-2 py-0.5 border border-amber-500/15">
                                         {match >= 75 
@@ -805,33 +881,6 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                               </div>
                             </div>
                           ))}
-                          
-                          {/* Scentbox Promo Card inside results */}
-                          <div className="p-5 border border-brand-accent/20 bg-brand-accent/[0.01] flex flex-col sm:flex-row items-center gap-4 justify-between mt-6 text-center sm:text-left rounded-none">
-                            <div className="space-y-1">
-                              <h5 className="font-serif text-xs font-semibold text-brand-accent uppercase tracking-widest">
-                                {language === 'be' ? 'Хочаце паспрабаваць усё адразу?' : 'Хотите попробовать всё сразу?'}
-                              </h5>
-                              <p className="text-[10px] text-brand-muted max-w-[400px]">
-                                {language === 'be' 
-                                  ? 'Закажыце індывідуальны Аромабокс са зніжкай! Нашы эксперты збяруць усе 3 падабраных водару па 2 мл у падарункавую скрыначку.'
-                                  : 'Закажите индивидуальный Аромабокс со скидкой! Наши эксперты соберут все 3 подобранных аромата по 2 мл в подарочную шкатулку.'}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => {
-                                setIsOpen(false);
-                                if (onOrderBoxClick) {
-                                  onOrderBoxClick();
-                                } else {
-                                  setIsCartOpen(true);
-                                }
-                              }}
-                              className="text-[10px] uppercase tracking-wider text-brand-accent hover:text-brand-accent-hover font-semibold shrink-0 py-2 border-b border-brand-accent hover:border-brand-accent-hover cursor-pointer"
-                            >
-                              {language === 'be' ? 'Скласці Бокс' : 'Создать Бокс'}
-                            </button>
-                          </div>
                         </div>
                       )}
                     </motion.div>

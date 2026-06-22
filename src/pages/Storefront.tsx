@@ -8,7 +8,6 @@ import { Search, MessageCircle, X, ChevronDown, Check, SlidersHorizontal, Filter
 import { Helmet } from 'react-helmet-async';
 import { useLanguage } from '../components/LanguageProvider';
 import Breadcrumbs from '../components/Breadcrumbs';
-import CustomSetBuilder from '../components/CustomSetBuilder';
 
 export default function Storefront() {
   const location = useLocation();

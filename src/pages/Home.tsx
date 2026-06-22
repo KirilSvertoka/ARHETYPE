@@ -97,12 +97,16 @@ export default function Home() {
 
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -449,13 +453,24 @@ export default function Home() {
                 {activeBrands.map((brand, bIdx) => {
                   const isActive = bIdx === activeBrandIdx;
                   return (
-                    <Link
+                     <Link
                       to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
                       key={brand.name + '-strip-' + bIdx}
                       onClick={(e) => {
                         if (!isActive) {
                           e.preventDefault();
                           setActiveBrandIdx(bIdx);
+                        }
+                      }}
+                      onMouseEnter={() => {
+                        if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                        hoverTimeoutRef.current = setTimeout(() => {
+                          setActiveBrandIdx(bIdx);
+                        }, 200);
+                      }}
+                      onMouseLeave={() => {
+                        if (hoverTimeoutRef.current) {
+                          clearTimeout(hoverTimeoutRef.current);
                         }
                       }}
                       className={`relative h-full flex-1 border-r border-white/5 cursor-pointer overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] select-none group/strip ${

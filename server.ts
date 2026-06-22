@@ -835,6 +835,78 @@ if (count.count <= 2) {
     insertVariant.run(testProductId, 'Tester 100ml', 320, 10, 'TEST-TST-100ML');
   }
 
+  // Seed premium ready-made aroma sets if none exist
+  const setQueryCount = db.prepare("SELECT COUNT(*) as count FROM products WHERE tags LIKE '%set%' OR tags LIKE '%набор%'").get() as { count: number };
+  if (setQueryCount.count === 0) {
+    const insertSet = db.prepare(`
+      INSERT INTO products (
+        name, brand, description, description_be, imageUrl, images, price, 
+        topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, 
+        scentFamilies_be, tags, tags_be, set_items, slug, concentration
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    
+    insertSet.run(
+      'Набор Древесные Открытия',
+      'Archetype Selection',
+      'Эксклюзивный фирменный аромасет из 3 знаковых древесных шедевров по 2 мл: Santal 33, Oud Wood и Gypsy Water. Погрузитесь в благородные лесные, кожаные и пряные мотивы.',
+      'Эксклюзіўны фірмовы аромасэт з 3 знакавых драўняных шэдэўраў па 2 мл: Santal 33, Oud Wood і Gypsy Water. Акуніцеся ў вытанчаныя лясныя, скураныя і рэзкія матывы.',
+      'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop',
+      '[]',
+      '45',
+      '[]', '[]', '[]',
+      JSON.stringify([{name: 'Woody', name_be: 'Драўняныя'}, {name: 'Warm Spicy', name_be: 'Цёплыя рэзкія'}]),
+      'Unisex',
+      JSON.stringify(['Woody', 'Oriental', 'Fresh']),
+      JSON.stringify(['Woody', 'Oriental', 'Fresh']),
+      JSON.stringify(['set', 'набор', 'woody']),
+      JSON.stringify(['сет', 'набор', 'woody']),
+      JSON.stringify([
+        {id: 1, brand: 'Le Labo', name: 'Santal 33', size: '2ml'},
+        {id: 3, brand: 'Byredo', name: 'Gypsy Water', size: '2ml'},
+        {id: 4, brand: 'Tom Ford', name: 'Oud Wood', size: '2ml'}
+      ]),
+      'archetype-selection-woody-discoveries-set',
+      'Set'
+    );
+
+    const set1Id = (db.prepare('SELECT id FROM products WHERE name = ?').get('Набор Древесные Открытия') as any)?.id;
+    if (set1Id) {
+      db.prepare('INSERT INTO product_variants (product_id, size, price, stock, sku, variant_type) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(set1Id, '3 x 2ml', 45, 50, 'SET-WOODY-3X2', 'decant');
+    }
+
+    insertSet.run(
+      'Набор Соблазнительная Сладость',
+      'Archetype Selection',
+      'Изысканный соблазнительный сет из 3 лучших гурманских и восточных парфюмов по 2 мл: Lost Cherry, Black Phantom и Baccarat Rouge 540. Идеален для романтических вечеров и свиданий.',
+      'Вытанчаны спакуслівы сэт з 3 лепшых гурманскіх і ўсходніх парфумаў па 2 мл: Lost Cherry, Black Phantom і Baccarat Rouge 540. Ідэальны для рамантычных вечароў і спатканняў.',
+      'https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=800&auto=format&fit=crop',
+      '[]',
+      '49',
+      '[]', '[]', '[]',
+      JSON.stringify([{name: 'Sweet', name_be: 'Салодкія'}, {name: 'Gourmand', name_be: 'Гурманскія'}]),
+      'Unisex',
+      JSON.stringify(['Gourmand', 'Oriental', 'Floral']),
+      JSON.stringify(['Gourmand', 'Oriental', 'Floral']),
+      JSON.stringify(['set', 'набор', 'gourmand']),
+      JSON.stringify(['сет', 'набор', 'gourmand']),
+      JSON.stringify([
+        {id: 2, brand: 'Maison Francis Kurkdjian', name: 'Baccarat Rouge 540', size: '2ml'},
+        {id: 7, brand: 'Tom Ford', name: 'Lost Cherry', size: '2ml'},
+        {id: 9, brand: 'Kilian', name: 'Black Phantom', size: '2ml'}
+      ]),
+      'archetype-selection-seductive-sweets-set',
+      'Set'
+    );
+
+    const set2Id = (db.prepare('SELECT id FROM products WHERE name = ?').get('Набор Соблазнительная Сладость') as any)?.id;
+    if (set2Id) {
+      db.prepare('INSERT INTO product_variants (product_id, size, price, stock, sku, variant_type) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(set2Id, '3 x 2ml', 49, 45, 'SET-SWEET-3X2', 'decant');
+    }
+  }
+
   // Add test users if none exist
   const userCount = (db.prepare('SELECT COUNT(*) as count FROM users').get() as any).count;
   if (userCount === 0) {
