@@ -8,6 +8,52 @@ import ScentQuiz from '../components/ScentQuiz';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../components/LanguageProvider';
 
+// Luxury Popular Brands list
+const POPULAR_BRANDS: BrandCard[] = [
+  {
+    name: 'Byredo',
+    name_be: 'Byredo',
+    image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop',
+    desc: 'Шведский авангард и поэзия',
+    desc_be: 'Швэдскі авангард і паэзія'
+  },
+  {
+    name: 'Le Labo',
+    name_be: 'Le Labo',
+    image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=800&auto=format&fit=crop',
+    desc: 'Индустриальная эстетика Нью-Йорка',
+    desc_be: 'Індустрыяльная эстэтыка Нью-Ёрка'
+  },
+  {
+    name: 'Tom Ford',
+    name_be: 'Tom Ford',
+    image: 'https://images.unsplash.com/photo-1508746829417-e6f548d8d6ed?q=80&w=800&auto=format&fit=crop',
+    desc: 'Роскошь, смелость и чувственность',
+    desc_be: 'Раскоша, смеласць і пачуццёвасць'
+  },
+  {
+    name: 'Creed',
+    name_be: 'Creed',
+    image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop',
+    desc: 'Монархическое величие и классика',
+    desc_be: 'Манархічная веліч і класіка'
+  },
+  {
+    name: 'Kilian',
+    name_be: 'Kilian',
+    image: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop',
+    desc: 'Ночные тайны и парижский шик',
+    desc_be: 'Начныя тайны і парыжскі шык'
+  },
+  {
+    name: 'Maison Francis Kurkdjian',
+    name_be: 'Maison Francis Kurkdjian',
+    image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop',
+    desc: 'Ювелирная точность ароматов',
+    desc_be: 'Ювелірная дакладнасць водараў'
+  },
+];
+
 export default function Home() {
   const [config, setConfig] = useState<HomeConfig | null>(null);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
@@ -46,6 +92,7 @@ export default function Home() {
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [activeBrandIdx, setActiveBrandIdx] = useState(0);
+  const [accordionHovered, setAccordionHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   const touchStartX = useRef<number | null>(null);
@@ -67,6 +114,21 @@ export default function Home() {
 
     return () => clearInterval(timer);
   }, [config, currentSlide]);
+
+  useEffect(() => {
+    if (accordionHovered || !config) return;
+    const activeBrands = config.popularBrands && config.popularBrands.length > 0
+      ? config.popularBrands.filter((b: any) => b.active !== false)
+      : POPULAR_BRANDS;
+
+    if (!activeBrands || activeBrands.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setActiveBrandIdx(prev => (prev + 1) % activeBrands.length);
+    }, 5000); // 5 seconds of inactivity auto-switch
+
+    return () => clearInterval(timer);
+  }, [accordionHovered, config, activeBrandIdx]);
 
   if (loading || !config) {
     return (
@@ -110,51 +172,7 @@ export default function Home() {
     }
   };
 
-  // Luxury Popular Brands list
-  const POPULAR_BRANDS: BrandCard[] = [
-    {
-      name: 'Byredo',
-      name_be: 'Byredo',
-      image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800&auto=format&fit=crop',
-      desc: 'Шведский авангард и поэзия',
-      desc_be: 'Швэдскі авангард і паэзія'
-    },
-    {
-      name: 'Le Labo',
-      name_be: 'Le Labo',
-      image: 'https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=800&auto=format&fit=crop',
-      desc: 'Индустриальная эстетика Нью-Йорка',
-      desc_be: 'Індустрыяльная эстэтыка Нью-Ёрка'
-    },
-    {
-      name: 'Tom Ford',
-      name_be: 'Tom Ford',
-      image: 'https://images.unsplash.com/photo-1508746829417-e6f548d8d6ed?q=80&w=800&auto=format&fit=crop',
-      desc: 'Роскошь, смелость и чувственность',
-      desc_be: 'Раскоша, смеласць і пачуццёвасць'
-    },
-    {
-      name: 'Creed',
-      name_be: 'Creed',
-      image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=800&auto=format&fit=crop',
-      desc: 'Монархическое величие и классика',
-      desc_be: 'Манархічная веліч і класіка'
-    },
-    {
-      name: 'Kilian',
-      name_be: 'Kilian',
-      image: 'https://images.unsplash.com/photo-1616949755610-8c9bbc08f138?q=80&w=800&auto=format&fit=crop',
-      desc: 'Ночные тайны и парижский шик',
-      desc_be: 'Начныя тайны і парыжскі шык'
-    },
-    {
-      name: 'Maison Francis Kurkdjian',
-      name_be: 'Maison Francis Kurkdjian',
-      image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=800&auto=format&fit=crop',
-      desc: 'Ювелирная точность ароматов',
-      desc_be: 'Ювелірная дакладнасць водараў'
-    },
-  ];
+
 
   const handlePrevSlide = () => {
     if (!config) return;
@@ -350,159 +368,172 @@ export default function Home() {
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.9, ease: "easeOut" }}
+        onMouseEnter={() => setAccordionHovered(true)}
+        onMouseLeave={() => setAccordionHovered(false)}
         className="relative w-full h-[550px] md:h-[80vh] lg:h-screen min-h-[500px] overflow-hidden bg-zinc-950 border-b border-brand-border/40 flex flex-col md:flex-row select-none"
       >
         {(() => {
-          const activeBrand = (config.popularBrands && config.popularBrands.length > 0
+          const activeBrands = config.popularBrands && config.popularBrands.length > 0
             ? config.popularBrands.filter((b: any) => b.active !== false)
-            : POPULAR_BRANDS
-          )[activeBrandIdx];
+            : POPULAR_BRANDS;
+          const activeBrand = activeBrands[activeBrandIdx] || activeBrands[0];
+          const activeBrandsCount = activeBrands.length;
+
+          // Dynamic widths based on card counts
+          // If the count of brand cards decreases, the active image area is wider ("картинка увеличивается")
+          // and the stripes (right sidebar lines) are narrower ("линии справа становятся тоньше")
+          let mainWidthClass = "w-full md:w-[72%] lg:w-[76%] xl:w-[80%]";
+          let sidebarWidthClass = "w-[28%] lg:w-[24%] xl:w-[20%]";
+
+          if (activeBrandsCount <= 3) {
+            mainWidthClass = "w-full md:w-[84%] lg:w-[87%] xl:w-[90%]";
+            sidebarWidthClass = "w-[16%] lg:w-[13%] xl:w-[10%]";
+          } else if (activeBrandsCount === 4) {
+            mainWidthClass = "w-full md:w-[78%] lg:w-[81%] xl:w-[84%]";
+            sidebarWidthClass = "w-[22%] lg:w-[19%] xl:w-[16%]";
+          }
 
           return (
-            <Link
-              to={`/catalog?brand=${encodeURIComponent(activeBrand?.name || '')}`}
-              className="absolute top-0 left-0 w-full md:w-[72%] lg:w-[76%] xl:w-[80%] h-full z-20 group/app-brand-main block overflow-hidden cursor-pointer"
-            >
-              {/* Active brand background image with crossfade */}
-              <div className="absolute inset-0 z-0">
-                <AnimatePresence mode="popLayout">
-                  <motion.div
-                    key={activeBrandIdx}
-                    initial={{ opacity: 0, scale: 1.02 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.7, ease: "easeOut" }}
-                    className="absolute inset-0 w-full h-full"
-                  >
-                    <img
-                      src={activeBrand?.image}
-                      alt=""
-                      className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-[1.2s] ease-out group-hover/app-brand-main:scale-105"
-                      referrerPolicy="no-referrer"
-                    />
-                    {/* Smooth gradient with extra opacity towards the bottom for readable overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10 md:bg-gradient-to-r md:from-black/80 md:via-black/35 md:to-transparent" />
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-
-              {/* Brand details overlay - lowered down, elegant, and thin typography */}
-              <div className="absolute bottom-16 left-6 md:bottom-24 md:left-12 lg:left-16 z-20 max-w-xs md:max-w-md pointer-events-none">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeBrandIdx}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.4 }}
-                    className="space-y-2 md:space-y-3"
-                  >
-                    <h3 className="font-serif text-3xl md:text-5xl tracking-[0.06em] uppercase text-white font-extralight leading-none">
-                      {language === 'be' && activeBrand?.name_be ? activeBrand?.name_be : activeBrand?.name}
-                    </h3>
-                    <p className="text-xs md:text-sm font-extralight text-white/50 tracking-[0.03em] font-sans leading-relaxed max-w-xs md:max-w-md">
-                      {language === 'be' && activeBrand?.desc_be ? activeBrand?.desc_be : activeBrand?.desc}
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </Link>
-          );
-        })()}
-
-        {/* Right side desktop vertical solid-color stripes container */}
-        <div className="hidden md:flex absolute top-0 right-0 h-full z-30 w-[28%] lg:w-[24%] xl:w-[20%] flex-row border-l border-white/5 select-none bg-zinc-950/95 backdrop-blur-md">
-          {(config.popularBrands && config.popularBrands.length > 0
-            ? config.popularBrands.filter((b: any) => b.active !== false)
-            : POPULAR_BRANDS
-          ).map((brand, bIdx) => {
-            const isActive = bIdx === activeBrandIdx;
-            return (
+            <>
               <Link
-                to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
-                key={brand.name + '-strip-' + bIdx}
-                onClick={(e) => {
-                  if (!isActive) {
-                    e.preventDefault();
-                    setActiveBrandIdx(bIdx);
-                  }
-                }}
-                className={`relative h-full flex-1 border-r border-white/5 cursor-pointer overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] select-none group/strip ${
-                  isActive ? 'flex-[1.5] bg-zinc-900' : 'hover:flex-[1.25] hover:bg-zinc-900/60 bg-zinc-950'
-                }`}
+                to={`/catalog?brand=${encodeURIComponent(activeBrand?.name || '')}`}
+                className={`absolute top-0 left-0 h-full z-20 group/app-brand-main block overflow-hidden cursor-pointer transition-all duration-700 ease-out ${mainWidthClass}`}
               >
-                {/* Clean, gold vertical bar highlight indicator line for active state */}
-                <div className={`absolute top-0 left-0 w-[2px] h-full transition-all duration-500 ${
-                  isActive ? 'bg-brand-accent opacity-100' : 'bg-transparent opacity-0'
-                }`} />
-
-                {/* Vertical Rotated text with short title inside the solid stripe */}
-                <div className="absolute inset-0 flex flex-col justify-end items-center pb-12 z-20">
-                  <div
-                    className="flex items-center gap-3.5 transition-transform duration-500 whitespace-nowrap"
-                    style={{
-                      writingMode: 'vertical-rl',
-                      transform: 'rotate(180deg)'
-                    }}
-                  >
-                    <span className={`text-[9px] tracking-[0.2em] uppercase font-mono transition-colors duration-300 ${
-                      isActive ? 'text-brand-accent font-medium' : 'text-white/40 group-hover/strip:text-white/70'
-                    }`}>
-                      {language === 'be' && brand.name_be ? brand.name_be : brand.name}
-                    </span>
-                    <span className={`w-2.5 h-[1px] transition-all duration-500 ${
-                      isActive ? 'bg-brand-accent w-5' : 'bg-white/10 group-hover/strip:bg-white/25'
-                    }`} />
-                    <span className={`text-[8px] tracking-[0.1em] uppercase font-sans transition-colors duration-300 ${
-                      isActive ? 'text-white/80 font-medium' : 'text-white/25 group-hover/strip:text-white/50'
-                    }`}>
-                      {bIdx + 1 < 10 ? `0${bIdx + 1}` : bIdx + 1}
-                    </span>
-                  </div>
+                {/* Active brand background image with crossfade */}
+                <div className="absolute inset-0 z-0">
+                  <AnimatePresence mode="popLayout">
+                    <motion.div
+                      key={activeBrandIdx}
+                      initial={{ opacity: 0, scale: 1.02 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.7, ease: "easeOut" }}
+                      className="absolute inset-0 w-full h-full"
+                    >
+                      <img
+                        src={activeBrand?.image}
+                        alt=""
+                        className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-[1.2s] ease-out group-hover/app-brand-main:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      {/* Smooth gradient with extra opacity towards the bottom for readable overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10 md:bg-gradient-to-r md:from-black/80 md:via-black/35 md:to-transparent" />
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
 
-                {/* Clean glassmorphic border reflection */}
-                <div className="absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-white/5 to-transparent pointer-events-none" />
+                {/* Brand details overlay - lowered down, elegant, and thin typography */}
+                <div className="absolute bottom-16 left-6 md:bottom-24 md:left-12 lg:left-16 z-20 max-w-xs md:max-w-md pointer-events-none">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeBrandIdx}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      transition={{ duration: 0.4 }}
+                      className="space-y-2 md:space-y-3"
+                    >
+                      <h3 className="font-serif text-3xl md:text-5xl tracking-[0.06em] uppercase text-white font-extralight leading-none">
+                        {language === 'be' && activeBrand?.name_be ? activeBrand?.name_be : activeBrand?.name}
+                      </h3>
+                      <p className="text-xs md:text-sm font-extralight text-white/50 tracking-[0.03em] font-sans leading-relaxed max-w-xs md:max-w-md">
+                        {language === 'be' && activeBrand?.desc_be ? activeBrand?.desc_be : activeBrand?.desc}
+                      </p>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
               </Link>
-            );
-          })}
-        </div>
 
-        {/* Mobile bottom solid picker selector */}
-        <div className="md:hidden absolute bottom-6 left-0 w-full z-30 px-4">
-          <p className="text-[8px] tracking-[0.15em] text-white/35 uppercase mb-2 text-center font-mono">
-            {language === 'be' ? 'Абярыце парфумерны дом' : 'Выберите парфюмерный дом'}
-          </p>
-          <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none px-0.5">
-            {(config.popularBrands && config.popularBrands.length > 0
-              ? config.popularBrands.filter((b: any) => b.active !== false)
-              : POPULAR_BRANDS
-            ).map((brand, bIdx) => {
-              const isActive = bIdx === activeBrandIdx;
-              return (
-                <Link
-                  to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
-                  key={brand.name + '-mob-' + bIdx}
-                  onClick={(e) => {
-                    if (!isActive) {
-                      e.preventDefault();
-                      setActiveBrandIdx(bIdx);
-                    }
-                  }}
-                  className={`relative flex-shrink-0 min-w-[75px] h-[38px] border overflow-hidden transition-all duration-300 flex items-center justify-center px-3 rounded-none ${
-                    isActive ? 'border-brand-accent bg-zinc-900/90' : 'border-white/10 bg-zinc-950/90'
-                  }`}
-                >
-                  <span className={`relative z-10 text-[8px] font-bold tracking-wider uppercase text-center leading-tight transition-colors duration-300 ${
-                    isActive ? 'text-brand-accent' : 'text-white/60'
-                  }`}>
-                    {language === 'be' && brand.name_be ? brand.name_be : brand.name}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+              {/* Right side desktop vertical solid-color stripes container */}
+              <div className={`hidden md:flex absolute top-0 right-0 h-full z-30 flex-row border-l border-white/5 select-none bg-zinc-950/95 backdrop-blur-md transition-all duration-700 ease-out ${sidebarWidthClass}`}>
+                {activeBrands.map((brand, bIdx) => {
+                  const isActive = bIdx === activeBrandIdx;
+                  return (
+                    <Link
+                      to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
+                      key={brand.name + '-strip-' + bIdx}
+                      onClick={(e) => {
+                        if (!isActive) {
+                          e.preventDefault();
+                          setActiveBrandIdx(bIdx);
+                        }
+                      }}
+                      className={`relative h-full flex-1 border-r border-white/5 cursor-pointer overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] select-none group/strip ${
+                        isActive ? 'flex-[1.5] bg-zinc-900' : 'hover:flex-[1.25] hover:bg-zinc-900/60 bg-zinc-950'
+                      }`}
+                    >
+                      {/* Clean, gold vertical bar highlight indicator line for active state */}
+                      <div className={`absolute top-0 left-0 w-[2px] h-full transition-all duration-500 ${
+                        isActive ? 'bg-brand-accent opacity-100' : 'bg-transparent opacity-0'
+                      }`} />
+
+                      {/* Vertical Rotated text with short title inside the solid stripe */}
+                      <div className="absolute inset-0 flex flex-col justify-end items-center pb-12 z-20">
+                        <div
+                          className="flex items-center gap-3.5 transition-transform duration-500 whitespace-nowrap"
+                          style={{
+                            writingMode: 'vertical-rl',
+                            transform: 'rotate(180deg)'
+                          }}
+                        >
+                          <span className={`text-[9px] tracking-[0.2em] uppercase font-mono transition-colors duration-300 ${
+                            isActive ? 'text-brand-accent font-medium' : 'text-white/40 group-hover/strip:text-white/70'
+                          }`}>
+                            {language === 'be' && brand.name_be ? brand.name_be : brand.name}
+                          </span>
+                          <span className={`w-2.5 h-[1px] transition-all duration-500 ${
+                            isActive ? 'bg-brand-accent w-5' : 'bg-white/10 group-hover/strip:bg-white/25'
+                          }`} />
+                          <span className={`text-[8px] tracking-[0.1em] uppercase font-sans transition-colors duration-300 ${
+                            isActive ? 'text-white/80 font-medium' : 'text-white/25 group-hover/strip:text-white/50'
+                          }`}>
+                            {bIdx + 1 < 10 ? `0${bIdx + 1}` : bIdx + 1}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Clean glassmorphic border reflection */}
+                      <div className="absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-white/5 to-transparent pointer-events-none" />
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Mobile bottom solid picker selector */}
+              <div className="md:hidden absolute bottom-6 left-0 w-full z-30 px-4">
+                <p className="text-[8px] tracking-[0.15em] text-white/35 uppercase mb-2 text-center font-mono">
+                  {language === 'be' ? 'Абярыце парфумерны дом' : 'Выберите парфюмерный дом'}
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none px-0.5">
+                  {activeBrands.map((brand, bIdx) => {
+                    const isActive = bIdx === activeBrandIdx;
+                    return (
+                      <Link
+                        to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
+                        key={brand.name + '-mob-' + bIdx}
+                        onClick={(e) => {
+                          if (!isActive) {
+                            e.preventDefault();
+                            setActiveBrandIdx(bIdx);
+                          }
+                        }}
+                        className={`relative flex-shrink-0 min-w-[75px] h-[38px] border overflow-hidden transition-all duration-300 flex items-center justify-center px-3 rounded-none ${
+                          isActive ? 'border-brand-accent bg-zinc-900/90' : 'border-white/10 bg-zinc-950/90'
+                        }`}
+                      >
+                        <span className={`relative z-10 text-[8px] font-bold tracking-wider uppercase text-center leading-tight transition-colors duration-300 ${
+                          isActive ? 'text-brand-accent' : 'text-white/60'
+                        }`}>
+                          {language === 'be' && brand.name_be ? brand.name_be : brand.name}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          );
+        })()}
       </motion.section>
 
       {/* INTERACTIVE SCENT SELECTOR */}
