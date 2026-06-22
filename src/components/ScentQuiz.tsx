@@ -771,7 +771,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-5 max-h-[440px] overflow-y-auto pr-1.5 custom-scrollbar bg-brand-bg">
+                        <div className="space-y-5">
                           {results.map(({ product, match, explanation, explanationBe }, idx) => (
                             <div 
                               key={product.id}
