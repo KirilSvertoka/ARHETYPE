@@ -503,7 +503,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98, y: 10 }}
               transition={{ type: 'spring', damping: 30, stiffness: 240 }}
-              className="bg-brand-bg w-full h-[100dvh] md:h-[90vh] md:max-w-4xl md:border md:border-brand-border/60 flex flex-col justify-between shadow-2xl relative rounded-none z-10 overflow-hidden"
+              className="bg-brand-bg w-full h-[100dvh] md:h-[80vh] md:max-h-[660px] md:max-w-3xl md:border md:border-brand-border/60 flex flex-col justify-between shadow-2xl relative rounded-none z-10 overflow-hidden"
             >
               
               {/* Luxury Header */}
@@ -780,45 +780,45 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                               {/* Left column: image and description */}
                               <div className="flex flex-col sm:flex-row gap-5 flex-1 min-w-0 items-start">
                                 {/* Product Image with match badge overlay */}
-                                <div className="shrink-0 aspect-square w-20 h-20 sm:w-24 sm:h-24 relative overflow-hidden border border-brand-border bg-transparent shadow-xs">
+                                <div className="shrink-0 aspect-square w-24 h-24 sm:w-28 sm:h-28 relative overflow-hidden border border-brand-border bg-transparent shadow-xs">
                                   <img 
                                     src={product.imageUrl} 
                                     alt={product.name} 
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                     referrerPolicy="no-referrer"
                                   />
-                                  <div className="absolute top-1.5 left-1.5 bg-brand-accent text-white text-[8px] font-bold px-1.5 py-0.5 tracking-wider font-sans uppercase">
+                                  <div className="absolute top-1.5 left-1.5 bg-brand-accent text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 tracking-wider font-sans uppercase">
                                     {match}% Match
                                   </div>
                                 </div>
 
                                 {/* Texts: Brand, Name, Recommendation/Explanation */}
-                                <div className="flex-1 min-w-0 space-y-1.5">
+                                <div className="flex-1 min-w-0 space-y-2">
                                   <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-[10px] tracking-widest text-brand-muted font-sans font-semibold uppercase">
+                                    <span className="text-[11px] sm:text-xs tracking-widest text-brand-muted font-sans font-semibold uppercase">
                                       {product.brand}
                                     </span>
                                     {/* Set check badge */}
                                     {((product.setItems && product.setItems.length > 0) || (product.tags || []).some(t => t.toLowerCase() === 'set' || t.toLowerCase() === 'набор') || product.name.toLowerCase().includes('набор') || product.name.toLowerCase().includes('сет') || product.name.toLowerCase().includes('set')) && (
-                                      <span className="text-[8px] font-sans font-bold uppercase tracking-wider text-sky-800 bg-sky-500/5 px-2 py-0.5 border border-sky-500/15">
+                                      <span className="text-[9px] font-sans font-bold uppercase tracking-wider text-sky-800 bg-sky-500/5 px-2 py-0.5 border border-sky-500/15">
                                         {language === 'be' ? 'Гатовы набор / Арамасэт' : 'Готовый набор / Аромасет'}
                                       </span>
                                     )}
                                     {gender !== 'unisex' && product.gender === 'Unisex' && (
-                                      <span className="text-[8px] font-sans font-bold uppercase tracking-wider text-amber-800 bg-amber-500/5 px-2 py-0.5 border border-amber-500/15">
+                                      <span className="text-[9px] font-sans font-bold uppercase tracking-wider text-amber-800 bg-amber-500/5 px-2 py-0.5 border border-amber-500/15">
                                         {match >= 75 
                                           ? (language === 'be' ? 'Унісекс — падыходзіць для вас' : 'Унисекс — подходит для вас')
                                           : (language === 'be' ? 'Унісекс — выдатна падыходзіць' : 'Унисекс — отлично подходит')}
                                       </span>
                                     )}
                                   </div>
-                                  <h4 className="font-serif text-sm sm:text-base font-semibold text-brand-light leading-snug">
+                                  <h4 className="font-serif text-base sm:text-lg font-semibold text-brand-light leading-snug">
                                     {product.name}
                                   </h4>
                                   
                                   {/* Explanation block */}
                                   <div className="pt-2">
-                                    <p className="text-[11px] sm:text-xs text-brand-muted font-serif leading-relaxed pl-3 border-l-2 border-brand-accent/30">
+                                    <p className="text-xs sm:text-[13px] text-brand-muted font-serif leading-relaxed pl-3 border-l-2 border-brand-accent/30">
                                       {language === 'be' ? explanationBe : explanation}
                                     </p>
                                   </div>
@@ -829,7 +829,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                               <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-stretch md:items-end justify-between sm:justify-start md:justify-center gap-4 w-full md:w-auto shrink-0 border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-6 border-brand-border/40">
                                 {product.variants && product.variants.length > 0 && (
                                   <div className="relative w-full sm:w-48 md:w-[160px]">
-                                    <span className="absolute -top-3.5 left-0 text-[8px] font-mono text-brand-muted uppercase tracking-wider block">
+                                    <span className="absolute -top-3.5 left-0 text-[9px] font-mono text-brand-muted uppercase tracking-wider block">
                                       {language === 'be' ? 'Аб’ём' : 'Объем'}
                                     </span>
                                     <select
@@ -838,7 +838,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                         const val = parseInt(e.target.value);
                                         setSelectedVariants(prev => ({ ...prev, [product.id]: val }));
                                       }}
-                                      className="w-full text-[10px] uppercase font-semibold tracking-wider pr-8 pl-3 py-2.5 bg-brand-bg border border-brand-border hover:border-brand-accent/50 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer rounded-none"
+                                      className="w-full text-xs uppercase font-semibold tracking-wider pr-8 pl-3 py-2.5 bg-brand-bg border border-brand-border hover:border-brand-accent/50 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer rounded-none"
                                     >
                                       {product.variants.map((v) => {
                                         const typeStr = getVariantType(v, language);
@@ -856,14 +856,14 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                 )}
                                 
                                 <div className="flex items-center gap-4 justify-between sm:justify-end w-full sm:w-auto">
-                                  <span className="text-sm font-serif font-semibold text-brand-light whitespace-nowrap sm:min-w-[65px] text-right">
+                                  <span className="text-base sm:text-lg font-sans font-semibold text-brand-light whitespace-nowrap sm:min-w-[70px] text-right lining-nums tabular-nums">
                                     {(product.variants?.find(v => v.id === selectedVariants[product.id])?.price || product.price)} {t('currency')}
                                   </span>
                                   <button
                                     id={`quiz-add-to-cart-${product.id}`}
                                     onClick={() => handleAddScentToCart(product)}
                                     disabled={product.variants?.find(v => v.id === selectedVariants[product.id])?.stock === 0}
-                                    className="bg-brand-accent text-white hover:bg-brand-accent-hover h-10 px-6 text-[10px] uppercase font-semibold tracking-wider transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 min-w-[125px] cursor-pointer rounded-none"
+                                    className="bg-brand-accent text-white hover:bg-brand-accent-hover h-11 px-6 text-xs uppercase font-semibold tracking-wider transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 min-w-[125px] cursor-pointer rounded-none"
                                   >
                                     {successAdded[product.id] ? (
                                       <>
