@@ -256,13 +256,15 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     mergedAccords = mergedAccords.slice(0, 5);
 
     // 4. Calculating variant info and automatic variant listing
-    const originalPriceSum = selectedBundleItems.reduce((sum, item) => {
-      return sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price as any) || 0);
-    }, 0);
-    const suggestedPrice = parseFloat(originalPriceSum.toFixed(2));
-    const finalPrice = parseFloat(customSetPrice) || suggestedPrice;
+    const parsedPrice = parseFloat(customSetPrice);
+    if (!customSetPrice || isNaN(parsedPrice) || parsedPrice <= 0) {
+      alert('Пожалуйста, укажите цену набора в поле "Стоимость (BYN)". Ценообразование наборов контролируется только администратором!');
+      return;
+    }
 
-    const autoSizeLabel = customSetVolumeLabel || `Сет ${selectedBundleItems.length} шт (${selectedBundleItems[0]?.variant.size || '2мл'})`;
+    const finalPrice = parsedPrice;
+
+    const autoSizeLabel = customSetVolumeLabel || `Сет ${selectedBundleItems.length} шт (${selectedBundleItems[0]?.variant?.size || '2мл'})`;
 
     const newVariant: ProductVariant = {
       productId: initialData?.id || 0,
@@ -911,11 +913,11 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
 
       <div className={activeTab === 'builder' ? 'block' : 'hidden'}>
         {/* Scent Set Builder Constructor (Admin Tool) */}
-        <div className="bg-white/5 p-6 rounded-3xl border border-brand-border space-y-6 text-left">
+        <div className="bg-white p-6 rounded-3xl border border-brand-border/80 shadow-[0_4px_24px_rgba(17,17,17,0.02)] space-y-6 text-left">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-brand-accent animate-pulse" />
+                <Sparkles className="w-5 h-5 text-brand-accent" />
                 <h3 className="text-xl font-serif text-brand-light">Конструктор парфюмерных наборов</h3>
               </div>
               <p className="text-xs text-brand-muted mt-1">Облегчите составление сетов! Выберите комплектующие продукты, и система сама назовет набор, соберет описание, объединит все их ароматические ноты и добавит готовые варианты в форму.</p>
@@ -925,7 +927,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
               type="button"
               onClick={handleAutoPopulateSet}
               disabled={selectedBundleItems.length === 0}
-              className="px-5 py-2.5 bg-brand-accent text-white hover:bg-brand-accent-hover text-xs uppercase tracking-wider font-semibold rounded-xl flex items-center gap-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              className="px-5 py-2.5 bg-brand-accent text-white hover:bg-brand-accent-hover text-xs uppercase tracking-wider font-semibold rounded-xl flex items-center gap-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-sm"
             >
               <Check className="w-4 h-4" />
               <span>Автозаполнить всё</span>
@@ -934,46 +936,46 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
             {/* Left side: Selected list */}
-            <div className="md:col-span-5 space-y-4">
+            <div className="md:col-span-12 lg:col-span-5 space-y-4">
               {/* Custom Set Configuration Panel */}
-              <div className="bg-black/20 border border-brand-border/65 p-4 rounded-xl space-y-4">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-brand-accent font-mono flex items-center gap-1.5">
+              <div className="bg-[#111111]/[0.02] border border-brand-border p-5 rounded-2xl space-y-4 shadow-sm">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-brand-accent flex items-center gap-2">
                   <span>⚙️</span> Настройка результирующей карточки:
                 </h4>
                 
                 <div className="space-y-3 text-xs">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-mono uppercase text-brand-muted block">Название набора:</label>
+                    <label className="text-[11px] font-semibold uppercase text-brand-muted block ml-1">Название набора:</label>
                     <input
                       type="text"
                       value={customSetName}
                       onChange={e => setCustomSetName(e.target.value)}
-                      className="w-full px-3 py-2 bg-black/45 border border-brand-border/80 rounded-lg text-xs text-brand-light placeholder:text-brand-muted/65 focus:outline-none focus:border-brand-accent"
+                      className="w-full px-3 py-2 bg-white border border-brand-border rounded-xl text-xs text-brand-light placeholder:text-brand-muted/45 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all shadow-sm"
                       placeholder="Например: Аромабокс Люксовые Ароматы"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-mono uppercase text-brand-muted block">Стоимость (BYN):</label>
+                      <label className="text-[11px] font-semibold uppercase text-brand-muted block ml-1">Стоимость (BYN):</label>
                       <input
                         type="number"
                         step="0.01"
                         value={customSetPrice}
                         onChange={e => setCustomSetPrice(e.target.value)}
-                        className="w-full px-3 py-2 bg-black/45 border border-brand-border/80 rounded-lg text-xs text-brand-light placeholder:text-brand-muted/65 focus:outline-none focus:border-brand-accent"
-                        placeholder="Например: 125.00"
+                        className="w-full px-3 py-2 bg-white border border-brand-border rounded-xl text-xs text-brand-light placeholder:text-brand-muted/45 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all shadow-sm"
+                        placeholder="Укажите цену..."
                       />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] font-mono uppercase text-brand-muted block">Объем / Вариант-лейбл:</label>
+                      <label className="text-[11px] font-semibold uppercase text-brand-muted block ml-1">Объем / Вариант-лейбл:</label>
                       <input
                         type="text"
                         value={customSetVolumeLabel}
                         onChange={e => setCustomSetVolumeLabel(e.target.value)}
-                        className="w-full px-3 py-2 bg-black/45 border border-brand-border/80 rounded-lg text-xs text-brand-light placeholder:text-brand-muted/65 focus:outline-none focus:border-brand-accent"
-                        placeholder="Например: Сет 3 шт x 5мл"
+                        className="w-full px-3 py-2 bg-white border border-brand-border rounded-xl text-xs text-brand-light placeholder:text-brand-muted/45 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all shadow-sm"
+                        placeholder="Например: Сет 5 шт x 2мл"
                       />
                     </div>
                   </div>
@@ -985,53 +987,50 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                         onClick={() => {
                           const brandsInBundle = Array.from(new Set(selectedBundleItems.map(item => item.product.brand)));
                           const autoTitle = `Набор отливантов: ${brandsInBundle.join(' & ')} (${selectedBundleItems.length} шт.)`;
-                          const originalPriceSum = selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price as any) || 0), 0);
-                          const suggestedPrice = parseFloat(originalPriceSum.toFixed(2));
                           const autoSizeLabel = `Сет ${selectedBundleItems.length} шт (${selectedBundleItems[0]?.variant?.size || '5мл'})`;
                           
                           setCustomSetName(autoTitle);
-                          setCustomSetPrice(suggestedPrice.toString());
                           setCustomSetVolumeLabel(autoSizeLabel);
                         }}
-                        className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-brand-muted hover:text-brand-light text-[8px] uppercase tracking-wider font-mono rounded transition-colors"
+                        className="px-3 py-1.5 bg-brand-bg hover:bg-white text-brand-muted hover:text-brand-light text-[10px] uppercase tracking-wider font-mono rounded-lg border border-brand-border hover:border-brand-muted/30 transition-all cursor-pointer font-semibold shadow-sm"
                       >
-                        🔄 Сбросить к авто-значениям
+                        🔄 Сбросить имя и объем к авто-значениям
                       </button>
                     </div>
                   )}
                 </div>
               </div>
 
-              <h4 className="text-xs font-bold uppercase tracking-widest text-brand-muted font-mono pt-2">Выбранные отливанты в наборе ({selectedBundleItems.length} шт):</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-brand-muted ml-1 pt-2">Выбранные отливанты в наборе ({selectedBundleItems.length} шт):</h4>
               
-              <div className="p-4 bg-black/10 border border-brand-border/60 rounded-2xl min-h-[300px] flex flex-col justify-between">
+              <div className="p-5 bg-black/[0.015] border border-brand-border rounded-2xl min-h-[300px] flex flex-col justify-between shadow-inner">
                 <div className="space-y-3">
                   {selectedBundleItems.length === 0 ? (
-                    <div className="text-center py-16 text-xs text-brand-muted uppercase tracking-widest">
+                    <div className="text-center py-16 text-xs text-brand-muted uppercase tracking-widest font-medium">
                       Набор пуст.<br/>Выберите отливанты справа ↗
                     </div>
                   ) : (
                     selectedBundleItems.map((item, idx) => (
-                      <div key={idx} className="flex flex-col p-3 bg-white/[0.02] border border-brand-border/40 rounded-xl space-y-2 text-left">
+                      <div key={idx} className="flex flex-col p-4 bg-white border border-brand-border rounded-xl space-y-3 text-left shadow-sm">
                         <div className="flex justify-between items-start gap-2">
                           <div className="min-w-0 flex-1">
-                            <p className="text-[9px] uppercase font-mono text-brand-muted">{item.product.brand}</p>
-                            <h5 className="text-xs text-brand-light font-medium truncate">{item.product.name}</h5>
+                            <p className="text-[9px] uppercase font-semibold tracking-wider text-brand-muted">{item.product.brand}</p>
+                            <h5 className="text-xs text-brand-light font-semibold truncate mt-0.5">{item.product.name}</h5>
                           </div>
                           
                           <button
                             type="button"
                             onClick={() => setSelectedBundleItems(prev => prev.filter((_, i) => i !== idx))}
-                            className="p-1 px-2.5 bg-red-400/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-[9px] font-semibold border-none uppercase cursor-pointer shrink-0"
+                            className="p-1 px-3 bg-red-500/10 hover:bg-red-600 text-red-600 hover:text-white rounded-lg transition-all text-[9.5px] font-bold border-none uppercase cursor-pointer shrink-0"
                           >
                             Удалить
                           </button>
                         </div>
 
                         {/* Interactive Adaptation of Volumes and Prices */}
-                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-brand-border/20">
-                          <div className="space-y-0.5">
-                            <span className="text-[8px] uppercase font-mono tracking-wider text-brand-muted block">Объем в наборе:</span>
+                        <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-brand-border/60">
+                          <div className="space-y-1">
+                            <span className="text-[10px] uppercase font-semibold text-brand-muted block ml-0.5">Объем в наборе:</span>
                             <input
                               type="text"
                               value={item.variant.size}
@@ -1039,12 +1038,12 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                                 const val = e.target.value;
                                 setSelectedBundleItems(prev => prev.map((it, i) => i === idx ? { ...it, variant: { ...it.variant, size: val } } : it));
                               }}
-                              className="w-full px-2 py-1 bg-black/40 border border-brand-border/40 rounded text-[10px] text-brand-light focus:outline-none focus:border-brand-accent"
+                              className="w-full px-2.5 py-1.5 bg-white border border-brand-border rounded-lg text-xs text-brand-light placeholder:text-brand-muted/30 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all"
                               placeholder="Например: 5мл"
                             />
                           </div>
-                          <div className="space-y-0.5">
-                            <span className="text-[8px] uppercase font-mono tracking-wider text-brand-muted block">Цена за ед. (BYN):</span>
+                          <div className="space-y-1">
+                            <span className="text-[10px] uppercase font-semibold text-brand-muted block ml-0.5">Цена за ед. (BYN):</span>
                             <input
                               type="number"
                               step="0.01"
@@ -1053,7 +1052,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                                 const val = parseFloat(e.target.value) || 0;
                                 setSelectedBundleItems(prev => prev.map((it, i) => i === idx ? { ...it, variant: { ...it.variant, price: val } } : it));
                               }}
-                              className="w-full px-2 py-1 bg-black/40 border border-brand-border/40 rounded text-[10px] text-brand-light focus:outline-none focus:border-brand-accent"
+                              className="w-full px-2.5 py-1.5 bg-white border border-brand-border rounded-lg text-xs text-brand-light placeholder:text-brand-muted/30 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all"
                               placeholder="Например: 35"
                             />
                           </div>
@@ -1064,18 +1063,15 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                 </div>
 
                 {selectedBundleItems.length > 0 && (
-                  <div className="border-t border-brand-border/40 pt-4 mt-6 space-y-1 text-xs">
-                    <div className="flex justify-between text-brand-muted">
-                      <span>Сумма деталей</span>
-                      <span>{selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price) || 0), 0).toFixed(2)} BYN</span>
+                  <div className="border-t border-brand-border pt-4 mt-6 space-y-3 text-xs">
+                    <div className="flex justify-between items-center text-brand-muted font-medium">
+                      <span>Суммарная стоимость отливантов:</span>
+                      <span className="font-bold text-sm text-brand-light">
+                        {selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price) || 0), 0).toFixed(2)} BYN
+                      </span>
                     </div>
-                    <div className="flex justify-between text-emerald-400 font-medium font-semibold">
-                      <span>Скидка 15%</span>
-                      <span>-{(selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price) || 0), 0) * 0.15).toFixed(2)} BYN</span>
-                    </div>
-                    <div className="flex justify-between text-brand-light font-bold text-sm pt-2 border-t border-white/5">
-                      <span>Итого набора</span>
-                      <span>{(selectedBundleItems.reduce((sum, item) => sum + (typeof item.variant.price === 'number' ? item.variant.price : parseFloat(item.variant.price) || 0), 0) * 0.85).toFixed(2)} BYN</span>
+                    <div className="p-3 bg-brand-bg border border-brand-border rounded-lg text-[10px] text-brand-muted leading-relaxed">
+                      ℹ️ <strong className="text-brand-light">Внимание:</strong> Скидки общего порядка и автоматическое ценообразование отключены. Итоговая цена набора устанавливается администратором вручную в поле <strong className="text-brand-light">«Стоимость (BYN)»</strong> выше.
                     </div>
                   </div>
                 )}
@@ -1083,7 +1079,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             </div>
 
             {/* Right side: Catalog search & select */}
-            <div className="md:col-span-7 space-y-4">
+            <div className="md:col-span-12 lg:col-span-7 space-y-4">
               <div className="relative">
                 <span className="absolute inset-y-0 left-3 flex items-center text-brand-muted/70">
                   <Search className="w-4 h-4" />
@@ -1092,12 +1088,12 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                   type="text"
                   value={inventSearch}
                   onChange={e => setInventSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 bg-black/20 border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted focus:outline-none focus:border-brand-accent transition-all font-light"
+                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted/60 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all shadow-sm"
                   placeholder="Быстрый поиск парфюмерии по названию или бренду..."
                 />
               </div>
 
-              <div className="bg-black/15 border border-brand-border rounded-2xl p-4 max-h-[350px] overflow-y-auto custom-scrollbar space-y-2">
+              <div className="bg-black/[0.015] border border-brand-border rounded-2xl p-4 max-h-[460px] overflow-y-auto custom-scrollbar space-y-2.5 shadow-inner">
                 {inventProducts
                   .filter(p => !inventSearch || p.name.toLowerCase().includes(inventSearch.toLowerCase()) || p.brand.toLowerCase().includes(inventSearch.toLowerCase()))
                   .slice(0, 30) // Show up to 30 matching products
@@ -1106,11 +1102,11 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                     const variants = (product.variants || []).filter(v => v.variant_type === 'decant' || v.variant_type === 'splitting' || v.size.toLowerCase().includes('ml'));
                     
                     return (
-                      <div key={product.id} className="p-3 bg-white/[0.01] hover:bg-white/[0.03] border border-brand-border/40 rounded-xl space-y-2 last:border-0 pb-3 transition-colors">
+                      <div key={product.id} className="p-3.5 bg-white hover:bg-brand-bg/40 border border-brand-border rounded-xl space-y-2 transition-all shadow-sm">
                         <div className="flex justify-between items-baseline">
                           <div>
-                            <span className="text-[10px] text-brand-muted uppercase font-bold tracking-wider">{product.brand}</span>
-                            <h5 className="text-xs font-semibold text-brand-light leading-tight">{product.name}</h5>
+                            <span className="text-[10px] text-brand-muted uppercase font-semibold tracking-wider">{product.brand}</span>
+                            <h5 className="text-xs font-semibold text-brand-light leading-tight mt-0.5">{product.name}</h5>
                           </div>
                         </div>
 
@@ -1131,10 +1127,10 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                                       setSelectedBundleItems(prev => [...prev, { product, variant }]);
                                     }
                                   }}
-                                  className={`px-2.5 py-1 rounded-lg text-[9px] font-mono tracking-wider transition-all flex items-center gap-1 cursor-pointer select-none ${
+                                  className={`px-2.5 py-1.5 rounded-lg text-[9px] font-mono tracking-wider transition-all flex items-center gap-1 cursor-pointer select-none border ${
                                     isSelected 
-                                      ? 'bg-brand-accent/25 text-brand-accent border border-brand-accent' 
-                                      : 'bg-white/5 text-brand-muted hover:text-brand-light border border-brand-border/40 hover:border-brand-muted'
+                                      ? 'bg-brand-accent/10 text-brand-accent border-brand-accent font-semibold shadow-sm' 
+                                      : 'bg-brand-bg/40 text-brand-muted hover:text-brand-light border-brand-border hover:border-brand-muted/40 transition-colors'
                                   }`}
                                 >
                                   {variant.size} — {(typeof variant.price === 'number' ? variant.price : parseFloat(variant.price as any)).toFixed(0)} BYN 

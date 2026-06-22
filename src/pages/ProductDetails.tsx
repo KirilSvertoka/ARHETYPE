@@ -458,10 +458,7 @@ export default function ProductDetails() {
         </script>
       </Helmet>
 
-      <Link to="/catalog" className="inline-flex items-center gap-2 text-brand-muted hover:text-white mb-8 transition-colors">
-        <ArrowLeft className="w-4 h-4" />
-        <span className="text-sm font-medium uppercase tracking-wider">{t('backToCatalog')}</span>
-      </Link>
+      <div className="h-6" />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         <div className="lg:col-span-7 space-y-6" id="product-gallery">

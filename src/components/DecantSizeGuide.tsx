@@ -102,7 +102,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
       visualInfo = {
         liquidHeight: '28%',
         bottleHeight: '60px',
-        bottleWidth: '16px',
+        bottleWidth: '24px',
         compareHeight: '52px',
         compareOffset: '14px',
         comparisonRu: 'размером с mini-помаду (легко поместится в визитницу)',
@@ -114,7 +114,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
       visualInfo = {
         liquidHeight: '52%',
         bottleHeight: '82px',
-        bottleWidth: '18px',
+        bottleWidth: '28px',
         compareHeight: '75px',
         compareOffset: '8px',
         comparisonRu: 'высотой с классический блеск для губ / зажигалку',
@@ -126,7 +126,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
       visualInfo = {
         liquidHeight: '78%',
         bottleHeight: '105px',
-        bottleWidth: '22px',
+        bottleWidth: '32px',
         compareHeight: '86px',
         compareOffset: '0px',
         comparisonRu: 'высотой со стандартную plastic-карту банковского формата',
@@ -139,7 +139,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
       visualInfo = {
         liquidHeight: '85%',
         bottleHeight: '120px',
-        bottleWidth: isFullBottle ? '45px' : '28px',
+        bottleWidth: isFullBottle ? '45px' : '36px',
         compareHeight: '86px',
         compareOffset: '0px',
         comparisonRu: isFullBottle 
@@ -328,7 +328,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
                   <span className="text-[9px] font-bold font-mono text-brand-light drop-shadow-md tracking-tighter uppercase whitespace-nowrap">
                     {isRemainder 
                       ? (language === 'be' ? 'Астатак' : 'Остаток') 
-                      : (isSet ? `${setCount}×${singleVolume} мл` : `${singleVolume} мл`)}
+                      : `${singleVolume} мл`}
                   </span>
                 </div>
               </motion.div>
@@ -336,7 +336,7 @@ export default function DecantSizeGuide({ selectedSize, variantType }: DecantSiz
               <span className="text-[8px] font-mono text-brand-accent mt-1 select-none font-bold whitespace-nowrap">
                 {isRemainder 
                   ? (language === 'be' ? 'Астатак' : 'Остаток') 
-                  : (singleVolume <= 3 ? '75 мм' : singleVolume <= 6 ? '82 мм' : singleVolume <= 15 ? '105 мм' : '120 мм')}
+                  : (singleVolume <= 3 ? '56 мм' : singleVolume <= 6 ? '75 мм' : singleVolume <= 15 ? '105 мм' : '120 мм')}
               </span>
             </div>
           </div>

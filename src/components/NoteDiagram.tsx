@@ -296,6 +296,21 @@ export default function NoteDiagram({
   const activeMeta = tierMetadata[activeTier];
   const info = hoveredNote ? getNoteMetadata(hoveredNote, language) : null;
 
+  // Check if each specific tier duration was specified by the admin
+  const isTopDurationSpecified = language === 'be' ? !!topNotesDuration_be?.trim() : !!topNotesDuration?.trim();
+  const isHeartDurationSpecified = language === 'be' ? !!heartNotesDuration_be?.trim() : !!heartNotesDuration?.trim();
+  const isBaseDurationSpecified = language === 'be' ? !!baseNotesDuration_be?.trim() : !!baseNotesDuration?.trim();
+
+  // If none of the 3 notes durations are specified by the admin, we consider duration unspecified overall
+  const hasAnyDuration = isTopDurationSpecified || isHeartDurationSpecified || isBaseDurationSpecified;
+
+  // Is the currently active tier's duration specified
+  const isCurrentDurationSpecified = activeTier === 'top' 
+    ? isTopDurationSpecified 
+    : activeTier === 'heart'
+      ? isHeartDurationSpecified
+      : isBaseDurationSpecified;
+
   const getTopButtonText = () => {
     if (language === 'be') {
       if (topNotesDuration_be) {
@@ -357,10 +372,12 @@ export default function NoteDiagram({
             {language === 'be' ? 'Мультысенсарная піраміда' : 'Мультисенсорная пирамида раскрытия'}
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-[10px] font-mono text-brand-muted bg-brand-bg px-2 py-0.5 border border-brand-border/40">
-          <Clock className="w-3 h-3" />
-          <span>{language === 'be' ? 'ЧАС РАСКРЫЦЦЯ' : 'ВРЕМЯ РАСКРЫТИЯ'}</span>
-        </div>
+        {hasAnyDuration && (
+          <div className="flex items-center gap-1.5 text-[10px] font-mono text-brand-muted bg-brand-bg px-2 py-0.5 border border-brand-border/40">
+            <Clock className="w-3 h-3" />
+            <span>{language === 'be' ? 'ЧАС РАСКРЫЦЦЯ' : 'ВРЕМЯ РАСКРЫТИЯ'}</span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
@@ -370,7 +387,7 @@ export default function NoteDiagram({
             {/* Pyramid Level 3 (Top) */}
             <button
                onClick={() => { setActiveTier('top'); setHoveredNote(null); }}
-              className={`relative h-14 w-full flex flex-col items-center justify-center border transition-all duration-300 ${
+              className={`relative ${hasAnyDuration ? 'h-14' : 'h-11 sm:h-12'} w-full flex flex-col items-center justify-center border transition-all duration-300 ${
                 activeTier === 'top'
                   ? 'bg-yellow-500/10 border-yellow-500/60 shadow-[0_0_15px_rgba(234,179,8,0.15)] text-brand-light'
                   : 'bg-brand-bg/40 border-brand-border/60 text-brand-muted hover:border-yellow-500/30 hover:bg-brand-hover/5'
@@ -384,15 +401,17 @@ export default function NoteDiagram({
               <span className="text-[10px] font-bold uppercase tracking-[0.15em]">
                 {language === 'be' ? 'ВЕРХНІЯ' : 'ВЕРХНИЕ'}
               </span>
-              <span className="text-[8px] font-mono tracking-wider opacity-80 mt-1">
-                {getTopButtonText()}
-              </span>
+              {hasAnyDuration && (
+                <span className="text-[8px] font-mono tracking-wider opacity-80 mt-1">
+                  {getTopButtonText()}
+                </span>
+              )}
             </button>
 
             {/* Pyramid Level 2 (Heart) */}
             <button
               onClick={() => { setActiveTier('heart'); setHoveredNote(null); }}
-              className={`relative h-16 w-full flex flex-col items-center justify-center border transition-all duration-300 ${
+              className={`relative ${hasAnyDuration ? 'h-16' : 'h-12 sm:h-13'} w-full flex flex-col items-center justify-center border transition-all duration-300 ${
                 activeTier === 'heart'
                   ? 'bg-pink-500/10 border-pink-500/60 shadow-[0_0_15px_rgba(236,72,103,0.15)] text-brand-light'
                   : 'bg-brand-bg/40 border-brand-border/60 text-brand-muted hover:border-pink-500/30 hover:bg-brand-hover/5'
@@ -406,15 +425,17 @@ export default function NoteDiagram({
               <span className="text-[10px] font-bold uppercase tracking-[0.15em]">
                 {language === 'be' ? 'СЯРЭДНІЯ' : 'СЕРДЦЕ'}
               </span>
-              <span className="text-[8px] font-mono tracking-wider opacity-80 mt-1">
-                {getHeartButtonText()}
-              </span>
+              {hasAnyDuration && (
+                <span className="text-[8px] font-mono tracking-wider opacity-80 mt-1">
+                  {getHeartButtonText()}
+                </span>
+              )}
             </button>
 
             {/* Pyramid Level 1 (Base) */}
             <button
               onClick={() => { setActiveTier('base'); setHoveredNote(null); }}
-              className={`relative h-18 w-full flex flex-col items-center justify-center border transition-all duration-300 ${
+              className={`relative ${hasAnyDuration ? 'h-18' : 'h-13 sm:h-14'} w-full flex flex-col items-center justify-center border transition-all duration-300 ${
                 activeTier === 'base'
                   ? 'bg-amber-500/10 border-amber-500/60 shadow-[0_0_15px_rgba(217,119,6,0.15)] text-brand-light'
                   : 'bg-brand-bg/40 border-brand-border/60 text-brand-muted hover:border-amber-500/30 hover:bg-brand-hover/5'
@@ -426,9 +447,11 @@ export default function NoteDiagram({
               <span className="text-[10px] font-bold uppercase tracking-[0.15em]">
                 {language === 'be' ? 'БАЗАВЫЯ' : 'БАЗА / ШЛЕЙФ'}
               </span>
-              <span className="text-[8px] font-mono tracking-wider opacity-80 mt-1">
-                {getBaseButtonText()}
-              </span>
+              {hasAnyDuration && (
+                <span className="text-[8px] font-mono tracking-wider opacity-80 mt-1">
+                  {getBaseButtonText()}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -441,12 +464,14 @@ export default function NoteDiagram({
               <span className={`inline-flex items-center px-2 py-0.5 border text-[9px] font-mono uppercase tracking-widest ${activeMeta.accentColor}`}>
                 {language === 'be' ? activeMeta.titleBe : activeMeta.titleRu}
               </span>
-              <p className="text-xs text-brand-light font-serif mt-1.5 leading-tight">
+              <p className={`text-brand-light font-serif mt-1.5 leading-tight ${isCurrentDurationSpecified ? 'text-xs' : 'text-sm sm:text-base font-medium'}`}>
                 {language === 'be' ? activeMeta.subtitleBe : activeMeta.subtitleRu}
               </p>
-              <p className="text-[10px] text-brand-muted uppercase tracking-wider font-mono">
-                {language === 'be' ? activeMeta.timeBe : activeMeta.timeRu}
-              </p>
+              {isCurrentDurationSpecified && (
+                <p className="text-[10px] text-brand-muted uppercase tracking-wider font-mono">
+                  {language === 'be' ? activeMeta.timeBe : activeMeta.timeRu}
+                </p>
+              )}
             </div>
 
             {/* List of active notes */}

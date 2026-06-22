@@ -292,7 +292,7 @@ export default function Home() {
 
             {/* Slider Dots Indicator */}
             {config.hero.slides.length > 1 && (
-              <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 z-25 flex gap-2.5 items-center">
+              <div className="absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 z-25 flex gap-2.5 items-center">
                 {config.hero.slides.map((_, idx) => (
                   <button
                     key={idx}
@@ -328,8 +328,8 @@ export default function Home() {
           </>
         )}
 
-        {/* Scrolling bottom helper line */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 pointer-events-none opacity-80">
+        {/* Scrolling bottom helper line (hidden on mobile, perfectly spaced on desktop) */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 hidden md:flex flex-col items-center gap-1.5 pointer-events-none opacity-80">
           <span className="text-[9px] tracking-[0.3em] uppercase text-white/50 font-semibold mb-1">
             {language === 'be' ? 'гартаць' : 'листать'}
           </span>
