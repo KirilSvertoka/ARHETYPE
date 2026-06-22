@@ -45,6 +45,7 @@ export default function Home() {
   }, []);
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeBrandIdx, setActiveBrandIdx] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
   const touchStartX = useRef<number | null>(null);
@@ -343,63 +344,154 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 2. MINIMALIST NEAT BLOCKS OF POPULAR BRANDS */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full border-b border-brand-border/40">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-xs uppercase tracking-[0.3em] text-brand-accent font-semibold mb-3">
-            {language === 'be' ? 'СЕЛЕКТЫЎНЫЯ БРЭНДЫ' : 'СЕЛЕКТИВНЫЕ БРЕНДЫ'}
-          </p>
-          <h2 className="text-3xl md:text-4xl font-serif text-brand-light leading-snug">
-            {language === 'be' ? 'Лепшыя парфумерныя дамы' : 'Лучшие парфюмерные дома'}
-          </h2>
-          <div className="h-[1px] w-12 bg-brand-accent mx-auto mt-6" />
-        </div>
+      {/* 2. IMMERSIVE FULL-SCREEN POPULAR BRANDS ACCORDION */}
+      <motion.section
+        initial={{ opacity: 0, scale: 0.99 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.9, ease: "easeOut" }}
+        className="relative w-full h-[550px] md:h-[80vh] lg:h-screen min-h-[500px] overflow-hidden bg-zinc-950 border-b border-brand-border/40 flex flex-col md:flex-row select-none"
+      >
+        {(() => {
+          const activeBrand = (config.popularBrands && config.popularBrands.length > 0
+            ? config.popularBrands.filter((b: any) => b.active !== false)
+            : POPULAR_BRANDS
+          )[activeBrandIdx];
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          return (
+            <Link
+              to={`/catalog?brand=${encodeURIComponent(activeBrand?.name || '')}`}
+              className="absolute top-0 left-0 w-full md:w-[72%] lg:w-[76%] xl:w-[80%] h-full z-20 group/app-brand-main block overflow-hidden cursor-pointer"
+            >
+              {/* Active brand background image with crossfade */}
+              <div className="absolute inset-0 z-0">
+                <AnimatePresence mode="popLayout">
+                  <motion.div
+                    key={activeBrandIdx}
+                    initial={{ opacity: 0, scale: 1.02 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.7, ease: "easeOut" }}
+                    className="absolute inset-0 w-full h-full"
+                  >
+                    <img
+                      src={activeBrand?.image}
+                      alt=""
+                      className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-[1.2s] ease-out group-hover/app-brand-main:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
+                    {/* Smooth gradient with extra opacity towards the bottom for readable overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10 md:bg-gradient-to-r md:from-black/80 md:via-black/35 md:to-transparent" />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Brand details overlay - lowered down, elegant, and thin typography */}
+              <div className="absolute bottom-16 left-6 md:bottom-24 md:left-12 lg:left-16 z-20 max-w-xs md:max-w-md pointer-events-none">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeBrandIdx}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.4 }}
+                    className="space-y-2 md:space-y-3"
+                  >
+                    <h3 className="font-serif text-3xl md:text-5xl tracking-[0.06em] uppercase text-white font-extralight leading-none">
+                      {language === 'be' && activeBrand?.name_be ? activeBrand?.name_be : activeBrand?.name}
+                    </h3>
+                    <p className="text-xs md:text-sm font-extralight text-white/50 tracking-[0.03em] font-sans leading-relaxed max-w-xs md:max-w-md">
+                      {language === 'be' && activeBrand?.desc_be ? activeBrand?.desc_be : activeBrand?.desc}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </Link>
+          );
+        })()}
+
+        {/* Right side desktop vertical solid-color stripes container */}
+        <div className="hidden md:flex absolute top-0 right-0 h-full z-30 w-[28%] lg:w-[24%] xl:w-[20%] flex-row border-l border-white/5 select-none bg-zinc-950/95 backdrop-blur-md">
           {(config.popularBrands && config.popularBrands.length > 0
             ? config.popularBrands.filter((b: any) => b.active !== false)
             : POPULAR_BRANDS
-          ).map((brand, bIdx) => (
-            <motion.div
-              key={brand.name + '-' + bIdx}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: bIdx * 0.08 }}
-            >
-              <Link
-                to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
-                className="group relative block aspect-[4/3] w-full overflow-hidden border border-brand-border/40 hover:border-brand-accent/40 transition-colors"
+          ).map((brand, bIdx) => {
+            const isActive = bIdx === activeBrandIdx;
+            return (
+              <div
+                key={brand.name + '-strip-' + bIdx}
+                onMouseEnter={() => setActiveBrandIdx(bIdx)}
+                className={`relative h-full flex-1 border-r border-white/5 cursor-pointer overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] select-none group/strip ${
+                  isActive ? 'flex-[1.5] bg-zinc-900' : 'hover:flex-[1.25] hover:bg-zinc-900/60 bg-zinc-950'
+                }`}
               >
-                {/* Image zoom effect */}
-                <img
-                  src={brand.image}
-                  alt={brand.name}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
-                />
+                {/* Clean, gold vertical bar highlight indicator line for active state */}
+                <div className={`absolute top-0 left-0 w-[2px] h-full transition-all duration-500 ${
+                  isActive ? 'bg-brand-accent opacity-100' : 'bg-transparent opacity-0'
+                }`} />
 
-                {/* Cover overlay */}
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/55 transition-colors duration-500" />
-
-                {/* Text Layout */}
-                <div className="absolute inset-0 p-8 flex flex-col justify-end items-center text-center text-white">
-                  <span className="text-xs tracking-[0.15em] text-white/70 uppercase mb-1.5 font-light">
-                    {language === 'be' ? 'Калекцыя' : 'Коллекция'}
-                  </span>
-                  <h3 className="font-serif text-2xl tracking-[0.05em] uppercase border-b border-white/20 pb-2 mb-2 w-fit">
-                    {language === 'be' && brand.name_be ? brand.name_be : brand.name}
-                  </h3>
-                  <p className="text-xs font-sans text-white/60 uppercase tracking-widest max-w-xs transition-opacity duration-300 opacity-60 group-hover:opacity-100">
-                    {language === 'be' && brand.desc_be ? brand.desc_be : brand.desc}
-                  </p>
+                {/* Vertical Rotated text with short title inside the solid stripe */}
+                <div className="absolute inset-0 flex flex-col justify-end items-center pb-12 z-20">
+                  <div
+                    className="flex items-center gap-3.5 transition-transform duration-500 whitespace-nowrap"
+                    style={{
+                      writingMode: 'vertical-rl',
+                      transform: 'rotate(180deg)'
+                    }}
+                  >
+                    <span className={`text-[9px] tracking-[0.2em] uppercase font-mono transition-colors duration-300 ${
+                      isActive ? 'text-brand-accent font-medium' : 'text-white/40 group-hover/strip:text-white/70'
+                    }`}>
+                      {language === 'be' && brand.name_be ? brand.name_be : brand.name}
+                    </span>
+                    <span className={`w-2.5 h-[1px] transition-all duration-500 ${
+                      isActive ? 'bg-brand-accent w-5' : 'bg-white/10 group-hover/strip:bg-white/25'
+                    }`} />
+                    <span className={`text-[8px] tracking-[0.1em] uppercase font-sans transition-colors duration-300 ${
+                      isActive ? 'text-white/80 font-medium' : 'text-white/25 group-hover/strip:text-white/50'
+                    }`}>
+                      {bIdx + 1 < 10 ? `0${bIdx + 1}` : bIdx + 1}
+                    </span>
+                  </div>
                 </div>
-              </Link>
-            </motion.div>
-          ))}
+
+                {/* Clean glassmorphic border reflection */}
+                <div className="absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-white/5 to-transparent pointer-events-none" />
+              </div>
+            );
+          })}
         </div>
-      </section>
+
+        {/* Mobile bottom solid picker selector */}
+        <div className="md:hidden absolute bottom-6 left-0 w-full z-30 px-4">
+          <p className="text-[8px] tracking-[0.15em] text-white/35 uppercase mb-2 text-center font-mono">
+            {language === 'be' ? 'Абярыце парфумерны дом' : 'Выберите парфюмерный дом'}
+          </p>
+          <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none px-0.5">
+            {(config.popularBrands && config.popularBrands.length > 0
+              ? config.popularBrands.filter((b: any) => b.active !== false)
+              : POPULAR_BRANDS
+            ).map((brand, bIdx) => {
+              const isActive = bIdx === activeBrandIdx;
+              return (
+                <button
+                  key={brand.name + '-mob-' + bIdx}
+                  onClick={() => setActiveBrandIdx(bIdx)}
+                  className={`relative flex-shrink-0 min-w-[75px] h-[38px] border overflow-hidden transition-all duration-300 flex items-center justify-center px-3 rounded-none ${
+                    isActive ? 'border-brand-accent bg-zinc-900/90' : 'border-white/10 bg-zinc-950/90'
+                  }`}
+                >
+                  <span className={`relative z-10 text-[8px] font-bold tracking-wider uppercase text-center leading-tight transition-colors duration-300 ${
+                    isActive ? 'text-brand-accent' : 'text-white/60'
+                  }`}>
+                    {language === 'be' && brand.name_be ? brand.name_be : brand.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </motion.section>
 
       {/* INTERACTIVE SCENT SELECTOR */}
       <ScentQuiz />
