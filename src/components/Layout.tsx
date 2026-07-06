@@ -10,6 +10,7 @@ import CartDrawer from './CartDrawer';
 import Newsletter from './Newsletter';
 import Loader from './Loader';
 import SearchOverlay from './SearchOverlay';
+import CallbackForm from './CallbackForm';
 import { motion, AnimatePresence } from 'motion/react';
 import { trackGoal } from '../utils/analytics';
 
@@ -21,6 +22,7 @@ export default function Layout() {
   const { items, setIsCartOpen, justAdded } = useCart();
   const { wishlist } = useWishlist();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCallbackOpen, setIsCallbackOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const location = useLocation();
   const adminPath = (import.meta as any).env.VITE_ADMIN_PATH?.replace(/^\//, '') || 'admin';
@@ -307,6 +309,15 @@ export default function Layout() {
                           <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-brand-light scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
                         </span>
                       </Link>
+                      <button 
+                        onClick={() => setIsCallbackOpen(true)}
+                        className="text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors relative group py-1 cursor-pointer focus:outline-none"
+                      >
+                        <span className="relative">
+                          {t('requestCallback')}
+                          <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-brand-light scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+                        </span>
+                      </button>
                     </nav>
                   </div>
                   
@@ -443,6 +454,15 @@ export default function Layout() {
                   </div>
                   <Link to="/about" className="text-lg font-medium uppercase tracking-wider text-brand-light">{t('about')}</Link>
                   <Link to="/contacts" className="text-lg font-medium uppercase tracking-wider text-brand-light">{t('contacts')}</Link>
+                  <button 
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setIsCallbackOpen(true);
+                    }}
+                    className="text-left text-lg font-medium uppercase tracking-wider text-brand-light cursor-pointer focus:outline-none"
+                  >
+                    {t('requestCallback')}
+                  </button>
                 </nav>
 
                 <div className="mt-12 pt-8 border-t border-brand-border space-y-6">
@@ -486,7 +506,7 @@ export default function Layout() {
       <footer className="bg-brand-hover border-t border-brand-border mt-24">
         <Newsletter />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 sm:gap-8 border-b border-brand-border pb-12">
+          <div className={`grid grid-cols-1 md:${settings?.showFooterContacts !== false ? 'grid-cols-4' : 'grid-cols-3'} gap-12 sm:gap-8 border-b border-brand-border pb-12`}>
             <div className="space-y-6">
               <Link to="/" className="inline-block">
                 <span className="font-serif text-2xl font-medium tracking-tight uppercase">АРХЕТИП</span>
@@ -524,43 +544,45 @@ export default function Layout() {
               </ul>
             </div>
 
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-widest text-brand-light mb-6">
-                {language === 'be' ? 'Кантакты' : 'Контакты'}
-              </h4>
-              <ul className="space-y-4 text-sm text-brand-muted">
-                {settings?.phone && (
-                  <li className="flex items-start gap-2">
-                    <Phone className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
-                    <a 
-                      href={`tel:${settings.phone.replace(/\D/g, '')}`} 
-                      className="hover:text-brand-accent transition-colors"
-                      onClick={() => trackGoal('phone_click', 'footer')}
-                    >
-                      {settings.phone}
-                    </a>
-                  </li>
-                )}
-                {settings?.email && (
-                  <li className="flex items-start gap-2">
-                    <Mail className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
-                    <a 
-                      href={`mailto:${settings.email}`} 
-                      className="hover:text-brand-accent transition-colors"
-                      onClick={() => trackGoal('email_click', 'footer')}
-                    >
-                      {settings.email}
-                    </a>
-                  </li>
-                )}
-                {settings?.address && (
-                  <li className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
-                    <span>{language === 'be' ? (settings.address_be || settings.address) : settings.address}</span>
-                  </li>
-                )}
-              </ul>
-            </div>
+            {settings?.showFooterContacts !== false && (
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-widest text-brand-light mb-6">
+                  {language === 'be' ? 'Кантакты' : 'Контакты'}
+                </h4>
+                <ul className="space-y-4 text-sm text-brand-muted">
+                  {settings?.phone && (
+                    <li className="flex items-start gap-2">
+                      <Phone className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
+                      <a 
+                        href={`tel:${settings.phone.replace(/\D/g, '')}`} 
+                        className="hover:text-brand-accent transition-colors"
+                        onClick={() => trackGoal('phone_click', 'footer')}
+                      >
+                        {settings.phone}
+                      </a>
+                    </li>
+                  )}
+                  {settings?.email && (
+                    <li className="flex items-start gap-2">
+                      <Mail className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
+                      <a 
+                        href={`mailto:${settings.email}`} 
+                        className="hover:text-brand-accent transition-colors"
+                        onClick={() => trackGoal('email_click', 'footer')}
+                      >
+                        {settings.email}
+                      </a>
+                    </li>
+                  )}
+                  {settings?.address && (
+                    <li className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
+                      <span>{language === 'be' ? (settings.address_be || settings.address) : settings.address}</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
           
           <div className="pt-12 flex flex-col md:flex-row justify-between items-center gap-8">
@@ -608,6 +630,28 @@ export default function Layout() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Global Floating Action Button & Callback Request Modal */}
+      {!isAdminPage && (
+        <>
+          <motion.button
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.3 }}
+            onClick={() => setIsCallbackOpen(true)}
+            className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 px-4 py-3 bg-brand-accent text-white rounded-none shadow-lg hover:bg-brand-accent-hover transition-all flex items-center gap-2.5 border border-brand-accent/20 cursor-pointer"
+            aria-label={t('contactUs')}
+          >
+            <MessageCircle className="w-4 h-4 text-white" />
+            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold hidden sm:inline">{t('contactUs')}</span>
+          </motion.button>
+
+          <CallbackForm 
+            isOpen={isCallbackOpen} 
+            onClose={() => setIsCallbackOpen(false)} 
+          />
+        </>
+      )}
     </>
   );
 }

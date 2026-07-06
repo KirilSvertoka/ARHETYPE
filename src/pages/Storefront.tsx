@@ -555,19 +555,6 @@ export default function Storefront() {
         <CallbackForm />
       </section>
 
-      {/* Floating Action Button */}
-      <motion.button
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.3 }}
-        onClick={scrollToCallback}
-        className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 px-4 py-3 bg-brand-accent text-white rounded-none shadow-lg hover:bg-brand-accent-hover transition-all flex items-center gap-2.5 border border-brand-accent/20"
-        aria-label={t('contactUs')}
-      >
-        <MessageCircle className="w-4 h-4" />
-        <span className="text-[10px] uppercase tracking-[0.2em] font-semibold hidden sm:inline">{t('contactUs')}</span>
-      </motion.button>
-
       {/* Top-level Filters Sidebar Overlay (Moved out of sticky container to prevent viewport cropping / nesting bugs) */}
       <AnimatePresence>
         {isFilterOpen && (

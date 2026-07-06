@@ -241,6 +241,7 @@ export interface GeneralSettings {
   showContactsPhone?: boolean;
   showContactsAddress?: boolean;
   showContactsSocials?: boolean;
+  showFooterContacts?: boolean;
   contactsTitle?: string;
   contactsTitle_be?: string;
   contactsDescription?: string;

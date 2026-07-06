@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Product, getVariantType, GeneralSettings, getConcentrationLabel } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle, Send, Star, ChevronDown, Sun, Moon, Compass, Sparkles } from 'lucide-react';
+import { ArrowLeft, X, ChevronLeft, ChevronRight, ShoppingBag, Minus, Plus, Info, Truck, CheckCircle, Send, Star, ChevronDown, Sun, Moon, Compass, Sparkles, PhoneCall } from 'lucide-react';
+import CallbackForm from '../components/CallbackForm';
 import { Helmet } from 'react-helmet-async';
 import NoteDiagram from '../components/NoteDiagram';
 import DecantSizeGuide from '../components/DecantSizeGuide';
@@ -58,6 +59,7 @@ export default function ProductDetails() {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const [quantity, setQuantity] = useState(1);
+  const [isCallbackModalOpen, setIsCallbackModalOpen] = useState(false);
   const [activeNotesAccordion, setActiveNotesAccordion] = useState<'top' | 'heart' | 'base' | null>('top');
   const [showSizeGuide, setShowSizeGuide] = useState(false);
 
@@ -698,6 +700,16 @@ export default function ProductDetails() {
                   <ShoppingBag className="w-3.5 h-3.5 sm:w-4 h-4" />
                   <span>{t('addToCart')}</span>
                 </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsCallbackModalOpen(true)}
+                  disabled={selectedVariantId ? product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 : false}
+                  className="flex-1 px-3 sm:px-6 h-10 sm:h-12 bg-transparent text-brand-light border border-brand-border hover:bg-brand-hover hover:border-brand-light/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 text-xs whitespace-nowrap"
+                >
+                  <PhoneCall className="w-3.5 h-3.5 sm:w-4 h-4 text-brand-accent" />
+                  <span>{language === 'be' ? 'У 1 клік' : 'В 1 клик'}</span>
+                </motion.button>
               </div>
             </div>
           )}
@@ -1099,6 +1111,14 @@ export default function ProductDetails() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {product && (
+        <CallbackForm 
+          isOpen={isCallbackModalOpen} 
+          onClose={() => setIsCallbackModalOpen(false)} 
+          productName={`${product.brand} ${product.name} ${selectedVariantId ? `(${product.variants?.find(v => v.id === selectedVariantId)?.size})` : ''}`}
+        />
+      )}
     </motion.div>
   );
 }

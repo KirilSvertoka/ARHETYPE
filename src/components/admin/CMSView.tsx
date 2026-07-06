@@ -644,6 +644,23 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
           </div>
 
           <div className="pt-8 border-t border-brand-border">
+            <h4 className="text-[10px] font-bold text-brand-muted uppercase tracking-[0.2em] mb-6 underline decoration-brand-accent/30 underline-offset-8">Отображение в подвале (Footer)</h4>
+            <div className="p-4 bg-white/5 border border-brand-border rounded-xl flex items-center justify-between">
+              <div>
+                <h5 className="text-sm font-medium text-brand-light">Отображать колонку "Контакты" в подвале</h5>
+                <p className="text-xs text-brand-muted mt-1">Включает или выключает отображение контактов (телефон, email, адрес) в футере сайта.</p>
+              </div>
+              <label className="flex items-center cursor-pointer">
+                <div className="relative">
+                  <input type="checkbox" className="sr-only" checked={localGeneralSettings.showFooterContacts !== false} onChange={e => setLocalGeneralSettings({...localGeneralSettings, showFooterContacts: e.target.checked})} />
+                  <div className={`block w-10 h-6 rounded-full transition-colors ${localGeneralSettings.showFooterContacts !== false ? 'bg-brand-accent' : 'bg-brand-muted/30'}`}></div>
+                  <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${localGeneralSettings.showFooterContacts !== false ? 'transform translate-x-4' : ''}`}></div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-brand-border">
             <h4 className="text-[10px] font-bold text-brand-muted uppercase tracking-[0.2em] mb-6 underline decoration-brand-accent/30 underline-offset-8">Юридические данные</h4>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-4 p-4 bg-white/5 border border-brand-border rounded-xl">
