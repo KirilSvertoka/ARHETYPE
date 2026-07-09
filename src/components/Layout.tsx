@@ -506,7 +506,7 @@ export default function Layout() {
       <footer className="bg-brand-hover border-t border-brand-border mt-24">
         <Newsletter />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className={`grid grid-cols-1 md:${settings?.showFooterContacts !== false ? 'grid-cols-4' : 'grid-cols-3'} gap-12 sm:gap-8 border-b border-brand-border pb-12`}>
+          <div className={`grid grid-cols-1 ${settings?.showFooterContacts !== false ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-12 sm:gap-8 border-b border-brand-border pb-12`}>
             <div className="space-y-6">
               <Link to="/" className="inline-block">
                 <span className="font-serif text-2xl font-medium tracking-tight uppercase">АРХЕТИП</span>
