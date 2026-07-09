@@ -550,18 +550,6 @@ export default function Layout() {
                   {language === 'be' ? 'Кантакты' : 'Контакты'}
                 </h4>
                 <ul className="space-y-4 text-sm text-brand-muted">
-                  {settings?.phone && (
-                    <li className="flex items-start gap-2">
-                      <Phone className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
-                      <a 
-                        href={`tel:${settings.phone.replace(/\D/g, '')}`} 
-                        className="hover:text-brand-accent transition-colors"
-                        onClick={() => trackGoal('phone_click', 'footer')}
-                      >
-                        {settings.phone}
-                      </a>
-                    </li>
-                  )}
                   {settings?.email && (
                     <li className="flex items-start gap-2">
                       <Mail className="w-4 h-4 mt-0.5 text-brand-accent shrink-0" />
