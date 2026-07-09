@@ -260,7 +260,7 @@ export default function Layout() {
                       >
                         <Link 
                           to="/catalog"
-                          className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors focus:outline-none relative group py-1"
+                          className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors focus:outline-none relative group py-1 whitespace-nowrap"
                         >
                           <span className="relative">
                             {t('catalog')}
@@ -297,27 +297,18 @@ export default function Layout() {
                           )}
                         </AnimatePresence>
                       </div>
-                      <Link to="/about" className="text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors relative group py-1">
+                      <Link to="/about" className="text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors relative group py-1 whitespace-nowrap">
                         <span className="relative">
                           {t('about')}
                           <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-brand-light scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
                         </span>
                       </Link>
-                      <Link to="/contacts" className="text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors relative group py-1">
+                      <Link to="/contacts" className="text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors relative group py-1 whitespace-nowrap">
                         <span className="relative">
                           {t('contacts')}
                           <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-brand-light scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
                         </span>
                       </Link>
-                      <button 
-                        onClick={() => setIsCallbackOpen(true)}
-                        className="text-[11px] font-medium uppercase tracking-[0.2em] text-brand-muted hover:text-brand-light transition-colors relative group py-1 cursor-pointer focus:outline-none"
-                      >
-                        <span className="relative">
-                          {t('requestCallback')}
-                          <span className="absolute -bottom-1 left-0 w-full h-[1px] bg-brand-light scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
-                        </span>
-                      </button>
                     </nav>
                   </div>
                   
