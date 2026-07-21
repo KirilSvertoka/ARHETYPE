@@ -337,10 +337,25 @@ export default function Storefront() {
   } else if (activeCategory === 'set' && activeBrand === 'All') {
     pageTitle = 'Парфюмерные наборы и аромабоксы в РБ | Подарочные сеты';
     pageDescription = 'Подарочные наборы нишевой парфюмерии и эксклюзивные аромабоксы. Купить сет оригиналов с распивом в Гродно с доставкой. Идеальный подарок!';
+  } else if ((activeCategory === 'eau_de_toilette' || activeCategory === 'toilet_water') && activeBrand === 'All') {
+    pageTitle = 'Туалетная вода в Гродно — купить оригинал с доставкой по Беларуси | АРХЕТИП';
+    pageDescription = 'Туалетная вода (EDT) в Гродно: оригинальная нишевая парфюмерия на распив и во флаконах. Доставка духов курьером по Гродно и почтой по всей Беларуси.';
+  } else if (activeCategory === 'perfume' && activeBrand === 'All') {
+    pageTitle = 'Духи в Гродно и Беларуси — купить оригинальный парфюм | АРХЕТИП';
+    pageDescription = 'Купить духи в Гродно с доставкой по Беларуси. Оригинальная нишевая парфюмерия: распив, отливанты и полные флаконы. Гарантия подлинности.';
   } else if (activeBrand !== 'All' && activeCategory === 'All' && activeGenderTab === 'All' && selectedFamilies.length === 0) {
-    pageTitle = `Парфюмерия ${activeBrand} купить в РБ | Распив и оригинальные флаконы`;
-    pageDescription = `Уникальные ароматы от ${activeBrand}. Только оригинальная селективная парфюмерия. Заказывайте на распив или покупайте полный флакон с доставкой по Гродно и Беларуси.`;
+    pageTitle = `${activeBrand} — купить духи в Гродно и Беларуси | Распив и флаконы`;
+    pageDescription = `Парфюмерия ${activeBrand}: оригинальные духи и туалетная вода. Распив и полные флаконы с доставкой по Гродно и всей Беларуси. Магазин АРХЕТИП.`;
   }
+
+  const catalogCanonicalParams = new URLSearchParams();
+  if (activeBrand !== 'All') catalogCanonicalParams.set('brand', activeBrand);
+  if (activeCategory !== 'All') catalogCanonicalParams.set('category', activeCategory);
+  if (activeGenderTab !== 'All') catalogCanonicalParams.set('gender', activeGenderTab);
+  const catalogCanonicalQs = catalogCanonicalParams.toString();
+  const catalogCanonical = catalogCanonicalQs
+    ? `https://archetype.by/catalog?${catalogCanonicalQs}`
+    : 'https://archetype.by/catalog';
 
   const breadcrumbData = {
     "@context": "https://schema.org",
@@ -375,7 +390,11 @@ export default function Storefront() {
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://archetype.by/catalog" />
+        <meta property="og:url" content={catalogCanonical} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <link rel="canonical" href={catalogCanonical} />
         <script type="application/ld+json">
           {JSON.stringify(breadcrumbData)}
         </script>
@@ -407,7 +426,19 @@ export default function Storefront() {
           {categoryName}
         </h1>
         <p className="text-sm text-brand-muted font-light max-w-xl mx-auto leading-relaxed">
-          {t('exploreCatalog')}
+          {activeBrand !== 'All' && activeCategory === 'All'
+            ? (language === 'be'
+              ? `Арыгінальныя духі ${activeBrand} у Гродне з дастаўкай па Беларусі. Распіў і поўныя флаконы.`
+              : `Оригинальные духи ${activeBrand} в Гродно с доставкой по Беларуси. Распив и полные флаконы.`)
+            : activeCategory === 'eau_de_toilette'
+            ? (language === 'be'
+              ? 'Туалетная вада ў Гродне: арыгінал на распіў і ў флаконах з дастаўкай па РБ.'
+              : 'Туалетная вода в Гродно: оригинал на распив и во флаконах с доставкой по РБ.')
+            : activeCategory === 'perfume'
+            ? (language === 'be'
+              ? 'Купіць духі ў Гродне з дастаўкай па Беларусі — нішавая парфумерыя АРХЕТЫП.'
+              : 'Купить духи в Гродно с доставкой по Беларуси — нишевая парфюмерия АРХЕТИП.')
+            : t('exploreCatalog')}
         </p>
         <div className="pt-2">
           <span className="inline-block text-[10px] font-mono tracking-widest text-brand-muted/70 uppercase">

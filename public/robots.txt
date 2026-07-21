@@ -1,19 +1,37 @@
+User-agent: Yandex
+Disallow: /api/
+Disallow: /forbidden
+Disallow: /502
+Disallow: /500
+Disallow: /admin
+Disallow: /admin/
+Disallow: /wishlist
+Disallow: /cart
+Disallow: /*?*sort=
+Disallow: /*?*search=
+Disallow: /*?*token=
+Disallow: /*?*utm_
+Disallow: /*?*gclid=
+Disallow: /*?*yclid=
+Clean-param: sort&search&token&utm_source&utm_medium&utm_campaign&gclid&yclid /catalog/
+Clean-param: sort&search&token&utm_source&utm_medium&utm_campaign&gclid&yclid /catalog
+
 User-agent: *
 Allow: /
-Disallow: /admin
+Disallow: /api/
 Disallow: /forbidden
+Disallow: /502
+Disallow: /500
+Disallow: /admin
+Disallow: /admin/
+Disallow: /wishlist
 Disallow: /cart
-Disallow: /checkout
-Disallow: /profile
-Disallow: /*?search=
-Disallow: /*?sort=
-Disallow: /*?brand=
-Disallow: /*?gender=
-Disallow: /*?families=
-Disallow: /*?accords=
-Disallow: /*?category=
-Disallow: /*?utm_
-Disallow: /*&utm_
+Disallow: /*?*sort=
+Disallow: /*?*search=
+Disallow: /*?*token=
+Disallow: /*?*utm_
+Disallow: /*?*gclid=
+Disallow: /*?*yclid=
 
 Host: https://archetype.by
 Sitemap: https://archetype.by/sitemap.xml

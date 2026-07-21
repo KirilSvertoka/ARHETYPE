@@ -246,7 +246,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                           >
                             <img
                               src={product.imageUrl}
-                              alt={product.name}
+                              alt={`${product.brand} ${product.name}`}
                               className="w-11 h-11 object-cover bg-white dark:bg-brand-light border border-brand-border/30 group-hover:scale-105 transition-transform duration-300"
                               referrerPolicy="no-referrer"
                             />

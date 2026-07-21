@@ -174,7 +174,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
             }}
             transition={{ duration: 0.4, ease: "easeOut" }}
             src={product.imageUrl} 
-            alt={product.name} 
+            alt={`${product.brand} ${product.name}`} 
             className="absolute inset-0 object-cover w-full h-full bg-brand-bg relative z-0"
             referrerPolicy="no-referrer"
             loading="lazy"

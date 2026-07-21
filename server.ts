@@ -385,8 +385,8 @@ const defaultGeneralSettings = {
   stat3Value: "10k+",
   stat3Label: "Счастливых клиентов",
   stat3Label_be: "Шчаслівых кліентаў",
-  seoTitle: "Arhetip Perfume",
-  seoDescription: "Магазин нишевой парфюмерии Arhetip"
+  seoTitle: "Купить духи в Гродно и Беларуси — нишевая парфюмерия, туалетная вода, доставка | АРХЕТИП",
+  seoDescription: "Духи и туалетная вода в Гродно с доставкой по Беларуси. Оригинальная нишевая парфюмерия на распив и во флаконах. Доставка духов по Гродно, Минску и всей РБ."
 };
 
 let initialHomeConfig = defaultHomeConfig;
@@ -415,6 +415,22 @@ try {
 
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('home_config', JSON.stringify(initialHomeConfig));
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('general_settings', JSON.stringify(initialGeneralSettings));
+
+// Upgrade weak placeholder SEO titles left from early defaults
+try {
+  const genRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings') as { value: string } | undefined;
+  if (genRow?.value) {
+    const gs = JSON.parse(genRow.value);
+    const weakTitles = ['Arhetip Perfume', 'Arhetip', 'АРХЕТИП'];
+    if (!gs.seoTitle || weakTitles.includes(String(gs.seoTitle).trim())) {
+      gs.seoTitle = defaultGeneralSettings.seoTitle;
+      gs.seoDescription = defaultGeneralSettings.seoDescription;
+      db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(JSON.stringify(gs), 'general_settings');
+    }
+  }
+} catch (e) {
+  console.error('Failed to upgrade general SEO settings', e);
+}
 
 // Migration for new columns
 const migrations = [
@@ -503,9 +519,9 @@ const seedCMS = [
     id: 'delivery', 
     title: 'Доставка и оплата', 
     title_be: 'Дастаўка і аплата', 
-    content: `### Доставка и оплата
+    content: `### Доставка духов по Гродно и Беларуси
 
-Мы стремимся сделать процесс покупки максимально удобным и прозрачным.
+Мы стремимся сделать процесс покупки максимально удобным и прозрачным. Закажите парфюм с доставкой духов курьером по Гродно или почтой по всей Беларуси.
 
 **Способы доставки**
 
@@ -1252,6 +1268,9 @@ app.get('/sitemap.xml', (req, res) => {
     // Query all products with their latest modified or created dates
     const products = db.prepare("SELECT slug, COALESCE(updated_at, created_at) as mdate FROM products WHERE slug IS NOT NULL AND slug != ''").all() as { slug: string; mdate?: string }[];
     
+    // Distinct brands for brand landing pages (/catalog?brand=...)
+    const brands = db.prepare("SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != '' ORDER BY brand ASC").all() as { brand: string }[];
+
     // Query all dynamic CMS pages with their updated dates
     const cmsPages = db.prepare('SELECT id, updated_at FROM cms_pages').all() as { id: string; updated_at?: string }[];
 
@@ -1271,7 +1290,7 @@ app.get('/sitemap.xml', (req, res) => {
     } catch (e) {}
 
     try {
-      const rMax = db.prepare('SELECT MAX(created_at) as latest FROM reviews WHERE status = "Approved"').get() as { latest?: string };
+      const rMax = db.prepare("SELECT MAX(created_at) as latest FROM reviews WHERE status = 'Approved'").get() as { latest?: string };
       latestReviewDateStr = rMax?.latest;
     } catch (e) {}
 
@@ -1324,6 +1343,34 @@ app.get('/sitemap.xml', (req, res) => {
     <lastmod>${pageDate}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>`;
+    });
+
+    // Brand landings (indexable catalog filters)
+    brands.forEach(({ brand }) => {
+      xml += `
+  <url>
+    <loc>${domain}/catalog?brand=${encodeURIComponent(brand)}</loc>
+    <lastmod>${productLastMod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>`;
+    });
+
+    // Key category landings for geo niches
+    const categoryLandings = [
+      { category: 'perfume', priority: '0.85' },
+      { category: 'eau_de_toilette', priority: '0.85' },
+      { category: 'decant', priority: '0.8' },
+      { category: 'set', priority: '0.75' },
+    ];
+    categoryLandings.forEach(({ category, priority }) => {
+      xml += `
+  <url>
+    <loc>${domain}/catalog?category=${encodeURIComponent(category)}</loc>
+    <lastmod>${productLastMod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${priority}</priority>
   </url>`;
     });
 
@@ -2855,16 +2902,46 @@ async function startServer() {
         "logo": `${domain}/favicon.png`,
         "address": {
           "@type": "PostalAddress",
-          "addressLocality": "Grodno",
+          "addressLocality": "Гродно",
+          "addressRegion": "Гродненская область",
           "addressCountry": "BY",
-          "postalCode": "230005",
-          "streetAddress": "ул. Парфюмерная 123"
+          ...(genSet.address ? { "streetAddress": genSet.address } : {})
         },
         "contactPoint": {
           "@type": "ContactPoint",
-          "telephone": genSet.phone || "+37529XXXXXXX",
-          "contactType": "customer service"
+          ...(genSet.phone ? { "telephone": genSet.phone } : {}),
+          "contactType": "customer service",
+          "areaServed": "BY",
+          "availableLanguage": ["ru", "be"]
         }
+      };
+
+      const localBusinessSchema = {
+        "@context": "https://schema.org",
+        "@type": "Store",
+        "name": "АРХЕТИП — нишевая парфюмерия в Гродно",
+        "description": "Интернет-магазин оригинальных духов и туалетной воды в Гродно с доставкой по Беларуси.",
+        "url": domain,
+        "image": `${domain}/favicon.png`,
+        "priceRange": "$$",
+        "currenciesAccepted": "BYN",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Гродно",
+          "addressRegion": "Гродненская область",
+          "addressCountry": "BY",
+          ...(genSet.address ? { "streetAddress": genSet.address } : {})
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 53.6694,
+          "longitude": 23.8131
+        },
+        "areaServed": [
+          { "@type": "City", "name": "Гродно" },
+          { "@type": "Country", "name": "Беларусь" }
+        ],
+        ...(genSet.phone ? { "telephone": genSet.phone } : {})
       };
 
       const websiteSchema = {
@@ -2874,15 +2951,21 @@ async function startServer() {
         "url": domain,
         "potentialAction": {
           "@type": "SearchAction",
-          "target": `${domain}/catalog?search={search_term_string}`
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": `${domain}/catalog?search={search_term_string}`
+          },
+          "query-input": "required name=search_term_string"
         }
       };
-      ldJson.push(orgSchema, websiteSchema);
+      ldJson.push(orgSchema, localBusinessSchema, websiteSchema);
 
-      let customTitle = genSet.seoTitle || "АРХЕТИП | Нишевая парфюмерия в Гродно и Беларуси — Купить оригинальные духи на распив";
-      let customDescription = genSet.seoDescription || "Эксклюзивная оригинальная нишевая и селективная парфюмерия в Гродно на распив (отливанты) и в оригинальных флаконах с доставкой по Минску, Гродно и всей Беларуси. Гарантия оригинальности.";
-      let customKeywords = "нишевый парфюм гродно, купить парфюм в гродно, нишевая парфюмерия беларусь, селективные духи, распив парфюмерии, отливанты купить беларусь, оригинальные духи гродно, интернет магазин духов гродно";
+      let customTitle = genSet.seoTitle || "Купить духи в Гродно и Беларуси — нишевая парфюмерия, туалетная вода, доставка | АРХЕТИП";
+      let customDescription = genSet.seoDescription || "Духи и туалетная вода в Гродно с доставкой по Беларуси. Оригинальная нишевая парфюмерия на распив и во флаконах. Доставка духов по Гродно, Минску и всей РБ.";
+      let customKeywords = "духи гродно, парфюм беларусь, туалетная вода гродно, доставка духов, нишевая парфюмерия гродно, купить духи беларусь, отливанты гродно, селективные духи";
       let customImage = `${domain}/favicon.png`;
+      let ogType = "website";
+      let seoFallbackHtml = "";
 
       if (req.path.startsWith('/catalog/')) {
         try {
@@ -2900,7 +2983,7 @@ async function startServer() {
 
               let inStock = pVariants.some(v => v.stock > 0);
 
-              const productReviews = db.prepare('SELECT * FROM reviews WHERE product_id = ? AND status = "Approved"').all(product.id) as any[];
+              const productReviews = db.prepare("SELECT * FROM reviews WHERE product_id = ? AND status = 'Approved'").all(product.id) as any[];
               
               const productSchema: any = {
                 "@context": "https://schema.org/",
@@ -2957,7 +3040,7 @@ async function startServer() {
                     "merchantReturnDays": 14,
                     "returnMethod": "https://schema.org/ReturnByMail",
                     "returnFees": "https://schema.org/FreeReturn",
-                    "merchantReturnLink": `${domain}/page/returns`
+                    "merchantReturnLink": `${domain}/p/returns`
                   }
                 }
               };
@@ -2982,25 +3065,6 @@ async function startServer() {
                     "ratingValue": r.rating
                   }
                 }));
-              } else {
-                productSchema.aggregateRating = {
-                  "@type": "AggregateRating",
-                  "ratingValue": "5.0",
-                  "reviewCount": "1"
-                };
-                productSchema.review = {
-                  "@type": "Review",
-                  "author": {
-                    "@type": "Person",
-                    "name": "Клиент"
-                  },
-                  "datePublished": "2024-01-01",
-                  "reviewBody": "Прекрасный оригинальный аромат. Рекомендую!",
-                  "reviewRating": {
-                    "@type": "Rating",
-                    "ratingValue": "5"
-                  }
-                };
               }
 
               const breadcrumbSchema = {
@@ -3022,6 +3086,12 @@ async function startServer() {
                   {
                     "@type": "ListItem",
                     "position": 3,
+                    "name": product.brand,
+                    "item": `${domain}/catalog?brand=${encodeURIComponent(product.brand)}`
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 4,
                     "name": `${product.brand} ${product.name}`,
                     "item": `${domain}/catalog/${slug}`
                   }
@@ -3029,10 +3099,16 @@ async function startServer() {
               };
               ldJson.push(productSchema, breadcrumbSchema);
               
-              customTitle = `${product.brand} ${product.name} — Купить отливант на распив и оригинал в Гродно | АРХЕТИП`;
-              customDescription = `Купить оригинальные духи ${product.brand} ${product.name} на распив (отливанты от 2 мл) в Гродно с быстрой доставкой по всей Беларуси. ${product.description ? product.description.substring(0, 140).trim() + '...' : ''}`;
-              customKeywords = `${product.brand} ${product.name} купить, оригинальные духи гродно, распив парфюмерии гродно, отливант ${product.name}, парфюм ${product.brand} беларусь`;
+              const defaultProductTitle = `${product.brand} ${product.name} — купить в Гродно с доставкой по Беларуси | АРХЕТИП`;
+              const defaultProductDescription = `Купить ${product.brand} ${product.name} оригинал в Гродно. Распив и флаконы, доставка духов по Беларуси. ${product.description ? product.description.substring(0, 120).trim() + '...' : ''}`;
+              customTitle = (product.seo_title && String(product.seo_title).trim()) || defaultProductTitle;
+              customDescription = (product.seo_description && String(product.seo_description).trim()) || defaultProductDescription;
+              customKeywords = `${product.brand} ${product.name} купить, ${product.brand} ${product.name} гродно, духи ${product.brand} беларусь, доставка духов, оригинальные духи гродно`;
               customImage = (product.imageUrl || '').startsWith('http') ? product.imageUrl : domain + (product.imageUrl || '/favicon.png');
+              ogType = "product";
+              const safeName = `${product.brand} ${product.name}`.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+              const safeDesc = (product.description || customDescription).replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 400);
+              seoFallbackHtml = `<noscript><article><h1>${safeName}</h1><p>${safeDesc}</p><p>Купить оригинальные духи в Гродно с доставкой по Беларуси — магазин АРХЕТИП.</p></article></noscript>`;
             }
           }
         } catch (error) {
@@ -3093,9 +3169,15 @@ async function startServer() {
         if (category) {
           const catMap: Record<string, string> = {
             'decants': 'отливанты',
+            'decant': 'отливанты',
             'full': 'флаконы',
             'boxes': 'боксы',
-            'sets': 'наборы'
+            'sets': 'наборы',
+            'set': 'наборы',
+            'perfume': 'духи',
+            'eau_de_toilette': 'туалетная вода',
+            'cologne': 'одеколон',
+            'oil': 'масляные духи'
           };
           filterParts.push(catMap[category.toLowerCase()] || category);
         }
@@ -3106,15 +3188,29 @@ async function startServer() {
         if (scentFamily) filterParts.push(`${scentFamily} ароматы`);
         if (search) filterParts.push(`поиск: "${search}"`);
         
-        if (filterParts.length > 0) {
+        if (category === 'eau_de_toilette' && !brand) {
+          customTitle = "Туалетная вода в Гродно — купить оригинал с доставкой по Беларуси | АРХЕТИП";
+          customDescription = "Туалетная вода (EDT) в Гродно: оригинальная нишевая парфюмерия на распив и во флаконах. Доставка духов курьером по Гродно и почтой по всей Беларуси.";
+          customKeywords = "туалетная вода гродно, edt купить беларусь, туалетная вода доставка, нишевая туалетная вода";
+        } else if (category === 'perfume' && !brand) {
+          customTitle = "Духи в Гродно и Беларуси — купить оригинальный парфюм | АРХЕТИП";
+          customDescription = "Купить духи в Гродно с доставкой по Беларуси. Оригинальная нишевая парфюмерия: распив, отливанты и полные флаконы.";
+          customKeywords = "духи гродно, купить духи беларусь, парфюм гродно, доставка духов";
+        } else if (brand && !category && !gender && !scentFamily && !search) {
+          customTitle = `${brand} — купить духи в Гродно и Беларуси | Распив и флаконы | АРХЕТИП`;
+          customDescription = `Парфюмерия ${brand}: оригинальные духи и туалетная вода. Распив и полные флаконы с доставкой по Гродно и всей Беларуси.`;
+          customKeywords = `${brand} купить гродно, духи ${brand} беларусь, ${brand} распив, доставка духов`;
+        } else if (filterParts.length > 0) {
           const suffix = filterParts.join(', ');
-          customTitle = `${suffix} — купить оригинальный парфюм на распив в Гродно | АРХЕТИП`;
-          customDescription = `Вся оригинальная селективная парфюмерия (${suffix}) в магазине АРХЕТИП. Только оригиналы, удобный распив на выбор, быстрая доставка по Гродно, Минску и всей Беларуси.`;
+          customTitle = `${suffix} — купить оригинальный парфюм в Гродно | АРХЕТИП`;
+          customDescription = `Вся оригинальная селективная парфюмерия (${suffix}) в магазине АРХЕТИП. Распив на выбор, быстрая доставка духов по Гродно, Минску и всей Беларуси.`;
         } else {
-          customTitle = "Каталог селективного и нишевого парфюма в Гродно — Купить отливанты с доставкой | АРХЕТИП";
-          customDescription = "Каталог оригинальных селективных духов от лучших нишевых брендов (Tom Ford, Byredo, Kilian, Le Labo) в Гродно. Удобный распив в проверенные отливанты. Быстрая доставка по Беларуси.";
+          customTitle = "Каталог духов и парфюмерии в Гродно — отливанты с доставкой по Беларуси | АРХЕТИП";
+          customDescription = "Каталог оригинальных духов и туалетной воды от Tom Ford, Byredo, Kilian, Le Labo в Гродно. Распив в отливанты. Доставка духов по Беларуси.";
         }
-        customKeywords = "каталог парфюма гродно, нишевые бренды гродно, оригинальные духи купить в беларуси, заказать отливанты гродно, селективная парфюмерия каталог, распив духи";
+        if (!brand && !category) {
+          customKeywords = "каталог парфюма гродно, духи гродно, туалетная вода гродно, доставка духов, нишевые бренды беларусь";
+        }
 
         const catalogBreadcrumb = {
           "@context": "https://schema.org",
@@ -3213,13 +3309,19 @@ async function startServer() {
           try {
             const page = db.prepare('SELECT * FROM cms_pages WHERE id = ?').get(id) as any;
             if (page) {
-              customTitle = `${page.title} | АРХЕТИП — Нишевая парфюмерия в Беларуси`;
-              const cleanContent = (page.content || '')
-                .replace(/<[^>]*>/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-              customDescription = cleanContent.substring(0, 160).trim() + "...";
-              customKeywords = `${page.title.toLowerCase()}, архетип, нишевая парфюмерия беларусь`;
+              if (id === 'delivery') {
+                customTitle = "Доставка духов по Гродно и Беларуси — купить парфюм с доставкой | АРХЕТИП";
+                customDescription = "Доставка оригинальных духов и отливантов по Гродно (курьер) и всей Беларуси (Европочта, Белпочта). Бесплатно от 150 BYN. Оплата при получении.";
+                customKeywords = "доставка духов, доставка парфюма гродно, доставка духов беларусь, купить духи с доставкой, доставка туалетной воды";
+              } else {
+                customTitle = `${page.title} | АРХЕТИП — Духи в Гродно и Беларуси`;
+                const cleanContent = (page.content || '')
+                  .replace(/<[^>]*>/g, ' ')
+                  .replace(/\s+/g, ' ')
+                  .trim();
+                customDescription = cleanContent.substring(0, 160).trim() + "...";
+                customKeywords = `${page.title.toLowerCase()}, духи гродно, парфюмерия беларусь, архетип`;
+              }
 
               const pageBreadcrumb = {
                 "@context": "https://schema.org",
@@ -3274,7 +3376,10 @@ async function startServer() {
                         req.path === '/cart/' ||
                         req.path === '/forbidden' ||
                         req.path === '/502' ||
-                        req.path === '/500';
+                        req.path === '/500' ||
+                        !!(req.query.search) ||
+                        !!(req.query.accords) ||
+                        !!(req.query.sort);
 
       // Build optimized canonical URL to allow indexation of key category/brand pages while avoiding duplicate garbage parameters
       let canonicalUrl = `${domain}${req.path}`;
@@ -3325,20 +3430,30 @@ async function startServer() {
         }
       }
 
-      // Replace duplicate-prone elements
-      html = html.replace(/<title>[^<]*<\/title>/i, `<title>${customTitle}</title>`);
-      html = html.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${customDescription}" />`);
-
       const robotsMeta = isNoIndex ? '\n        <meta name="robots" content="noindex, nofollow" />' : '';
 
+      // Escape meta content for HTML attributes
+      const escapeAttr = (s: string) => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+      // Replace duplicate-prone elements
+      html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeAttr(customTitle)}</title>`);
+      html = html.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escapeAttr(customDescription)}" />`);
+
       const finalMetaTags = `
-        <meta name="keywords" content="${customKeywords}" />${robotsMeta}${yandexMetaTag}${googleMetaTag}${yandexMetricaScript}
-        <meta property="og:title" content="${customTitle}" />
-        <meta property="og:description" content="${customDescription}" />
-        <meta property="og:image" content="${customImage}" />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="${domain}${req.path}" />
-        <link rel="canonical" href="${canonicalUrl}" />
+        <meta name="keywords" content="${escapeAttr(customKeywords)}" />${robotsMeta}${yandexMetaTag}${googleMetaTag}${yandexMetricaScript}
+        <meta property="og:title" content="${escapeAttr(customTitle)}" />
+        <meta property="og:description" content="${escapeAttr(customDescription)}" />
+        <meta property="og:image" content="${escapeAttr(customImage)}" />
+        <meta property="og:type" content="${ogType}" />
+        <meta property="og:url" content="${escapeAttr(canonicalUrl)}" />
+        <meta property="og:locale" content="ru_BY" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="${escapeAttr(customTitle)}" />
+        <meta name="twitter:description" content="${escapeAttr(customDescription)}" />
+        <meta name="twitter:image" content="${escapeAttr(customImage)}" />
+        <meta name="geo.region" content="BY-HR" />
+        <meta name="geo.placename" content="Grodno" />
+        <link rel="canonical" href="${escapeAttr(canonicalUrl)}" />
         <link rel="icon" href="${domain}/favicon.png" type="image/png" />
         <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="${domain}/favicon.png" />
@@ -3348,6 +3463,10 @@ async function startServer() {
 
       const scriptTag = `<script type="application/ld+json">${JSON.stringify(ldJson)}</script>`;
       html = html.replace('</head>', `${scriptTag}</head>`);
+
+      if (seoFallbackHtml) {
+        html = html.replace('<div id="root"></div>', `<div id="root"></div>${seoFallbackHtml}`);
+      }
 
       if (process.env.NODE_ENV !== 'production' && vite) {
         html = await vite.transformIndexHtml(req.originalUrl, html);

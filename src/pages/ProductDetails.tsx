@@ -260,13 +260,16 @@ export default function ProductDetails() {
   }, Infinity) || 1;
   const isDecant = minVolume < 30; // rough heuristic
   
-  const pageTitle = `Купить ${product.brand} ${product.name} (Оригинал) | ${isDecant ? `Отливант от ${minVolume === Infinity ? 1 : minVolume} мл или Флакон` : 'Распив и Флаконы'}`;
-  const pageDescription = `${product.brand} ${product.name} — ${notesStr || 'эксклюзивный селективный парфюм'}. Оригинал, распив в Гродно с доставкой по Беларуси. Гарантия подлинности, стойкость и шлейф.`;
+  const defaultPageTitle = `Купить ${product.brand} ${product.name} (Оригинал) в Гродно | ${isDecant ? `Отливант от ${minVolume === Infinity ? 1 : minVolume} мл` : 'Распив и флаконы'} | АРХЕТИП`;
+  const defaultPageDescription = `${product.brand} ${product.name} — ${notesStr || 'эксклюзивный селективный парфюм'}. Купить оригинал в Гродно с доставкой духов по Беларуси. Распив и флаконы, гарантия подлинности.`;
+  const pageTitle = (product.seoTitle && product.seoTitle.trim()) || defaultPageTitle;
+  const pageDescription = (product.seoDescription && product.seoDescription.trim()) || defaultPageDescription;
+  const imageAlt = `${product.brand} ${product.name} — купить в Гродно`;
 
-  const structuredData = {
+  const structuredData: Record<string, unknown> = {
     "@context": "https://schema.org/",
     "@type": "Product",
-    "name": product.name,
+    "name": `${product.brand} ${product.name}`,
     "image": product.imageUrl,
     "description": product.description,
     "brand": {
@@ -317,50 +320,31 @@ export default function ProductDetails() {
         "merchantReturnDays": 14,
         "returnMethod": "https://schema.org/ReturnByMail",
         "returnFees": "https://schema.org/FreeReturn",
-        "merchantReturnLink": `${window.location.origin}/page/returns`
+        "merchantReturnLink": `${window.location.origin}/p/returns`
       }
-    },
-    ...(reviews.length > 0 ? {
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1),
-        "reviewCount": reviews.length
-      },
-      "review": reviews.map(r => ({
-        "@type": "Review",
-        "author": {
-          "@type": "Person",
-          "name": String(r.userName || '').trim() || "Покупатель"
-        },
-        "datePublished": r.createdAt || "2024-01-01",
-        "reviewBody": String(r.comment || '').trim() || "Прекрасный аромат.",
-        "reviewRating": {
-          "@type": "Rating",
-          "ratingValue": r.rating
-        }
-      }))
-    } : {
-      // Default placeholder ratings to improve SEO and satisfy Google Rich Results requirements
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5.0",
-        "reviewCount": "1"
-      },
-      "review": {
-        "@type": "Review",
-        "author": {
-          "@type": "Person",
-          "name": "Клиент"
-        },
-        "datePublished": "2024-01-01",
-        "reviewBody": "Прекрасный оригинальный аромат. Рекомендую!",
-        "reviewRating": {
-          "@type": "Rating",
-          "ratingValue": "5"
-        }
-      }
-    })
+    }
   };
+
+  if (reviews.length > 0) {
+    structuredData.aggregateRating = {
+      "@type": "AggregateRating",
+      "ratingValue": (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1),
+      "reviewCount": reviews.length
+    };
+    structuredData.review = reviews.map(r => ({
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": String(r.userName || '').trim() || "Покупатель"
+      },
+      "datePublished": r.createdAt || "2024-01-01",
+      "reviewBody": String(r.comment || '').trim() || "Прекрасный аромат.",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": r.rating
+      }
+    }));
+  }
   
   const heartNotesList = parseNotes(product.heartNotes);
   const allIngredients = [...topNotesList, ...heartNotesList, ...baseNotesList];
@@ -445,15 +429,20 @@ export default function ProductDetails() {
       <Helmet>
         <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
+        <meta name="keywords" content={`${product.brand} ${product.name} купить, ${product.brand} ${product.name} гродно, духи ${product.brand} беларусь, доставка духов`} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:image" content={product.imageUrl} />
-        <meta property="og:url" content={window.location.href} />
-        <meta property="og:site_name" content="Arhetip" />
+        <meta property="og:url" content={`https://archetype.by/catalog/${product.slug}`} />
+        <meta property="og:site_name" content="АРХЕТИП" />
         <meta property="og:type" content="product" />
         <meta property="product:brand" content={product.brand} />
         <meta property="product:price:amount" content={product.price.toString()} />
         <meta property="product:price:currency" content="BYN" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={product.imageUrl} />
         <link rel="canonical" href={`https://archetype.by/catalog/${product.slug}`} />
         <script type="application/ld+json">
           {JSON.stringify([structuredData, breadcrumbData])}
@@ -474,7 +463,7 @@ export default function ProductDetails() {
             </div>
             <img 
               src={activeImage} 
-              alt={product.name} 
+              alt={imageAlt} 
               className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-[1.03]"
               referrerPolicy="no-referrer"
               loading="lazy"
@@ -491,7 +480,7 @@ export default function ProductDetails() {
                     : 'border-brand-border/60 opacity-60 hover:opacity-100 hover:border-brand-accent/30'
                 }`}
               >
-                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
+                <img src={product.imageUrl} alt={imageAlt} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
               </button>
               {product.images.map((img, idx) => (
                 <button
@@ -503,7 +492,7 @@ export default function ProductDetails() {
                       : 'border-brand-border/60 opacity-60 hover:opacity-100 hover:border-brand-accent/30'
                   }`}
                 >
-                  <img src={img} alt={`${product.name} ${idx + 2}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
+                  <img src={img} alt={`${imageAlt} — фото ${idx + 2}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>
@@ -1101,7 +1090,7 @@ export default function ProductDetails() {
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.3 }}
                 src={allImages[fullscreenImageIndex]} 
-                alt={`${product.name} gallery image ${fullscreenImageIndex + 1}`}
+                alt={`${imageAlt} — галерея ${fullscreenImageIndex + 1}`}
                 className="max-w-full max-h-full object-contain rounded-none border border-white/5"
                 referrerPolicy="no-referrer"
                 loading="lazy"

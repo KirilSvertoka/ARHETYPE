@@ -24,22 +24,28 @@ export default function Contacts() {
 
   const orgData = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "Store"],
     "name": "АРХЕТИП",
     "url": "https://archetype.by",
     "logo": "https://archetype.by/favicon.png",
+    "description": "Нишевая парфюмерия в Гродно: духи и туалетная вода с доставкой по Беларуси",
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Grodno",
+      "addressLocality": "Гродно",
+      "addressRegion": "Гродненская область",
       "addressCountry": "BY",
-      "postalCode": "230005",
-      "streetAddress": "ул. Парфюмерная 123"
+      ...(settings?.address ? { "streetAddress": settings.address } : {})
     },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": settings?.phone || "+37529XXXXXXX",
-      "contactType": "customer service"
-    }
+      "telephone": settings?.phone || undefined,
+      "contactType": "customer service",
+      "areaServed": "BY"
+    },
+    "areaServed": [
+      { "@type": "City", "name": "Гродно" },
+      { "@type": "Country", "name": "Беларусь" }
+    ]
   };
 
   const blocks = [];

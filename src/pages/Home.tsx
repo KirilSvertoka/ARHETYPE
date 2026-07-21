@@ -152,16 +152,47 @@ export default function Home() {
     "logo": "https://archetype.by/favicon.png",
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Grodno",
+      "addressLocality": "Гродно",
+      "addressRegion": "Гродненская область",
       "addressCountry": "BY",
-      "postalCode": "230005",
-      "streetAddress": "ул. Парфюмерная 123"
+      ...(((config as any).genData?.address) ? { "streetAddress": (config as any).genData.address } : {})
     },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": (config as any).genData?.phone || "+37529XXXXXXX",
-      "contactType": "customer service"
+      "telephone": (config as any).genData?.phone || undefined,
+      "contactType": "customer service",
+      "areaServed": "BY",
+      "availableLanguage": ["ru", "be"]
     }
+  };
+
+  const localBusinessData = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "name": "АРХЕТИП — нишевая парфюмерия в Гродно",
+    "description": "Интернет-магазин оригинальных духов и туалетной воды в Гродно с доставкой по Беларуси. Распив и полные флаконы.",
+    "url": "https://archetype.by",
+    "image": "https://archetype.by/favicon.png",
+    "priceRange": "$$",
+    "currenciesAccepted": "BYN",
+    "paymentAccepted": "Cash, Credit Card, Bank Transfer",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Гродно",
+      "addressRegion": "Гродненская область",
+      "addressCountry": "BY",
+      ...(((config as any).genData?.address) ? { "streetAddress": (config as any).genData.address } : {})
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 53.6694,
+      "longitude": 23.8131
+    },
+    "areaServed": [
+      { "@type": "City", "name": "Гродно" },
+      { "@type": "Country", "name": "Беларусь" }
+    ],
+    "telephone": (config as any).genData?.phone || undefined
   };
 
   const webSiteData = {
@@ -171,7 +202,10 @@ export default function Home() {
     "url": "https://archetype.by",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://archetype.by/catalog?search={search_term_string}",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://archetype.by/catalog?search={search_term_string}"
+      },
       "query-input": "required name=search_term_string"
     }
   };
@@ -219,17 +253,20 @@ export default function Home() {
       className="w-full min-h-screen bg-brand-bg flex flex-col"
     >
       <Helmet>
-        <title>Купить нишевую парфюмерию в Гродно с доставкой по РБ | Распив и Оригинал | АРХЕТИП</title>
-        <meta name="description" content="Эксклюзивные нишевые ароматы на распив и во флаконах. Оригинальная селективная парфюмерия с доставкой по Минску и всей Беларуси. Закажите подарочный aromabox!" />
-        <meta property="og:title" content="Купить нишевую парфюмерию в Гродно с доставкой по РБ | Распив и Оригинал | АРХЕТИП" />
-        <meta property="og:description" content="Эксклюзивные нишевые ароматы на распив и во флаконах. Оригинальная селективная парфюмерия с доставкой по Минску и всей Беларуси. Закажите подарочный aromabox!" />
+        <title>Купить духи в Гродно и Беларуси — нишевая парфюмерия, туалетная вода, доставка | АРХЕТИП</title>
+        <meta name="description" content="Духи и туалетная вода в Гродно с доставкой по Беларуси. Оригинальная нишевая парфюмерия на распив и во флаконах: Tom Ford, Byredo, Kilian и др. Купить парфюм с доставкой духов по РБ." />
+        <meta name="keywords" content="духи гродно, парфюм беларусь, туалетная вода гродно, доставка духов, нишевая парфюмерия гродно, купить духи беларусь, отливанты гродно" />
+        <meta property="og:title" content="Купить духи в Гродно и Беларуси — нишевая парфюмерия | АРХЕТИП" />
+        <meta property="og:description" content="Духи и туалетная вода в Гродно с доставкой по Беларуси. Оригинальная нишевая парфюмерия на распив и во флаконах." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://archetype.by" />
         <meta property="og:image" content={config.hero.slides[0]?.image} />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Купить духи в Гродно и Беларуси | АРХЕТИП" />
+        <meta name="twitter:description" content="Духи и туалетная вода в Гродно с доставкой по Беларуси. Оригинальная нишевая парфюмерия." />
         <link rel="canonical" href="https://archetype.by" />
         <script type="application/ld+json">
-          {JSON.stringify([orgData, webSiteData])}
+          {JSON.stringify([orgData, localBusinessData, webSiteData])}
         </script>
       </Helmet>
 
