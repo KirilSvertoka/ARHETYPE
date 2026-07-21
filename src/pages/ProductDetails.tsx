@@ -254,17 +254,20 @@ export default function ProductDetails() {
     ...baseNotesList.slice(0, 2).map(getNoteStringVal)
   ].filter(Boolean).join(', ');
 
-  const minVolume = product.variants?.reduce((min, v) => {
-    const sizeMatch = v.size.match(/(\d+)/);
-    return sizeMatch ? Math.min(min, parseInt(sizeMatch[1])) : min;
-  }, Infinity) || 1;
-  const isDecant = minVolume < 30; // rough heuristic
-  
-  const defaultPageTitle = `Купить ${product.brand} ${product.name} (Оригинал) в Гродно | ${isDecant ? `Отливант от ${minVolume === Infinity ? 1 : minVolume} мл` : 'Распив и флаконы'} | АРХЕТИП`;
+  const defaultPageTitle = `${product.brand} ${product.name} — купить в Гродно с доставкой по Беларуси | АРХЕТИП`;
   const defaultPageDescription = `${product.brand} ${product.name} — ${notesStr || 'эксклюзивный селективный парфюм'}. Купить оригинал в Гродно с доставкой духов по Беларуси. Распив и флаконы, гарантия подлинности.`;
-  const pageTitle = (product.seoTitle && product.seoTitle.trim()) || defaultPageTitle;
-  const pageDescription = (product.seoDescription && product.seoDescription.trim()) || defaultPageDescription;
-  const imageAlt = `${product.brand} ${product.name} — купить в Гродно`;
+  const customTitle = (product.seoTitle || '').trim();
+  const customDescription = (product.seoDescription || '').trim();
+  const looksCommercial = (s: string) => /купить|гродно|беларус|доставк|распив|оригинал/i.test(s);
+  const pageTitle = customTitle && (customTitle.length >= 45 || looksCommercial(customTitle))
+    ? customTitle
+    : defaultPageTitle;
+  const pageDescription = customDescription && (customDescription.length >= 100 || looksCommercial(customDescription))
+    ? customDescription
+    : defaultPageDescription;
+  const imageAlt = `${product.brand} ${product.name}`;
+  const siteOrigin = 'https://archetype.by';
+  const productUrl = `${siteOrigin}/catalog/${product.slug}`;
 
   const structuredData: Record<string, unknown> = {
     "@context": "https://schema.org/",
@@ -278,7 +281,7 @@ export default function ProductDetails() {
     },
     "offers": {
       "@type": "Offer",
-      "url": window.location.href,
+      "url": productUrl,
       "priceCurrency": "BYN",
       "price": selectedVariant ? selectedVariant.price : product.price,
       "priceValidUntil": "2027-12-31",
@@ -433,7 +436,7 @@ export default function ProductDetails() {
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:image" content={product.imageUrl} />
-        <meta property="og:url" content={`https://archetype.by/catalog/${product.slug}`} />
+        <meta property="og:url" content={productUrl} />
         <meta property="og:site_name" content="АРХЕТИП" />
         <meta property="og:type" content="product" />
         <meta property="product:brand" content={product.brand} />
@@ -443,7 +446,7 @@ export default function ProductDetails() {
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         <meta name="twitter:image" content={product.imageUrl} />
-        <link rel="canonical" href={`https://archetype.by/catalog/${product.slug}`} />
+        <link rel="canonical" href={productUrl} />
         <script type="application/ld+json">
           {JSON.stringify([structuredData, breadcrumbData])}
         </script>

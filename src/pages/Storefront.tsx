@@ -426,19 +426,7 @@ export default function Storefront() {
           {categoryName}
         </h1>
         <p className="text-sm text-brand-muted font-light max-w-xl mx-auto leading-relaxed">
-          {activeBrand !== 'All' && activeCategory === 'All'
-            ? (language === 'be'
-              ? `Арыгінальныя духі ${activeBrand} у Гродне з дастаўкай па Беларусі. Распіў і поўныя флаконы.`
-              : `Оригинальные духи ${activeBrand} в Гродно с доставкой по Беларуси. Распив и полные флаконы.`)
-            : activeCategory === 'eau_de_toilette'
-            ? (language === 'be'
-              ? 'Туалетная вада ў Гродне: арыгінал на распіў і ў флаконах з дастаўкай па РБ.'
-              : 'Туалетная вода в Гродно: оригинал на распив и во флаконах с доставкой по РБ.')
-            : activeCategory === 'perfume'
-            ? (language === 'be'
-              ? 'Купіць духі ў Гродне з дастаўкай па Беларусі — нішавая парфумерыя АРХЕТЫП.'
-              : 'Купить духи в Гродно с доставкой по Беларуси — нишевая парфюмерия АРХЕТИП.')
-            : t('exploreCatalog')}
+          {t('exploreCatalog')}
         </p>
         <div className="pt-2">
           <span className="inline-block text-[10px] font-mono tracking-widest text-brand-muted/70 uppercase">

@@ -33,8 +33,37 @@ const upload = multer({ storage });
 
 const app = express();
 
-// Trust proxy for rate limiting
+// Trust proxy for rate limiting and correct HTTPS behind nginx
 app.set('trust proxy', 1);
+
+/** Public site origin for canonical/OG/sitemap. Prefer APP_URL; force https on production hosts. */
+function getSiteOrigin(req?: { protocol?: string; get: (name: string) => string | undefined }): string {
+  const envUrl = (process.env.APP_URL || '').trim().replace(/\/$/, '');
+  if (/^https?:\/\//i.test(envUrl) && !/MY_APP_URL/i.test(envUrl)) {
+    return envUrl;
+  }
+
+  if (!req) return 'https://archetype.by';
+
+  const hostHeader = (req.get('x-forwarded-host') || req.get('host') || 'archetype.by').split(',')[0].trim();
+  const isLocal = /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(hostHeader);
+  if (isLocal) {
+    const proto = (req.get('x-forwarded-proto') || req.protocol || 'http').split(',')[0].trim();
+    return `${proto}://${hostHeader}`;
+  }
+
+  const host = hostHeader.replace(/:\d+$/, '');
+  return `https://${host}`;
+}
+
+/** Prefer admin SEO fields only when they look complete; otherwise always auto-generate. */
+function pickSeoText(custom: string | null | undefined, generated: string, minLen: number): string {
+  const trimmed = String(custom || '').trim();
+  if (!trimmed) return generated;
+  const looksCommercial = /купить|гродно|беларус|доставк|распив|оригинал/i.test(trimmed);
+  if (trimmed.length >= minLen || looksCommercial) return trimmed;
+  return generated;
+}
 
 // Security Middleware
 app.use(helmet({
@@ -1197,7 +1226,7 @@ db.prepare(`
 // SEO Endpoints
 
 app.get('/robots.txt', (req, res) => {
-  const domain = req.protocol + '://' + req.get('host');
+  const domain = getSiteOrigin(req);
   const adminPathEnv = process.env.VITE_ADMIN_PATH || 'admin';
   const cleanAdminPath = adminPathEnv.startsWith('/') ? adminPathEnv : `/${adminPathEnv}`;
   
@@ -1246,7 +1275,7 @@ Sitemap: ${domain}/sitemap.xml
 
 app.get('/sitemap.xml', (req, res) => {
   try {
-    const domain = req.protocol + '://' + req.get('host');
+    const domain = getSiteOrigin(req);
     
     // Helper to format dates to YYYY-MM-DD
     const formatSitemapDate = (dbDate?: string | null) => {
@@ -1398,7 +1427,7 @@ app.get('/sitemap.xml', (req, res) => {
 
 app.get('/api/feeds/yandex.xml', (req, res) => {
   try {
-    const domain = `${req.protocol}://${req.get('host')}`;
+    const domain = getSiteOrigin(req);
     const products = db.prepare('SELECT p.*, (SELECT MIN(price) FROM product_variants WHERE product_id = p.id) as min_price FROM products p').all() as any[];
     const variants = db.prepare('SELECT * FROM product_variants').all() as any[];
     const settings = JSON.parse(db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value || '{}');
@@ -1459,7 +1488,7 @@ app.get('/api/feeds/yandex.xml', (req, res) => {
 
 app.get('/api/feeds/google.xml', (req, res) => {
   try {
-    const domain = `${req.protocol}://${req.get('host')}`;
+    const domain = getSiteOrigin(req);
     const products = db.prepare('SELECT * FROM products').all() as any[];
     const variants = db.prepare('SELECT * FROM product_variants').all() as any[];
 
@@ -2889,7 +2918,7 @@ async function startServer() {
 
       let html = fs.readFileSync(htmlPath, 'utf-8');
 
-      const domain = `${req.protocol}://${req.get('host')}`;
+      const domain = getSiteOrigin(req);
       let ldJson: any[] = [];
       const genSetStr = db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}';
       const genSet = JSON.parse(genSetStr);
@@ -3101,11 +3130,12 @@ async function startServer() {
               
               const defaultProductTitle = `${product.brand} ${product.name} — купить в Гродно с доставкой по Беларуси | АРХЕТИП`;
               const defaultProductDescription = `Купить ${product.brand} ${product.name} оригинал в Гродно. Распив и флаконы, доставка духов по Беларуси. ${product.description ? product.description.substring(0, 120).trim() + '...' : ''}`;
-              customTitle = (product.seo_title && String(product.seo_title).trim()) || defaultProductTitle;
-              customDescription = (product.seo_description && String(product.seo_description).trim()) || defaultProductDescription;
+              customTitle = pickSeoText(product.seo_title, defaultProductTitle, 45);
+              customDescription = pickSeoText(product.seo_description, defaultProductDescription, 100);
               customKeywords = `${product.brand} ${product.name} купить, ${product.brand} ${product.name} гродно, духи ${product.brand} беларусь, доставка духов, оригинальные духи гродно`;
               customImage = (product.imageUrl || '').startsWith('http') ? product.imageUrl : domain + (product.imageUrl || '/favicon.png');
               ogType = "product";
+              // Invisible to users with JS; helps crawlers that skip SPA rendering
               const safeName = `${product.brand} ${product.name}`.replace(/</g, '&lt;').replace(/>/g, '&gt;');
               const safeDesc = (product.description || customDescription).replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 400);
               seoFallbackHtml = `<noscript><article><h1>${safeName}</h1><p>${safeDesc}</p><p>Купить оригинальные духи в Гродно с доставкой по Беларуси — магазин АРХЕТИП.</p></article></noscript>`;
