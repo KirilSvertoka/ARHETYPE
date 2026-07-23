@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Search, X, ArrowRight, Sparkles, Star, Heart } from 'lucide-react';
 import { useLanguage } from './LanguageProvider';
 import { Product } from '../types';
+import { brandPath } from '../utils/seo';
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -98,7 +99,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
   };
 
   const selectPopularBrand = (brandName: string) => {
-    navigate(`/catalog?brand=${encodeURIComponent(brandName)}`);
+    navigate(brandPath(brandName));
     onClose();
   };
 

@@ -16,6 +16,8 @@ import Contacts from './pages/Contacts';
 import Reviews from './pages/Reviews';
 import About from './pages/About';
 import Page from './pages/Page';
+import Grodno from './pages/Grodno';
+import Brands from './pages/Brands';
 import NotFound from './pages/NotFound';
 import Forbidden from './pages/Forbidden';
 import ServerError from './pages/ServerError';
@@ -39,6 +41,15 @@ function ScrollToTop() {
   return null;
 }
 
+/** Remove server-injected crawler HTML once React has mounted (meta/JSON-LD stay in head). */
+function ClearSeoPrerender() {
+  useEffect(() => {
+    const el = document.getElementById('seo-prerender');
+    if (el) el.remove();
+  }, []);
+  return null;
+}
+
 export default function App() {
   const adminPath = (import.meta as any).env.VITE_ADMIN_PATH?.replace(/^\//, '') || 'admin';
 
@@ -51,11 +62,15 @@ export default function App() {
             <CartProvider>
               <BrowserRouter>
                 <ScrollToTop />
+                <ClearSeoPrerender />
                 <Routes>
                   <Route path="/" element={<Layout />}>
                     <Route index element={<Home />} />
                     <Route path="catalog" element={<Storefront />} />
                     <Route path="catalog/:slug" element={<ProductDetails />} />
+                    <Route path="brand/:brandSlug" element={<Storefront />} />
+                    <Route path="brands" element={<Brands />} />
+                    <Route path="grodno" element={<Grodno />} />
                     <Route path="contacts" element={<Contacts />} />
                     <Route path="about" element={<About />} />
                     <Route path="p/:id" element={<Page />} />

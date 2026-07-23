@@ -13,6 +13,7 @@ import RelatedProducts from '../components/RelatedProducts';
 import RecentlyViewed from '../components/RecentlyViewed';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { trackViewItem, trackAddToCart, trackGoal } from '../utils/analytics';
+import { brandPath, SITE_ORIGIN } from '../utils/seo';
 
 const slugifyHelper = (text: string) => {
   const cyrillicToLatinMap: Record<string, string> = {
@@ -266,7 +267,7 @@ export default function ProductDetails() {
     ? customDescription
     : defaultPageDescription;
   const imageAlt = `${product.brand} ${product.name}`;
-  const siteOrigin = 'https://archetype.by';
+  const siteOrigin = SITE_ORIGIN;
   const productUrl = `${siteOrigin}/catalog/${product.slug}`;
 
   const structuredData: Record<string, unknown> = {
@@ -386,7 +387,7 @@ export default function ProductDetails() {
       <Breadcrumbs 
         items={[
           { label: t('catalog') || (language === 'be' ? 'Каталог' : 'Каталог'), path: '/catalog' },
-          { label: product.brand, path: `/catalog?brand=${encodeURIComponent(product.brand)}` },
+          { label: product.brand, path: brandPath(product.brand) },
           { label: product.name }
         ]} 
       />
@@ -506,7 +507,7 @@ export default function ProductDetails() {
           <div className="space-y-8">
             <div>
               <Link 
-                to={`/catalog?brand=${encodeURIComponent(product.brand)}`}
+                to={brandPath(product.brand)}
                 className="inline-block text-sm font-medium uppercase tracking-widest text-brand-muted mb-2 hover:text-brand-accent transition-colors"
               >
                 {product.brand}
@@ -718,6 +719,17 @@ export default function ProductDetails() {
                     ? 'Бяспечная ўпакоўка, якасныя атамайзеры. Дастаўка па Гродне і па ўсёй РБ.' 
                     : 'Безопасная упаковка, надежные стеклянные атомайзеры для отливантов. Доставка по Гродно — сегодня. РБ — 5 дней.'}
                 </p>
+                <div className="mt-3 flex flex-wrap gap-3 text-[10px] uppercase tracking-wider">
+                  <Link to="/p/delivery" className="text-brand-accent hover:underline">
+                    {language === 'be' ? 'Дастаўка' : 'Доставка'}
+                  </Link>
+                  <Link to="/grodno" className="text-brand-accent hover:underline">
+                    {language === 'be' ? 'Духі ў Гродне' : 'Духи в Гродно'}
+                  </Link>
+                  <Link to={brandPath(product.brand)} className="text-brand-accent hover:underline">
+                    {product.brand}
+                  </Link>
+                </div>
               </div>
               <div className="p-4 rounded-none bg-brand-hover border border-brand-border">
                 <div className="flex items-center gap-2 mb-2 text-brand-light font-semibold text-xs uppercase tracking-wider">

@@ -7,6 +7,7 @@ import ProductCard from '../components/ProductCard';
 import ScentQuiz from '../components/ScentQuiz';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../components/LanguageProvider';
+import { brandPath } from '../utils/seo';
 
 // Luxury Popular Brands list
 const POPULAR_BRANDS: BrandCard[] = [
@@ -437,7 +438,7 @@ export default function Home() {
           return (
             <>
               <Link
-                to={`/catalog?brand=${encodeURIComponent(activeBrand?.name || '')}`}
+                to={brandPath(activeBrand?.name || '')}
                 className={`absolute top-0 left-0 h-full z-20 group/app-brand-main block overflow-hidden cursor-pointer transition-all duration-700 ease-out ${mainWidthClass}`}
               >
                 {/* Active brand background image with crossfade */}
@@ -491,7 +492,7 @@ export default function Home() {
                   const isActive = bIdx === activeBrandIdx;
                   return (
                      <Link
-                      to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
+                      to={brandPath(brand.name)}
                       key={brand.name + '-strip-' + bIdx}
                       onClick={(e) => {
                         if (!isActive) {
@@ -561,7 +562,7 @@ export default function Home() {
                     const isActive = bIdx === activeBrandIdx;
                     return (
                       <Link
-                        to={`/catalog?brand=${encodeURIComponent(brand.name)}`}
+                        to={brandPath(brand.name)}
                         key={brand.name + '-mob-' + bIdx}
                         onClick={(e) => {
                           if (!isActive) {

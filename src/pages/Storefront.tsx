@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Product } from '../types';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import CallbackForm from '../components/CallbackForm';
 import { motion, AnimatePresence } from 'motion/react';
@@ -8,10 +8,12 @@ import { Search, MessageCircle, X, ChevronDown, Check, SlidersHorizontal, Filter
 import { Helmet } from 'react-helmet-async';
 import { useLanguage } from '../components/LanguageProvider';
 import Breadcrumbs from '../components/Breadcrumbs';
+import { brandPath, resolveBrandFromSlug, SITE_ORIGIN } from '../utils/seo';
 
 export default function Storefront() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { brandSlug } = useParams<{ brandSlug?: string }>();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
@@ -54,41 +56,32 @@ export default function Storefront() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Update URL search params when filters change
+  // Update URL when filters change — brand uses clean /brand/:slug
   useEffect(() => {
     const params = new URLSearchParams();
-    if (activeBrand !== 'All') params.set('brand', activeBrand);
     if (activeGenderTab !== 'All') params.set('gender', activeGenderTab);
     if (activeCategory !== 'All') params.set('category', activeCategory);
     if (sortBy !== 'name-asc') params.set('sort', sortBy);
     if (debouncedSearchQuery) params.set('search', debouncedSearchQuery);
     if (selectedFamilies.length > 0) params.set('families', selectedFamilies.join(','));
     if (selectedAccords.length > 0) params.set('accords', selectedAccords.join(','));
-    
-    const currentParams = new URLSearchParams(location.search);
-    
-    let isDifferent = false;
-    
-    // Check if lengths are different
-    if (Array.from(params.keys()).length !== Array.from(currentParams.keys()).length) {
-      isDifferent = true;
-    } else {
-      // Check if values are different
-      for (const [key, value] of params.entries()) {
-        if (currentParams.get(key) !== value) {
-          isDifferent = true;
-          break;
-        }
-      }
-    }
-    
-    if (isDifferent) {
-      const newSearch = params.toString();
-      navigate(`/catalog${newSearch ? `?${newSearch}` : ''}`, { replace: true });
-    }
-  }, [activeBrand, activeGenderTab, activeCategory, sortBy, debouncedSearchQuery, selectedFamilies, selectedAccords, navigate, location.pathname]);
 
-  // Sync state with URL search params (on initial load or back/forward navigation)
+    const qs = params.toString();
+    const targetPath = activeBrand !== 'All' ? brandPath(activeBrand) : '/catalog';
+    const target = `${targetPath}${qs ? `?${qs}` : ''}`;
+
+    const currentParams = new URLSearchParams(location.search);
+    currentParams.delete('brand');
+    const currentQs = currentParams.toString();
+    const onBrandOrCatalog = location.pathname === '/catalog' || location.pathname.startsWith('/brand/');
+    const currentNormalized = `${onBrandOrCatalog ? location.pathname : '/catalog'}${currentQs ? `?${currentQs}` : ''}`;
+
+    if (onBrandOrCatalog && target !== currentNormalized) {
+      navigate(target, { replace: true });
+    }
+  }, [activeBrand, activeGenderTab, activeCategory, sortBy, debouncedSearchQuery, selectedFamilies, selectedAccords, navigate, location.pathname, location.search]);
+
+  // Sync state with URL (path brand slug + query filters)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const categoryParam = params.get('category');
@@ -108,8 +101,17 @@ export default function Storefront() {
     const newSort = sortParam || 'name-asc';
     if (newSort !== sortBy) setSortBy(newSort);
 
-    const newBrand = brandParam || 'All';
-    const resolvedBrand = findMatchingBrand(newBrand, brands);
+    let resolvedBrand = 'All';
+    if (brandSlug && brands.length > 0) {
+      resolvedBrand = resolveBrandFromSlug(brandSlug, brands) || findMatchingBrand(brandSlug.replace(/-/g, ' '), brands);
+    } else if (brandSlug && brands.length === 0) {
+      // keep waiting for brands list
+      resolvedBrand = activeBrand;
+    } else if (brandParam) {
+      resolvedBrand = findMatchingBrand(brandParam, brands.length ? brands : [brandParam]);
+    } else if (!brandSlug) {
+      resolvedBrand = 'All';
+    }
     if (resolvedBrand !== activeBrand) setActiveBrand(resolvedBrand);
 
     const newSearchQuery = searchParam || '';
@@ -128,7 +130,7 @@ export default function Storefront() {
     } else if (selectedAccords.length > 0) {
       setSelectedAccords([]);
     }
-  }, [location.search]);
+  }, [location.search, location.pathname, brandSlug, brands]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -349,13 +351,12 @@ export default function Storefront() {
   }
 
   const catalogCanonicalParams = new URLSearchParams();
-  if (activeBrand !== 'All') catalogCanonicalParams.set('brand', activeBrand);
   if (activeCategory !== 'All') catalogCanonicalParams.set('category', activeCategory);
   if (activeGenderTab !== 'All') catalogCanonicalParams.set('gender', activeGenderTab);
   const catalogCanonicalQs = catalogCanonicalParams.toString();
-  const catalogCanonical = catalogCanonicalQs
-    ? `https://archetype.by/catalog?${catalogCanonicalQs}`
-    : 'https://archetype.by/catalog';
+  const catalogCanonical = activeBrand !== 'All'
+    ? `${SITE_ORIGIN}${brandPath(activeBrand)}${catalogCanonicalQs ? `?${catalogCanonicalQs}` : ''}`
+    : (catalogCanonicalQs ? `${SITE_ORIGIN}/catalog?${catalogCanonicalQs}` : `${SITE_ORIGIN}/catalog`);
 
   const breadcrumbData = {
     "@context": "https://schema.org",

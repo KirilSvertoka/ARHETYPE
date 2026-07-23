@@ -391,8 +391,8 @@ const defaultGeneralSettings = {
   phone: "+375 (29) 123-45-67",
   workingHours: "Пн-Пт: 10:00 - 20:00, Сб-Вс: 11:00 - 18:00",
   workingHours_be: "Пн-Пт: 10:00 - 20:00, Сб-Нд: 11:00 - 18:00",
-  address: "ул. Парфюмерная 123, Гродно, Беларусь",
-  address_be: "вул. Парфумерная 123, Гродна, Беларусь",
+  address: "",
+  address_be: "",
   unp: "123456789",
   bankDetails: "IBAN: BY00 ABCD 0000 0000 0000 0000, BIC: ABCDBY2X",
   aboutTitle: "Наша история",
@@ -847,10 +847,39 @@ const seedCMS = [
 seedCMS.forEach(page => {
   db.prepare('INSERT OR IGNORE INTO cms_pages (id, title, title_be, content, content_be, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
     .run(page.id, page.title, page.title_be, page.content, page.content_be);
-  
-  // Force update for existing records to reflect Grodno changes
-  db.prepare('UPDATE cms_pages SET title = ?, title_be = ?, content = ?, content_be = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-    .run(page.title, page.title_be, page.content, page.content_be, page.id);
+});
+
+const guideCMS = [
+  {
+    id: 'kak-vybrat-nishevuyu-parfyumeriyu',
+    title: 'Как выбрать нишевую парфюмерию в Гродно: гид по ароматам',
+    title_be: 'Як выбраць нішавую парфумерыю ў Гродне: гід па водарах',
+    content: `### Как выбрать нишевую парфюмерию в Гродно
+
+Нишевый аромат выбирают не по громкому имени, а по характеру композиции и тому, как она раскрывается на коже. Начните знакомство с [каталога парфюмерии](/catalog): используйте фильтры по семействам, концентрациям и форматам.
+
+Если вы покупаете духи в городе, изучите условия [доставки по Гродно и Беларуси](/grodno) и [доставки и оплаты](/p/delivery). Не уверены в любимом доме? Откройте [бренды нишевой парфюмерии](/brands) и попробуйте отливанты перед покупкой полного флакона.`,
+    content_be: `### Як выбраць нішавую парфумерыю ў Гродне
+
+Пачніце знаёмства з [каталога](/catalog), даведайцеся пра [дастаўку ў Гродне](/grodno), [аплату і дастаўку](/p/delivery) і вывучыце [брэнды](/brands).`
+  },
+  {
+    id: 'raspiv-vs-flakon',
+    title: 'Распив или полный флакон: что выбрать в Гродно',
+    title_be: 'Распіў ці поўны флакон: што выбраць у Гродне',
+    content: `### Распив или полный флакон: что выбрать
+
+[Отливанты и распив](/catalog?category=decant) помогают носить аромат несколько дней и понять его раскрытие без покупки большого объёма. Полный флакон подходит, когда аромат уже стал частью вашей коллекции.
+
+В [Гродно](/grodno) можно заказать оригинальную нишевую парфюмерию с удобной доставкой по городу и Беларуси.`,
+    content_be: `### Распіў ці поўны флакон
+
+[Адліванты](/catalog?category=decant) дазваляюць пазнаёміцца з водарам, а ўмовы заказу ўдакладняйце на старонцы [Гродна](/grodno).`
+  }
+];
+guideCMS.forEach(page => {
+  db.prepare('INSERT OR IGNORE INTO cms_pages (id, title, title_be, content, content_be, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
+    .run(page.id, page.title, page.title_be, page.content, page.content_be);
 });
 
 // Seed default FAQs if the table is empty
@@ -1297,7 +1326,7 @@ app.get('/sitemap.xml', (req, res) => {
     // Query all products with their latest modified or created dates
     const products = db.prepare("SELECT slug, COALESCE(updated_at, created_at) as mdate FROM products WHERE slug IS NOT NULL AND slug != ''").all() as { slug: string; mdate?: string }[];
     
-    // Distinct brands for brand landing pages (/catalog?brand=...)
+    // Distinct brands for brand landing pages (/brand/:slug)
     const brands = db.prepare("SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != '' ORDER BY brand ASC").all() as { brand: string }[];
 
     // Query all dynamic CMS pages with their updated dates
@@ -1361,6 +1390,18 @@ app.get('/sitemap.xml', (req, res) => {
     <lastmod>${reviewLastMod}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${domain}/grodno</loc>
+    <lastmod>${siteLastMod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>${domain}/brands</loc>
+    <lastmod>${productLastMod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
   </url>`;
 
     // Append dynamic CMS Pages
@@ -1375,11 +1416,11 @@ app.get('/sitemap.xml', (req, res) => {
   </url>`;
     });
 
-    // Brand landings (indexable catalog filters)
+    // Brand landings
     brands.forEach(({ brand }) => {
       xml += `
   <url>
-    <loc>${domain}/catalog?brand=${encodeURIComponent(brand)}</loc>
+    <loc>${domain}/brand/${slugify(brand)}</loc>
     <lastmod>${productLastMod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
@@ -2839,6 +2880,8 @@ function isPathValid(reqPath: string): boolean {
     const validStaticRoutes = [
       '/',
       '/catalog',
+      '/grodno',
+      '/brands',
       '/contacts',
       '/about',
       '/reviews',
@@ -2868,6 +2911,13 @@ function isPathValid(reqPath: string): boolean {
         return true;
       }
       return false;
+    }
+
+    if (p.startsWith('/brand/')) {
+      const slug = p.substring('/brand/'.length);
+      if (!slug || slug.includes('/')) return false;
+      const brands = db.prepare("SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != ''").all() as { brand: string }[];
+      return brands.some(({ brand }) => slugify(brand) === slug);
     }
 
     if (p.startsWith('/p/')) {
@@ -2906,6 +2956,14 @@ async function startServer() {
     try {
       if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
         return next();
+      }
+
+      if ((req.path === '/catalog' || req.path === '/catalog/') && req.query.brand && !req.query.search) {
+        const brand = String(req.query.brand);
+        const redirectParams = new URLSearchParams(req.originalUrl.split('?')[1] || '');
+        redirectParams.delete('brand');
+        const queryString = redirectParams.toString();
+        return res.redirect(301, `/brand/${slugify(brand)}${queryString ? `?${queryString}` : ''}`);
       }
 
       let htmlPath = process.env.NODE_ENV !== 'production' 
@@ -2995,8 +3053,33 @@ async function startServer() {
       let customImage = `${domain}/favicon.png`;
       let ogType = "website";
       let seoFallbackHtml = "";
+      const escapeHtml = (value: string) => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-      if (req.path.startsWith('/catalog/')) {
+      if (req.path.startsWith('/brand/')) {
+        try {
+          const brandSlug = req.path.substring('/brand/'.length);
+          const brands = db.prepare("SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != ''").all() as { brand: string }[];
+          const brand = brands.find(({ brand }) => slugify(brand) === brandSlug)?.brand;
+          if (brand) {
+            const products = db.prepare('SELECT slug, name FROM products WHERE brand = ? AND slug IS NOT NULL AND slug != ? ORDER BY created_at DESC LIMIT 12').all(brand, '') as { slug: string; name: string }[];
+            customTitle = `${brand} — купить духи в Гродно и Беларуси | Распив и флаконы | АРХЕТИП`;
+            customDescription = `Оригинальная парфюмерия ${brand} в Гродно: распив, отливанты и полные флаконы с доставкой по Беларуси.`;
+            customKeywords = `${brand} купить гродно, духи ${brand} беларусь, ${brand} распив, доставка духов`;
+            seoFallbackHtml = `<div id="seo-prerender" style="max-width:48rem;margin:1.5rem auto;padding:1rem;font-family:system-ui,sans-serif;color:#ccc"><h1>${escapeHtml(brand)} — нишевая парфюмерия в Гродно</h1><p>${escapeHtml(customDescription)}</p><ul>${products.map(product => `<li><a href="/catalog/${encodeURIComponent(product.slug)}">${escapeHtml(`${brand} ${product.name}`)}</a></li>`).join('')}</ul><p><a href="/brands">Все бренды</a> · <a href="/catalog">Каталог</a> · <a href="/grodno">Доставка в Гродно</a></p></div>`;
+            ldJson.push({
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Главная", "item": domain },
+                { "@type": "ListItem", "position": 2, "name": "Бренды", "item": `${domain}/brands` },
+                { "@type": "ListItem", "position": 3, "name": brand, "item": `${domain}/brand/${brandSlug}` }
+              ]
+            });
+          }
+        } catch (error) {
+          console.error('Failed to inject brand SEO schema/meta', error);
+        }
+      } else if (req.path.startsWith('/catalog/')) {
         try {
           const slug = req.path.split('/').pop();
           if (slug) {
@@ -3116,7 +3199,7 @@ async function startServer() {
                     "@type": "ListItem",
                     "position": 3,
                     "name": product.brand,
-                    "item": `${domain}/catalog?brand=${encodeURIComponent(product.brand)}`
+                    "item": `${domain}/brand/${slugify(product.brand)}`
                   },
                   {
                     "@type": "ListItem",
@@ -3135,10 +3218,9 @@ async function startServer() {
               customKeywords = `${product.brand} ${product.name} купить, ${product.brand} ${product.name} гродно, духи ${product.brand} беларусь, доставка духов, оригинальные духи гродно`;
               customImage = (product.imageUrl || '').startsWith('http') ? product.imageUrl : domain + (product.imageUrl || '/favicon.png');
               ogType = "product";
-              // Invisible to users with JS; helps crawlers that skip SPA rendering
-              const safeName = `${product.brand} ${product.name}`.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-              const safeDesc = (product.description || customDescription).replace(/</g, '&lt;').replace(/>/g, '&gt;').substring(0, 400);
-              seoFallbackHtml = `<noscript><article><h1>${safeName}</h1><p>${safeDesc}</p><p>Купить оригинальные духи в Гродно с доставкой по Беларуси — магазин АРХЕТИП.</p></article></noscript>`;
+              const safeName = escapeHtml(`${product.brand} ${product.name}`);
+              const safeDesc = escapeHtml((product.description || customDescription).substring(0, 400));
+              seoFallbackHtml = `<div id="seo-prerender" style="max-width:48rem;margin:1.5rem auto;padding:1rem;font-family:system-ui,sans-serif;color:#ccc"><h1>${safeName}</h1><p>${safeDesc}</p><p>Цена от ${lowestPrice} BYN.</p><p><a href="/brand/${slugify(product.brand)}">${escapeHtml(product.brand)}</a> · <a href="/grodno">Доставка в Гродно</a> · <a href="/p/delivery">Доставка и оплата</a> · <a href="/catalog">Каталог</a></p></div>`;
             }
           }
         } catch (error) {
@@ -3261,6 +3343,17 @@ async function startServer() {
           ]
         };
         ldJson.push(catalogBreadcrumb);
+      } else if (req.path === '/grodno' || req.path === '/grodno/') {
+        customTitle = "Нишевая парфюмерия в Гродно — купить духи и отливанты | АРХЕТИП";
+        customDescription = "Оригинальные нишевые духи, туалетная вода и отливанты в Гродно. Выбор ароматов в каталоге и доставка по городу и всей Беларуси.";
+        customKeywords = "духи гродно, парфюм гродно, отливанты гродно, нишевая парфюмерия гродно, доставка духов гродно";
+        seoFallbackHtml = `<div id="seo-prerender" style="max-width:48rem;margin:1.5rem auto;padding:1rem;font-family:system-ui,sans-serif;color:#ccc"><h1>Нишевая парфюмерия в Гродно</h1><p>Выбирайте оригинальные духи и отливанты с доставкой по Гродно и Беларуси.</p><p><a href="/catalog">Каталог парфюмерии</a> · <a href="/brands">Бренды</a> · <a href="/catalog?category=decant">Отливанты</a> · <a href="/p/delivery">Доставка и оплата</a></p></div>`;
+      } else if (req.path === '/brands' || req.path === '/brands/') {
+        customTitle = "Бренды нишевой парфюмерии в Гродно | АРХЕТИП";
+        customDescription = "Бренды оригинальной нишевой парфюмерии в Гродно: духи, отливанты и полные флаконы с доставкой по Беларуси.";
+        customKeywords = "бренды парфюмерии гродно, нишевые бренды беларусь, купить духи бренды, отливанты гродно";
+        const brands = db.prepare("SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != '' ORDER BY brand ASC").all() as { brand: string }[];
+        seoFallbackHtml = `<div id="seo-prerender" style="max-width:48rem;margin:1.5rem auto;padding:1rem;font-family:system-ui,sans-serif;color:#ccc"><h1>Бренды нишевой парфюмерии</h1><p>Оригинальные ароматы в Гродно: выберите бренд или перейдите в каталог.</p><ul>${brands.map(({ brand }) => `<li><a href="/brand/${slugify(brand)}">${escapeHtml(brand)}</a></li>`).join('')}</ul><p><a href="/catalog">Каталог</a> · <a href="/grodno">Доставка в Гродно</a></p></div>`;
       } else if (req.path === '/contacts' || req.path === '/contacts/') {
         customTitle = "Контакты интернет-магазина АРХЕТИП — Нишевая парфюмерия в Беларуси";
         customDescription = "Свяжитесь с нами для консультации и заказа оригинальной селективной парфюмерии: телефон, Telegram, Instagram. Быстрая доставка по Гродно, Минску и РБ.";
@@ -3413,7 +3506,15 @@ async function startServer() {
 
       // Build optimized canonical URL to allow indexation of key category/brand pages while avoiding duplicate garbage parameters
       let canonicalUrl = `${domain}${req.path}`;
-      if (req.path === '/catalog' || req.path === '/catalog/') {
+      if (req.path.startsWith('/brand/')) {
+        const canonicalParams = new URLSearchParams();
+        const category = req.query.category ? String(req.query.category) : '';
+        const gender = req.query.gender ? String(req.query.gender) : '';
+        if (category) canonicalParams.set('category', category);
+        if (gender) canonicalParams.set('gender', gender);
+        const queryString = canonicalParams.toString();
+        canonicalUrl = queryString ? `${domain}${req.path}?${queryString}` : `${domain}${req.path}`;
+      } else if (req.path === '/catalog' || req.path === '/catalog/') {
         const canonicalParams = new URLSearchParams();
         const brand = req.query.brand ? String(req.query.brand) : '';
         const category = req.query.category ? String(req.query.category) : '';
@@ -3484,6 +3585,8 @@ async function startServer() {
         <meta name="geo.region" content="BY-HR" />
         <meta name="geo.placename" content="Grodno" />
         <link rel="canonical" href="${escapeAttr(canonicalUrl)}" />
+        <link rel="alternate" hreflang="ru-BY" href="${escapeAttr(canonicalUrl)}" />
+        <link rel="alternate" hreflang="x-default" href="${escapeAttr(canonicalUrl)}" />
         <link rel="icon" href="${domain}/favicon.png" type="image/png" />
         <link rel="shortcut icon" href="${domain}/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="${domain}/favicon.png" />
@@ -3495,7 +3598,7 @@ async function startServer() {
       html = html.replace('</head>', `${scriptTag}</head>`);
 
       if (seoFallbackHtml) {
-        html = html.replace('<div id="root"></div>', `<div id="root"></div>${seoFallbackHtml}`);
+        html = html.replace('<div id="root"></div>', `${seoFallbackHtml}<div id="root"></div>`);
       }
 
       if (process.env.NODE_ENV !== 'production' && vite) {

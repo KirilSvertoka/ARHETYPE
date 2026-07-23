@@ -6,6 +6,7 @@ import { useLanguage } from './LanguageProvider';
 import { useCart } from './CartProvider';
 import { useWishlist } from './WishlistProvider';
 import { ShoppingBag, Heart } from 'lucide-react';
+import { brandPath } from '../utils/seo';
 
 interface ProductCardProps {
   product: Product;
@@ -70,7 +71,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
   const handleBrandClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/catalog?brand=${encodeURIComponent(product.brand)}`);
+    navigate(brandPath(product.brand));
   };
 
   const getSelectedVariantPrice = () => {

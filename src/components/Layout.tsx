@@ -99,11 +99,14 @@ export default function Layout() {
       }
     };
 
-    // Minimum loading time for the full animation sequence (stroke + fill)
-    // ONLY play on home page
+    // Splash once per session on home; keep short for LCP
     const isHome = location.pathname === '/';
-    const minLoadTime = isHome 
-      ? new Promise(resolve => setTimeout(resolve, 3200))
+    const splashSeen = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('archetype_splash_seen');
+    const minLoadTime = isHome && !splashSeen
+      ? new Promise(resolve => setTimeout(() => {
+          try { sessionStorage.setItem('archetype_splash_seen', '1'); } catch {}
+          resolve(null);
+        }, 900))
       : Promise.resolve();
     
     Promise.all([fetchData(), minLoadTime]).then(() => {
@@ -518,6 +521,8 @@ export default function Layout() {
               </h4>
               <ul className="space-y-4">
                 <li><Link to="/catalog" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('catalog')}</Link></li>
+                <li><Link to="/brands" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Брэнды' : 'Бренды'}</Link></li>
+                <li><Link to="/grodno" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Духі ў Гродне' : 'Духи в Гродно'}</Link></li>
                 <li><Link to="/about" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('about')}</Link></li>
                 <li><Link to="/contacts" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('contacts')}</Link></li>
               </ul>
@@ -531,6 +536,8 @@ export default function Layout() {
                 <li><Link to="/p/delivery" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Дастаўка і аплата' : 'Доставка и оплата'}</Link></li>
                 <li><Link to="/p/returns" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Гарантыя і вяртанне' : 'Гарантия и возврат'}</Link></li>
                 <li><Link to="/p/faq" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Пытанні і адказы (FAQ)' : 'Вопросы и ответы (FAQ)'}</Link></li>
+                <li><Link to="/p/kak-vybrat-nishevuyu-parfyumeriyu" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Як выбраць нішу' : 'Как выбрать нишу'}</Link></li>
+                <li><Link to="/p/raspiv-vs-flakon" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Распіў ці флакон' : 'Распив или флакон'}</Link></li>
                 <li><Link to="/contacts" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('contacts')}</Link></li>
               </ul>
             </div>
