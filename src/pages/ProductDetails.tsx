@@ -216,7 +216,13 @@ export default function ProductDetails() {
     return (
       <div className="text-center py-24">
         <Helmet>
-          <title>{t('notFound')} | Arhetip</title>
+          <title>{t('notFound')} | АРХЕТИП</title>
+          <meta name="robots" content="noindex, nofollow" />
+          <meta
+            name="description"
+            content="Запрошенный аромат не найден в каталоге. Смотрите актуальный каталог нишевой парфюмерии АРХЕТИП в Гродно."
+          />
+          <link rel="canonical" href={`${SITE_ORIGIN}/catalog`} />
         </Helmet>
         <h2 className="text-2xl font-serif text-brand-light mb-4">{t('notFound')}</h2>
         <Link to="/catalog" className="text-brand-muted hover:text-white flex items-center justify-center gap-2">

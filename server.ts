@@ -3095,7 +3095,13 @@ async function startServer() {
 
               let inStock = pVariants.some(v => v.stock > 0);
 
-              const productReviews = db.prepare("SELECT * FROM reviews WHERE product_id = ? AND status = 'Approved'").all(product.id) as any[];
+              let productReviews: any[] = [];
+              try {
+                productReviews = db.prepare("SELECT * FROM reviews WHERE product_id = ? AND status = 'Approved'").all(product.id) as any[];
+              } catch (reviewErr) {
+                console.error('Failed to load product reviews for SEO', reviewErr);
+                productReviews = [];
+              }
               
               const productSchema: any = {
                 "@context": "https://schema.org/",
@@ -3489,7 +3495,9 @@ async function startServer() {
       // Check if current page should be hidden from search engines (NoIndex)
       const adminPathEnv = process.env.VITE_ADMIN_PATH || 'admin';
       const cleanAdminPath = adminPathEnv.startsWith('/') ? adminPathEnv : `/${adminPathEnv}`;
-      const isNoIndex = req.path === cleanAdminPath || 
+      const pathExists = isPathValid(req.path);
+      const isNoIndex = !pathExists ||
+                        req.path === cleanAdminPath || 
                         req.path.startsWith(cleanAdminPath + '/') || 
                         req.path === '/admin' ||
                         req.path.startsWith('/admin/') ||
@@ -3504,9 +3512,43 @@ async function startServer() {
                         !!(req.query.accords) ||
                         !!(req.query.sort);
 
+      // Soft-404 / missing routes: clear title for bots, point canonical at a live page
+      if (!pathExists) {
+        if (req.path.startsWith('/catalog/')) {
+          customTitle = 'Товар не найден | АРХЕТИП';
+          customDescription = 'Запрошенный аромат не найден в каталоге. Смотрите актуальный каталог нишевой парфюмерии АРХЕТИП в Гродно.';
+          customKeywords = 'каталог духов гродно, нишевая парфюмерия';
+          seoFallbackHtml = `<div id="seo-prerender" style="max-width:48rem;margin:1.5rem auto;padding:1rem;font-family:system-ui,sans-serif;color:#ccc"><h1>Товар не найден</h1><p>Этой карточки больше нет в каталоге.</p><p><a href="/catalog">Перейти в каталог</a> · <a href="/brands">Бренды</a> · <a href="/grodno">Доставка в Гродно</a></p></div>`;
+        } else if (req.path.startsWith('/brand/')) {
+          customTitle = 'Бренд не найден | АРХЕТИП';
+          customDescription = 'Бренд не найден. Смотрите все бренды нишевой парфюмерии в магазине АРХЕТИП.';
+          seoFallbackHtml = `<div id="seo-prerender" style="max-width:48rem;margin:1.5rem auto;padding:1rem;font-family:system-ui,sans-serif;color:#ccc"><h1>Бренд не найден</h1><p><a href="/brands">Все бренды</a> · <a href="/catalog">Каталог</a></p></div>`;
+        } else if (req.path.startsWith('/p/')) {
+          customTitle = 'Страница не найдена | АРХЕТИП';
+          customDescription = 'Страница не найдена. Вернитесь в каталог нишевой парфюмерии АРХЕТИП.';
+          seoFallbackHtml = `<div id="seo-prerender" style="max-width:48rem;margin:1.5rem auto;padding:1rem;font-family:system-ui,sans-serif;color:#ccc"><h1>Страница не найдена</h1><p><a href="/catalog">Каталог</a> · <a href="/">На главную</a></p></div>`;
+        } else {
+          customTitle = 'Страница не найдена | АРХЕТИП';
+          customDescription = 'Страница не найдена.';
+          seoFallbackHtml = `<div id="seo-prerender" style="max-width:48rem;margin:1.5rem auto;padding:1rem;font-family:system-ui,sans-serif;color:#ccc"><h1>Страница не найдена</h1><p><a href="/">На главную</a> · <a href="/catalog">Каталог</a></p></div>`;
+        }
+        ldJson = [];
+        ogType = 'website';
+      }
+
       // Build optimized canonical URL to allow indexation of key category/brand pages while avoiding duplicate garbage parameters
       let canonicalUrl = `${domain}${req.path}`;
-      if (req.path.startsWith('/brand/')) {
+      if (!pathExists) {
+        if (req.path.startsWith('/catalog/')) {
+          canonicalUrl = `${domain}/catalog`;
+        } else if (req.path.startsWith('/brand/')) {
+          canonicalUrl = `${domain}/brands`;
+        } else if (req.path.startsWith('/p/')) {
+          canonicalUrl = `${domain}/`;
+        } else {
+          canonicalUrl = `${domain}/`;
+        }
+      } else if (req.path.startsWith('/brand/')) {
         const canonicalParams = new URLSearchParams();
         const category = req.query.category ? String(req.query.category) : '';
         const gender = req.query.gender ? String(req.query.gender) : '';
@@ -3605,12 +3647,13 @@ async function startServer() {
         html = await vite.transformIndexHtml(req.originalUrl, html);
       }
 
-      let httpStatus = 200;
-      if (!isPathValid(req.path)) {
-        httpStatus = 404;
+      let httpStatus = pathExists ? 200 : 404;
+      const responseHeaders: Record<string, string> = { 'Content-Type': 'text/html' };
+      if (!pathExists || isNoIndex) {
+        responseHeaders['X-Robots-Tag'] = 'noindex, nofollow';
       }
 
-      res.status(httpStatus).set({ 'Content-Type': 'text/html' }).end(html);
+      res.status(httpStatus).set(responseHeaders).end(html);
     } catch (e) {
       next(e);
     }
