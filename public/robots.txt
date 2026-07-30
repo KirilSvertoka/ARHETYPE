@@ -1,4 +1,10 @@
 User-agent: Yandex
+Allow: /*?gender=
+Allow: /*&gender=
+Allow: /*?category=
+Allow: /*&category=
+Allow: /*?family=
+Allow: /*&family=
 Disallow: /api/
 Disallow: /forbidden
 Disallow: /502
@@ -8,16 +14,28 @@ Disallow: /admin/
 Disallow: /wishlist
 Disallow: /cart
 Disallow: /*?*sort=
+Disallow: /*&sort=
 Disallow: /*?*search=
+Disallow: /*&search=
 Disallow: /*?*token=
+Disallow: /*&token=
 Disallow: /*?*utm_
+Disallow: /*&utm_
 Disallow: /*?*gclid=
+Disallow: /*&gclid=
 Disallow: /*?*yclid=
+Disallow: /*&yclid=
 Clean-param: sort&search&token&utm_source&utm_medium&utm_campaign&gclid&yclid /catalog/
 Clean-param: sort&search&token&utm_source&utm_medium&utm_campaign&gclid&yclid /catalog
 
 User-agent: *
 Allow: /
+Allow: /*?gender=
+Allow: /*&gender=
+Allow: /*?category=
+Allow: /*&category=
+Allow: /*?family=
+Allow: /*&family=
 Disallow: /api/
 Disallow: /forbidden
 Disallow: /502
@@ -27,11 +45,17 @@ Disallow: /admin/
 Disallow: /wishlist
 Disallow: /cart
 Disallow: /*?*sort=
+Disallow: /*&sort=
 Disallow: /*?*search=
+Disallow: /*&search=
 Disallow: /*?*token=
+Disallow: /*&token=
 Disallow: /*?*utm_
+Disallow: /*&utm_
 Disallow: /*?*gclid=
+Disallow: /*&gclid=
 Disallow: /*?*yclid=
+Disallow: /*&yclid=
 
 Host: https://archetype.by
 Sitemap: https://archetype.by/sitemap.xml

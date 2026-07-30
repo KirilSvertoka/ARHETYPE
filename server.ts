@@ -1261,6 +1261,12 @@ app.get('/robots.txt', (req, res) => {
   
   res.type('text/plain');
   res.send(`User-agent: Yandex
+Allow: /*?gender=
+Allow: /*&gender=
+Allow: /*?category=
+Allow: /*&category=
+Allow: /*?family=
+Allow: /*&family=
 Disallow: /api/
 Disallow: /forbidden
 Disallow: /502
@@ -1272,15 +1278,27 @@ Disallow: /admin/
 Disallow: /wishlist
 Disallow: /cart
 Disallow: /*?*sort=
+Disallow: /*&sort=
 Disallow: /*?*search=
+Disallow: /*&search=
 Disallow: /*?*token=
+Disallow: /*&token=
 Disallow: /*?*utm_
+Disallow: /*&utm_
 Disallow: /*?*gclid=
+Disallow: /*&gclid=
 Disallow: /*?*yclid=
+Disallow: /*&yclid=
 Clean-param: sort&search&token&utm_source&utm_medium&utm_campaign&gclid&yclid /catalog/
 Clean-param: sort&search&token&utm_source&utm_medium&utm_campaign&gclid&yclid /catalog
 
 User-agent: *
+Allow: /*?gender=
+Allow: /*&gender=
+Allow: /*?category=
+Allow: /*&category=
+Allow: /*?family=
+Allow: /*&family=
 Disallow: /api/
 Disallow: /forbidden
 Disallow: /502
@@ -1292,11 +1310,17 @@ Disallow: /admin/
 Disallow: /wishlist
 Disallow: /cart
 Disallow: /*?*sort=
+Disallow: /*&sort=
 Disallow: /*?*search=
+Disallow: /*&search=
 Disallow: /*?*token=
+Disallow: /*&token=
 Disallow: /*?*utm_
+Disallow: /*&utm_
 Disallow: /*?*gclid=
+Disallow: /*&gclid=
 Disallow: /*?*yclid=
+Disallow: /*&yclid=
 
 Sitemap: ${domain}/sitemap.xml
 `);
@@ -1427,7 +1451,7 @@ app.get('/sitemap.xml', (req, res) => {
   </url>`;
     });
 
-    // Key category landings for geo niches
+    // Key category + gender landings for geo niches
     const categoryLandings = [
       { category: 'perfume', priority: '0.85' },
       { category: 'eau_de_toilette', priority: '0.85' },
@@ -1438,6 +1462,21 @@ app.get('/sitemap.xml', (req, res) => {
       xml += `
   <url>
     <loc>${domain}/catalog?category=${encodeURIComponent(category)}</loc>
+    <lastmod>${productLastMod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${priority}</priority>
+  </url>`;
+    });
+
+    const genderLandings = [
+      { gender: 'Male', priority: '0.85' },
+      { gender: 'Female', priority: '0.85' },
+      { gender: 'Unisex', priority: '0.8' },
+    ];
+    genderLandings.forEach(({ gender, priority }) => {
+      xml += `
+  <url>
+    <loc>${domain}/catalog?gender=${encodeURIComponent(gender)}</loc>
     <lastmod>${productLastMod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>${priority}</priority>
