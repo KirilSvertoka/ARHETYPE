@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = process.env.TEST_PORT || '34567';
+const PORT = process.env.TEST_PORT || String(40000 + Math.floor(Math.random() * 20000));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'arhetype-upload-'));
 const dbPath = path.join(tmp, 'test.db');
 const uploadDir = path.join(tmp, 'uploads');
@@ -18,7 +18,7 @@ const PNG_1X1 = Buffer.from(
 
 function startServer() {
   return new Promise((resolve, reject) => {
-    const child = spawn('npx', ['tsx', 'server.ts'], {
+    const child = spawn(path.join(__dirname, 'node_modules/.bin/tsx'), ['server.ts'], {
       cwd: __dirname,
       env: {
         ...process.env,
@@ -34,9 +34,11 @@ function startServer() {
     });
 
     let output = '';
+    let settled = false;
     const onData = (buf) => {
       output += buf.toString();
-      if (output.includes('Server running')) {
+      if (!settled && output.includes('Server running')) {
+        settled = true;
         child.stdout.off('data', onData);
         child.stderr.off('data', onData);
         resolve(child);
@@ -45,25 +47,33 @@ function startServer() {
     child.stdout.on('data', onData);
     child.stderr.on('data', onData);
     child.on('exit', (code) => {
-      reject(new Error(`Server exited early (${code}): ${output.slice(-2000)}`));
+      if (!settled) {
+        settled = true;
+        reject(new Error(`Server exited early (${code}): ${output.slice(-2000)}`));
+      }
     });
-    setTimeout(() => reject(new Error(`Server start timeout: ${output.slice(-2000)}`)), 60000);
+    setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error(`Server start timeout: ${output.slice(-2000)}`));
+      }
+    }, 60000);
   });
 }
 
 async function stopServer(child) {
-  if (!child || child.killed) return;
+  if (!child || child.killed || child.exitCode != null) return;
   child.removeAllListeners('exit');
-  child.kill('SIGTERM');
   await new Promise((resolve) => {
     const t = setTimeout(() => {
-      child.kill('SIGKILL');
+      try { child.kill('SIGKILL'); } catch {}
       resolve();
     }, 5000);
     child.on('exit', () => {
       clearTimeout(t);
       resolve();
     });
+    try { child.kill('SIGTERM'); } catch { resolve(); }
   });
 }
 
@@ -158,6 +168,7 @@ async function run() {
     assert(Array.isArray(product.images) && product.images[0] === imageUrl, 'gallery image was not persisted');
 
     await stopServer(child);
+    await new Promise((r) => setTimeout(r, 500));
     child = await startServer();
 
     const sessionAfterRestart = await api('/api/admin/session', {
