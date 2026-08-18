@@ -1,3 +1,22 @@
+export class UploadAuthError extends Error {
+  status = 401;
+
+  constructor(message = 'Сессия истекла. Войдите снова, чтобы загрузить фото.') {
+    super(message);
+    this.name = 'UploadAuthError';
+  }
+}
+
+async function readUploadResponse(res: Response, fileName: string): Promise<{ url?: string; success?: boolean }> {
+  if (res.status === 401) {
+    throw new UploadAuthError();
+  }
+  if (!res.ok) {
+    throw new Error(`Ошибка при загрузке ${fileName}`);
+  }
+  return res.json();
+}
+
 export const uploadImageChunks = async (
   file: File,
   token: string,
@@ -12,8 +31,8 @@ export const uploadImageChunks = async (
       headers: { Authorization: `Bearer ${token}` },
       body: formDataUpload,
     });
-    if (!res.ok) throw new Error(`Ошибка при загрузке ${file.name}`);
-    const data = await res.json();
+    const data = await readUploadResponse(res, file.name);
+    if (!data.url) throw new Error(`Ошибка при загрузке ${file.name}`);
     return data.url;
   }
 
@@ -56,12 +75,12 @@ export const uploadImageChunks = async (
       }),
     });
 
-    if (!res.ok)
-      throw new Error(
-        `Ошибка при загрузке части ${i + 1}/${totalChunks} для ${file.name}`,
-      );
-    const data = await res.json();
+    const data = await readUploadResponse(
+      res,
+      `части ${i + 1}/${totalChunks} для ${file.name}`,
+    );
     if (data.url) finalUrl = data.url;
   }
+  if (!finalUrl) throw new Error(`Ошибка при загрузке ${file.name}`);
   return finalUrl;
 };

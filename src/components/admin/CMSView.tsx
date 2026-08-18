@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { CMSPage, HomeConfig, GeneralSettings } from '../../types';
 import { XCircle, Plus, Trash2, GripVertical, Image as ImageIcon, UploadCloud, ArrowUp, ArrowDown, Eye, EyeOff, ChevronLeft, ChevronRight, Monitor, Smartphone, Globe, ArrowRight, Play, Sparkles } from 'lucide-react';
-import { uploadImageChunks } from '../../utils/uploadUtils';
+import { uploadImageChunks, UploadAuthError } from '../../utils/uploadUtils';
 import FAQManager from './FAQManager';
 
 interface CMSViewProps {
@@ -12,9 +12,10 @@ interface CMSViewProps {
   token: string;
   loading: boolean;
   activeSection: 'general' | 'home' | 'pages' | 'contacts';
+  onAuthError?: () => void;
 }
 
-export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage, token, loading, activeSection }: CMSViewProps) {
+export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage, token, loading, activeSection, onAuthError }: CMSViewProps) {
   const [editingPage, setEditingPage] = useState<CMSPage | null>(null);
   const [isCreatingPage, setIsCreatingPage] = useState(false);
   const [localHomeConfig, setLocalHomeConfig] = useState<HomeConfig | null>(homeConfig);
@@ -58,6 +59,9 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
       const url = await uploadImageChunks(file, token);
       callback(url);
     } catch (err: any) {
+      if (err instanceof UploadAuthError || err?.status === 401) {
+        onAuthError?.();
+      }
       alert(err.message);
     }
   };
@@ -97,7 +101,11 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
             ref={inputRef} 
             className="hidden" 
             accept="image/*"
-            onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              if (e.target.files?.[0]) onUpload(e.target.files[0]);
+              e.target.value = '';
+            }}
           />
           
           <div className="w-10 h-10 rounded-lg bg-white/5 flex-shrink-0 overflow-hidden flex items-center justify-center">

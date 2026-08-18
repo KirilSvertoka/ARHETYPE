@@ -80,6 +80,20 @@ export default function AdminPanel() {
     localStorage.removeItem('adminToken');
   };
 
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    fetch('/api/admin/session', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then((res) => {
+      if (!cancelled && res.status === 401) {
+        setToken(null);
+        localStorage.removeItem('adminToken');
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [token]);
+
   const fetchProducts = async () => {
     if (!token) return;
     setLoading(true);
@@ -102,6 +116,10 @@ export default function AdminPanel() {
       const res = await fetch('/api/admin/dashboard', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
       if (res.ok) setDashboardData(await res.json());
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
@@ -452,10 +470,10 @@ export default function AdminPanel() {
                   onPageChange={(page) => fetchReviews(page)}
                 />
               )}
-              {activeTab === 'cms-contacts' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="contacts" />}
-              {activeTab === 'cms-general' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="general" />}
-              {activeTab === 'cms-home' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="home" />}
-              {activeTab === 'cms-pages' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="pages" />}
+              {activeTab === 'cms-contacts' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="contacts" onAuthError={handleLogout} />}
+              {activeTab === 'cms-general' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="general" onAuthError={handleLogout} />}
+              {activeTab === 'cms-home' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="home" onAuthError={handleLogout} />}
+              {activeTab === 'cms-pages' && <CMSView pages={cmsPages} homeConfig={homeConfig} onUpdateHome={fetchCMSData} onUpdatePage={fetchCMSData} token={token!} loading={loading} activeSection="pages" onAuthError={handleLogout} />}
               {activeTab === 'reports' && <ReportsView token={token!} />}
               {activeTab === 'changelog' && <ChangelogView />}
             </motion.div>

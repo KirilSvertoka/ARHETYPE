@@ -18,18 +18,27 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const uploadDir = path.join(__dirname, 'uploads');
+const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+export function sanitizeUploadFilename(originalName: string): string {
+  const ext = path.extname(originalName || '').toLowerCase();
+  const safeExt = /^\.[a-z0-9]{1,8}$/.test(ext) ? ext : '.jpg';
+  return `${Date.now()}-${crypto.randomBytes(8).toString('hex')}${safeExt}`;
 }
 
 const storage = multer.diskStorage({
   destination: uploadDir,
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9.-]/g, ''));
+    cb(null, sanitizeUploadFilename(file.originalname));
   }
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }
+});
 
 const app = express();
 
@@ -117,37 +126,22 @@ app.get('/apple-touch-icon-precomposed.png', (req, res) => {
   res.sendFile(favPath);
 });
 
-// Simple in-memory session store
+// Simple in-memory session cache (backed by SQLite so restarts keep admins logged in)
 const activeTokens = new Set<string>();
 
-// Auth Middleware
-const requireAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  let token = '';
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.split(' ')[1];
-  } else if (req.query.token && typeof req.query.token === 'string') {
-    token = req.query.token;
-  }
-
-  if (!token || !activeTokens.has(token)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  next();
-};
-
 // Initialize SQLite Database
+const dbPath = process.env.DATABASE_PATH || 'perfume.db';
 let db: Database.Database;
 try {
-  db = new Database('perfume.db');
+  db = new Database(dbPath);
   // Test if it's corrupt
   db.pragma('integrity_check');
 } catch (err: any) {
   console.error('Database is corrupt or failed to open, recreating...', err);
-  if (fs.existsSync('perfume.db')) {
-    fs.unlinkSync('perfume.db');
+  if (fs.existsSync(dbPath)) {
+    fs.unlinkSync(dbPath);
   }
-  db = new Database('perfume.db');
+  db = new Database(dbPath);
 }
 
 // Register custom normalization function for accent-insensitive comparisons
@@ -297,7 +291,60 @@ db.exec(`
     answer_be TEXT,
     sort_order INTEGER DEFAULT 0
   );
+
+  CREATE TABLE IF NOT EXISTS admin_sessions (
+    token TEXT PRIMARY KEY,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL
+  );
 `);
+
+function persistAdminSession(token: string) {
+  db.prepare(
+    `INSERT OR REPLACE INTO admin_sessions (token, expires_at)
+     VALUES (?, datetime('now', '+30 days'))`
+  ).run(token);
+  activeTokens.add(token);
+}
+
+function revokeAdminSession(token: string) {
+  db.prepare('DELETE FROM admin_sessions WHERE token = ?').run(token);
+  activeTokens.delete(token);
+}
+
+function isAdminTokenValid(token: string): boolean {
+  if (!token) return false;
+  if (activeTokens.has(token)) return true;
+  const row = db.prepare(
+    `SELECT token FROM admin_sessions WHERE token = ? AND expires_at > datetime('now')`
+  ).get(token) as { token: string } | undefined;
+  if (row) {
+    activeTokens.add(row.token);
+    return true;
+  }
+  return false;
+}
+
+db.prepare(`DELETE FROM admin_sessions WHERE expires_at <= datetime('now')`).run();
+const storedSessions = db.prepare(
+  `SELECT token FROM admin_sessions WHERE expires_at > datetime('now')`
+).all() as { token: string }[];
+storedSessions.forEach((row) => activeTokens.add(row.token));
+
+const requireAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  let token = '';
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.query.token && typeof req.query.token === 'string') {
+    token = req.query.token;
+  }
+
+  if (!token || !isAdminTokenValid(token)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+};
 
 // Seed default home config
 const defaultHomeConfig = {
@@ -1658,8 +1705,7 @@ app.post('/api/upload/chunk', requireAuth, express.json({ limit: '50mb' }), (req
     fs.appendFileSync(tempPath, buffer);
     
     if (Number(chunkIndex) === Number(totalChunks) - 1) {
-      const sanitizedName = filename.replace(/[^a-zA-Z0-9.-]/g, '');
-      const finalName = `${Date.now()}-${sanitizedName}`;
+      const finalName = sanitizeUploadFilename(filename || 'image.jpg');
       const finalPath = path.join(uploadDir, finalName);
       fs.renameSync(tempPath, finalPath);
       res.json({ url: `/uploads/${finalName}` });
@@ -1774,7 +1820,7 @@ app.post('/api/login', loginLimiter, (req, res) => {
 
   if (username === adminUser && password === adminPass) {
     const token = crypto.randomBytes(32).toString('hex');
-    activeTokens.add(token);
+    persistAdminSession(token);
     res.json({ token });
   } else {
     res.status(401).json({ error: 'Invalid credentials' });
@@ -1785,9 +1831,13 @@ app.post('/api/logout', (req, res) => {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
-    activeTokens.delete(token);
+    revokeAdminSession(token);
   }
   res.status(204).send();
+});
+
+app.get('/api/admin/session', requireAuth, (_req, res) => {
+  res.json({ ok: true });
 });
 
 app.get('/api/products/:slug', (req, res) => {
@@ -2977,7 +3027,7 @@ function isPathValid(reqPath: string): boolean {
 }
 
 async function startServer() {
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   let vite: any;
   if (process.env.NODE_ENV !== 'production') {

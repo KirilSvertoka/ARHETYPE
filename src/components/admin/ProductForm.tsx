@@ -3,7 +3,7 @@ import { Product, Note, ProductVariant } from '../../types';
 import { UploadCloud, RefreshCw, Plus, Trash2, Image as ImageIcon, Tag, Layers, Search, Check, Sparkles, Box } from 'lucide-react';
 import NoteBuilder from './NoteBuilder';
 
-import { uploadImageChunks } from '../../utils/uploadUtils';
+import { uploadImageChunks, UploadAuthError } from '../../utils/uploadUtils';
 
 interface ProductFormProps {
   token: string;
@@ -58,7 +58,11 @@ const ImageDropzone = ({
           className="hidden" 
           accept="image/*"
           multiple={multiple}
-          onChange={(e) => e.target.files?.length && onUpload(e.target.files)}
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            if (e.target.files?.length) onUpload(e.target.files);
+            e.target.value = '';
+          }}
         />
         
         {currentUrl ? (
@@ -336,6 +340,9 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
         });
       }
     } catch (err: any) {
+      if (err instanceof UploadAuthError || err?.status === 401) {
+        onAuthError();
+      }
       alert(err.message);
     } finally {
       setUploading(false);
