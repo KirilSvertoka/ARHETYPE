@@ -114,6 +114,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     imageUrl: initialData?.imageUrl || '',
     images: initialData?.images || [],
     price: initialData?.price?.toString() || '',
+    discountPercent: String(initialData?.discountPercent ?? 0),
     gender: initialData?.gender || 'Unisex',
     concentration: initialData?.concentration || 'EDP',
     stockThreshold: initialData?.stockThreshold?.toString() || '10',
@@ -424,6 +425,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     const payload = {
       ...formData,
       price: formData.price,
+      discountPercent: Math.min(90, Math.max(0, parseInt(formData.discountPercent, 10) || 0)),
       stockThreshold: parseInt(formData.stockThreshold),
       topNotes: formData.topNotes,
       heartNotes: formData.heartNotes,
@@ -536,6 +538,21 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Порог остатка</label>
               <input type="number" min="0" value={formData.stockThreshold} onChange={e => setFormData({...formData, stockThreshold: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="10" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Скидка (%)</label>
+              <input
+                type="number"
+                min="0"
+                max="90"
+                value={formData.discountPercent}
+                onChange={e => setFormData({ ...formData, discountPercent: e.target.value })}
+                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted"
+                placeholder="0"
+              />
+              <p className="text-[10px] text-brand-muted ml-1">0 — без скидки. Применяется ко всем ценам товара (включая варианты).</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

@@ -61,7 +61,9 @@ export interface Product {
   imageUrl: string;
   images?: string[];
   slug: string;
-  price: string | number; // Base price or starting price
+  price: string | number; // Base price or starting price (before discount)
+  /** Product-wide percent off (0–90). Applied to base price and all variants in the UI/cart. */
+  discountPercent?: number;
   topNotes: Note[];
   heartNotes: Note[];
   baseNotes: Note[];

@@ -28,6 +28,10 @@ export default function Storefront() {
   const [activeCategory, setActiveCategory] = useState<string>(() => new URLSearchParams(location.search).get('category') || 'All');
   const [accordsList, setAccordsList] = useState<string[]>([]);
   const [selectedAccords, setSelectedAccords] = useState<string[]>(() => new URLSearchParams(location.search).get('accords')?.split(',') || []);
+  const [saleOnly, setSaleOnly] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('onSale') === '1' || params.get('category') === 'sale';
+  });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [sortBy, setSortBy] = useState<string>(() => new URLSearchParams(location.search).get('sort') || 'name-asc');
   const [mobileGridCols, setMobileGridCols] = useState<1 | 2>(1);
@@ -57,6 +61,7 @@ export default function Storefront() {
     search?: string;
     families?: string[];
     accords?: string[];
+    onSale?: boolean;
   }) => {
     const brand = filters.brand && filters.brand !== 'All' ? filters.brand : 'All';
     const params = new URLSearchParams();
@@ -66,6 +71,7 @@ export default function Storefront() {
     if (filters.search) params.set('search', filters.search);
     if (filters.families && filters.families.length > 0) params.set('families', filters.families.join(','));
     if (filters.accords && filters.accords.length > 0) params.set('accords', filters.accords.join(','));
+    if (filters.onSale) params.set('onSale', '1');
     const qs = params.toString();
     const path = brand !== 'All' ? brandPath(brand) : '/catalog';
     return `${path}${qs ? `?${qs}` : ''}`;
@@ -79,6 +85,7 @@ export default function Storefront() {
     search?: string;
     families?: string[];
     accords?: string[];
+    onSale?: boolean;
   }) => {
     const next = {
       brand: patch.brand !== undefined ? patch.brand : activeBrand,
@@ -88,6 +95,7 @@ export default function Storefront() {
       search: patch.search !== undefined ? patch.search : debouncedSearchQuery,
       families: patch.families !== undefined ? patch.families : selectedFamilies,
       accords: patch.accords !== undefined ? patch.accords : selectedAccords,
+      onSale: patch.onSale !== undefined ? patch.onSale : saleOnly,
     };
     const target = buildCatalogUrl(next);
     const current = `${location.pathname}${location.search}`;
@@ -116,8 +124,10 @@ export default function Storefront() {
     const searchParam = params.get('search') || '';
     const familiesParam = params.get('families');
     const accordsParam = params.get('accords');
+    const onSaleParam = params.get('onSale');
 
-    setActiveCategory(categoryParam || 'All');
+    setActiveCategory(categoryParam === 'sale' ? 'All' : (categoryParam || 'All'));
+    setSaleOnly(onSaleParam === '1' || categoryParam === 'sale');
     setActiveGenderTab(((genderParam as 'All' | 'Male' | 'Female' | 'Unisex') || 'All'));
     setSortBy(sortParam || 'name-asc');
     setSearchQuery(searchParam);
@@ -163,12 +173,13 @@ export default function Storefront() {
         search: searchQuery.trim(),
         families: selectedFamilies,
         accords: selectedAccords,
+        onSale: saleOnly,
       });
       const current = `${location.pathname}${location.search}`;
       if (target !== current) navigate(target);
     }, 300);
     return () => clearTimeout(handler);
-  }, [searchQuery, activeBrand, activeCategory, activeGenderTab, sortBy, selectedFamilies, selectedAccords, location.pathname, location.search, navigate]);
+  }, [searchQuery, activeBrand, activeCategory, activeGenderTab, sortBy, selectedFamilies, selectedAccords, saleOnly, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
@@ -238,6 +249,9 @@ export default function Storefront() {
     if (selectedAccords.length > 0) {
       params.append('accords', selectedAccords.join(','));
     }
+    if (saleOnly) {
+      params.append('onSale', '1');
+    }
     params.append('sort', sortBy);
 
     fetch(`/api/products?${params.toString()}`)
@@ -253,7 +267,7 @@ export default function Storefront() {
         console.error('Failed to fetch products', err);
         setLoading(false);
       });
-  }, [debouncedSearchQuery, activeBrand, activeGenderTab, selectedFamilies, selectedAccords, sortBy, activeCategory, brandSlug, brands]);
+  }, [debouncedSearchQuery, activeBrand, activeGenderTab, selectedFamilies, selectedAccords, sortBy, activeCategory, saleOnly, brandSlug, brands]);
 
   const scentFamilies = [
     { id: 'familyFloral', label: t('familyFloral') },
@@ -287,7 +301,7 @@ export default function Storefront() {
     navigate('/catalog');
   };
 
-  const activeFiltersCount = (activeGenderTab !== 'All' ? 1 : 0) + selectedFamilies.length + selectedAccords.length + (activeBrand !== 'All' ? 1 : 0) + (sortBy !== 'name-asc' ? 1 : 0) + (activeCategory !== 'All' ? 1 : 0) + (searchQuery ? 1 : 0);
+  const activeFiltersCount = (activeGenderTab !== 'All' ? 1 : 0) + selectedFamilies.length + selectedAccords.length + (activeBrand !== 'All' ? 1 : 0) + (sortBy !== 'name-asc' ? 1 : 0) + (activeCategory !== 'All' ? 1 : 0) + (saleOnly ? 1 : 0) + (searchQuery ? 1 : 0);
 
   const scrollToCallback = () => {
     const element = document.getElementById('callback-section');
@@ -645,6 +659,26 @@ export default function Storefront() {
                       <ChevronDown className="w-4 h-4" />
                     </div>
                   </div>
+                </div>
+
+                {/* Sale filter */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-muted">
+                    {t('onSale')}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => navigateFilters({ onSale: !saleOnly })}
+                    className={`w-full px-4 py-3 rounded-none text-xs font-semibold uppercase tracking-[0.1em] transition-all border text-left ${
+                      saleOnly
+                        ? 'bg-brand-accent text-white border-brand-accent'
+                        : 'bg-brand-hover/10 text-brand-muted border-brand-border/60 hover:border-brand-accent/40 hover:text-brand-accent'
+                    }`}
+                  >
+                    {saleOnly
+                      ? (language === 'be' ? 'Паказаны толькі акцыі' : 'Показаны только акции')
+                      : (language === 'be' ? 'Паказаць тавары са зніжкай' : 'Показать товары со скидкой')}
+                  </button>
                 </div>
 
                 {/* Brand Filter */}

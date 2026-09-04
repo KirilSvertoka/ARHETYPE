@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '../types';
+import { applyDiscount } from '../utils/pricing';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -58,7 +59,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         selectedVariantId: variant?.id,
         selectedVariantSize: variant?.size,
         variant_type: variant?.variant_type || (variant ? 'full' : undefined),
-        price: variant ? variant.price : product.price
+        price: applyDiscount(variant ? variant.price : product.price, product.discountPercent)
       };
       return [...prev, newItem];
     });

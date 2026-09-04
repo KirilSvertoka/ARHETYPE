@@ -58,15 +58,17 @@ const POPULAR_BRANDS: BrandCard[] = [
 export default function Home() {
   const [config, setConfig] = useState<HomeConfig | null>(null);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [saleProducts, setSaleProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { t, language } = useLanguage();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [configRes, productsRes, genRes] = await Promise.all([
+        const [configRes, productsRes, saleRes, genRes] = await Promise.all([
           fetch('/api/settings/home'),
           fetch('/api/products?sort=newest'),
+          fetch('/api/products?onSale=1&sort=newest'),
           fetch('/api/settings/general')
         ]);
 
@@ -75,12 +77,14 @@ export default function Home() {
 
         const configData = await configRes.json();
         const productsData: Product[] = await productsRes.json();
+        const saleData: Product[] = saleRes.ok ? await saleRes.json() : [];
         const genData = genRes.ok ? await genRes.json() : {};
 
         setConfig({ ...configData, genData });
         
         // Use the first 8 products as New Arrivals (pre-sorted by newest)
         setNewArrivals(productsData.slice(0, 8));
+        setSaleProducts(saleData.slice(0, 8));
         setLoading(false);
       } catch (err) {
         console.error('Failed to load home data', err);
@@ -591,6 +595,54 @@ export default function Home() {
 
       {/* INTERACTIVE SCENT SELECTOR */}
       <ScentQuiz />
+
+      {/* SALE PRODUCTS */}
+      {saleProducts.length > 0 && (
+        <section className="py-24 md:py-32 w-full bg-brand-bg text-brand-light border-b border-brand-border/40 relative overflow-hidden select-none">
+          <div className="absolute left-0 top-1/3 w-[380px] h-[380px] bg-brand-accent/[0.02] rounded-full blur-[120px] pointer-events-none" />
+          <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-16 w-full">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-20 gap-8">
+              <div className="max-w-2xl space-y-4">
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-[0.35em] text-brand-accent">
+                  <span className="w-1 h-1 rounded-full bg-brand-accent" />
+                  {t('onSale')}
+                </span>
+                <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif text-brand-light font-extralight tracking-[0.05em] uppercase leading-none">
+                  {t('saleProducts')}
+                </h2>
+                <p className="text-xs sm:text-sm text-brand-muted font-extralight tracking-[0.02em] leading-relaxed max-w-xl">
+                  {language === 'be'
+                    ? 'Абраныя ароматы з дзейнай зніжкай — пакуль акцыя актыўная.'
+                    : 'Избранные ароматы с действующей скидкой — пока акция активна.'}
+                </p>
+              </div>
+
+              <Link
+                to="/catalog?onSale=1"
+                className="inline-flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.25em] text-brand-muted hover:text-brand-light transition-all duration-300 group shrink-0 pb-1 border-b border-brand-border hover:border-brand-accent cursor-pointer"
+              >
+                <span>{t('viewSale')}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-brand-accent transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+              {saleProducts.map((product, pIdx) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.8, delay: pIdx * 0.1 }}
+                  className="rounded-none overflow-hidden border border-brand-border/50 hover:border-brand-accent/20 transition-colors"
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 3. STYLISH GRID OF NEW ARRIVALS (Light Theme Edition) */}
       {newArrivals.length > 0 && (

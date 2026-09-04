@@ -548,7 +548,8 @@ const migrations = [
   "ALTER TABLE products ADD COLUMN heartNotesDuration_be TEXT",
   "ALTER TABLE products ADD COLUMN baseNotesDuration TEXT",
   "ALTER TABLE products ADD COLUMN baseNotesDuration_be TEXT",
-  "ALTER TABLE products ADD COLUMN set_items TEXT DEFAULT '[]'"
+  "ALTER TABLE products ADD COLUMN set_items TEXT DEFAULT '[]'",
+  "ALTER TABLE products ADD COLUMN discountPercent INTEGER DEFAULT 0"
 ];
 
 // Populate newly added fields
@@ -1850,6 +1851,7 @@ app.get('/api/products/:slug', (req, res) => {
     const variants = db.prepare('SELECT * FROM product_variants WHERE product_id = ?').all(product.id);
     const result = {
       ...product,
+      discountPercent: Number(product.discountPercent) || 0,
       images: JSON.parse(product.images || '[]'),
       scentFamilies: JSON.parse(product.scentFamilies || '[]'),
       scentFamilies_be: JSON.parse(product.scentFamilies_be || '[]'),
@@ -1924,14 +1926,18 @@ app.get('/api/suggestions', (req, res) => {
 
 app.get('/api/products', (req, res) => {
   try {
-    const { search, brand, gender, families, accords, sort, category } = req.query;
+    const { search, brand, gender, families, accords, sort, category, onSale } = req.query;
 
     let query = 'SELECT DISTINCT p.* FROM products p';
     let joins = '';
     let where = ' WHERE 1=1';
     const params: any[] = [];
 
-    if (category && category !== 'All') {
+    const saleOnly = onSale === '1' || onSale === 'true' || category === 'sale';
+    if (saleOnly) {
+      where += ' AND COALESCE(p.discountPercent, 0) > 0';
+    }
+    if (category && category !== 'All' && category !== 'sale') {
       if (category === 'decant') {
         joins += ' JOIN product_variants v_cat ON p.id = v_cat.product_id';
         where += " AND (v_cat.size LIKE '%ml' AND CAST(v_cat.size AS INTEGER) <= 20)";
@@ -2011,6 +2017,7 @@ app.get('/api/products', (req, res) => {
       const variants = db.prepare('SELECT * FROM product_variants WHERE product_id = ?').all(p.id);
       return {
         ...p,
+        discountPercent: Number(p.discountPercent) || 0,
         images: JSON.parse(p.images || '[]'),
         scentFamilies: JSON.parse(p.scentFamilies || '[]'),
         scentFamilies_be: JSON.parse(p.scentFamilies_be || '[]'),
@@ -2588,20 +2595,28 @@ app.get('/api/stats/views-over-time', requireAuth, (req, res) => {
   }
 });
 
+function clampDiscountPercent(value: unknown): number {
+  const n = typeof value === 'number' ? value : parseInt(String(value ?? '0'), 10);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(90, Math.max(0, Math.round(n)));
+}
+
 app.post('/api/products', requireAuth, (req, res) => {
-  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
+  const { name, brand, description, description_be, imageUrl, images, price, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
   const slug = slugify(`${brand}-${name}`);
+  const discount = clampDiscountPercent(discountPercent);
   
   try {
     const insert = db.prepare(`
-      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, set_items, created_at, updated_at)
-      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage, @topNotesDuration, @topNotesDuration_be, @heartNotesDuration, @heartNotesDuration_be, @baseNotesDuration, @baseNotesDuration_be, @setItems, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, set_items, created_at, updated_at)
+      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @discountPercent, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage, @topNotesDuration, @topNotesDuration_be, @heartNotesDuration, @heartNotesDuration_be, @baseNotesDuration, @baseNotesDuration_be, @setItems, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `);
     
     const result = insert.run({
       name, brand, description, description_be: description_be || null, imageUrl, 
       images: JSON.stringify(images || []),
       price,
+      discountPercent: discount,
       topNotes: JSON.stringify(topNotes || []),
       heartNotes: JSON.stringify(heartNotes || []),
       baseNotes: JSON.stringify(baseNotes || []),
@@ -2639,6 +2654,7 @@ app.post('/api/products', requireAuth, (req, res) => {
     
     res.status(201).json({ id: productId });
   } catch (error) {
+    console.error('Failed to create product:', error);
     res.status(500).json({ error: 'Failed to create product' });
   }
 });
@@ -2659,14 +2675,15 @@ app.delete('/api/products/:id', requireAuth, (req, res) => {
 
 app.put('/api/products/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const { name, brand, description, description_be, imageUrl, images, price, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
+  const { name, brand, description, description_be, imageUrl, images, price, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
   const slug = slugify(`${brand}-${name}`);
+  const discount = clampDiscountPercent(discountPercent);
   
   try {
     db.prepare(`
       UPDATE products 
       SET name = @name, brand = @brand, description = @description, description_be = @description_be, imageUrl = @imageUrl, images = @images,
-          price = @price, topNotes = @topNotes, heartNotes = @heartNotes, baseNotes = @baseNotes, accords = @accords, gender = @gender,
+          price = @price, discountPercent = @discountPercent, topNotes = @topNotes, heartNotes = @heartNotes, baseNotes = @baseNotes, accords = @accords, gender = @gender,
           scentFamilies = @scentFamilies, scentFamilies_be = @scentFamilies_be, concentration = @concentration, stockThreshold = @stockThreshold, tags = @tags, tags_be = @tags_be, slug = @slug, season = @season, seo_title = @seoTitle, seo_description = @seoDescription, longevity = @longevity, sillage = @sillage,
           topNotesDuration = @topNotesDuration, topNotesDuration_be = @topNotesDuration_be, heartNotesDuration = @heartNotesDuration, heartNotesDuration_be = @heartNotesDuration_be, baseNotesDuration = @baseNotesDuration, baseNotesDuration_be = @baseNotesDuration_be,
           set_items = @setItems,
@@ -2676,6 +2693,7 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
       id, name, brand, description, description_be: description_be || null, imageUrl,
       images: JSON.stringify(images || []),
       price,
+      discountPercent: discount,
       topNotes: JSON.stringify(topNotes || []),
       heartNotes: JSON.stringify(heartNotes || []),
       baseNotes: JSON.stringify(baseNotes || []),
@@ -2712,6 +2730,7 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
 
     res.json({ success: true });
   } catch (error) {
+    console.error('Failed to update product:', error);
     res.status(500).json({ error: 'Failed to update product' });
   }
 });

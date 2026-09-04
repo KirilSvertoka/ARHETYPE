@@ -14,6 +14,7 @@ import RecentlyViewed from '../components/RecentlyViewed';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { trackViewItem, trackAddToCart, trackGoal } from '../utils/analytics';
 import { brandPath, SITE_ORIGIN } from '../utils/seo';
+import { applyDiscount, hasActiveDiscount, normalizeDiscountPercent } from '../utils/pricing';
 
 const slugifyHelper = (text: string) => {
   const cyrillicToLatinMap: Record<string, string> = {
@@ -651,16 +652,35 @@ export default function ProductDetails() {
             </div>
           ) : (
             <div className="mt-8 pt-8 border-t border-brand-border">
-              <div className="flex items-baseline gap-2 mb-6">
-                <span className="text-3xl font-serif lining-nums text-brand-light">
-                  {(() => {
-                    const price = selectedVariantId 
-                      ? product.variants?.find(v => v.id === selectedVariantId)?.price 
-                      : product.price;
-                    const formatted = typeof price === 'number' ? price.toFixed(2) : price;
-                    return /\d/.test(String(formatted)) ? `${formatted} ${t("currency")}` : formatted;
-                  })()}
-                </span>
+              <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mb-6">
+                {(() => {
+                  const rawPrice = selectedVariantId
+                    ? product.variants?.find(v => v.id === selectedVariantId)?.price
+                    : product.price;
+                  const discountPercent = normalizeDiscountPercent(product.discountPercent);
+                  const onSale = hasActiveDiscount(discountPercent);
+                  const original = typeof rawPrice === 'number' ? rawPrice.toFixed(2) : rawPrice;
+                  const sale = applyDiscount(rawPrice, discountPercent);
+                  const fmt = (v: string | number | undefined) =>
+                    /\d/.test(String(v)) ? `${v} ${t('currency')}` : v;
+                  return (
+                    <>
+                      {onSale && (
+                        <span className="text-lg font-serif lining-nums text-brand-muted line-through">
+                          {fmt(original)}
+                        </span>
+                      )}
+                      <span className="text-3xl font-serif lining-nums text-brand-light">
+                        {fmt(onSale ? sale : original)}
+                      </span>
+                      {onSale && (
+                        <span className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-accent">
+                          −{discountPercent}%
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
                 {selectedVariantId && product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 && (
                   <span className="text-xs font-bold text-red-500 uppercase tracking-[0.15em]">
                     {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}

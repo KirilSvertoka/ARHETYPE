@@ -7,6 +7,7 @@ import { useCart } from './CartProvider';
 import { useWishlist } from './WishlistProvider';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { brandPath } from '../utils/seo';
+import { applyDiscount, hasActiveDiscount, normalizeDiscountPercent } from '../utils/pricing';
 
 interface ProductCardProps {
   product: Product;
@@ -74,6 +75,9 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
     navigate(brandPath(product.brand));
   };
 
+  const discountPercent = normalizeDiscountPercent(product.discountPercent);
+  const onSale = hasActiveDiscount(discountPercent);
+
   const getSelectedVariantPrice = () => {
     if (selectedVariantId && product.variants && product.variants.length > 0) {
       const selected = product.variants.find(v => v.id === selectedVariantId);
@@ -86,21 +90,56 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
   };
 
   const selectedPriceValue = getSelectedVariantPrice();
+  const showSelected = variant !== 'standard' && (isHovered || hasInteracted) && selectedPriceValue !== null;
 
-  const formattedPrice = (variant !== 'standard' && (isHovered || hasInteracted) && selectedPriceValue !== null)
+  const originalPriceLabel = showSelected
     ? selectedPriceValue
-    : (product.variants && product.variants.length > 0 
+    : (product.variants && product.variants.length > 0
         ? `${language === 'be' ? 'ад' : 'от'} ${(() => {
             const prices = product.variants.map(v => typeof v.price === 'number' ? v.price : parseFloat(v.price as string));
             const minPrice = Math.min(...prices.filter(p => !isNaN(p)));
             return isFinite(minPrice) ? minPrice.toFixed(2) : product.variants[0].price;
-          })()}` 
+          })()}`
         : (typeof product.price === 'number' ? product.price.toFixed(2) : product.price));
+
+  const salePriceLabel = showSelected
+    ? applyDiscount(selectedPriceValue, discountPercent)
+    : (product.variants && product.variants.length > 0
+        ? `${language === 'be' ? 'ад' : 'от'} ${(() => {
+            const prices = product.variants.map(v => {
+              const raw = typeof v.price === 'number' ? v.price : parseFloat(v.price as string);
+              if (isNaN(raw)) return NaN;
+              return parseFloat(String(applyDiscount(raw, discountPercent)));
+            });
+            const minPrice = Math.min(...prices.filter(p => !isNaN(p)));
+            return isFinite(minPrice) ? minPrice.toFixed(2) : applyDiscount(product.variants[0].price, discountPercent);
+          })()}`
+        : applyDiscount(product.price, discountPercent));
+
+  const formattedPrice = onSale ? salePriceLabel : originalPriceLabel;
 
   const formatPriceWithCurrency = (priceStr: string | number) => {
     const s = String(priceStr);
     return /\d/.test(s) ? `${s} ${t('currency')}` : s;
   };
+
+  const renderPrice = (light = false) => (
+    <div className={`flex flex-col ${light ? 'items-end' : 'items-start md:items-end'}`}>
+      {onSale && (
+        <span className={`text-[10px] sm:text-xs line-through opacity-60 ${light ? 'text-white/70' : 'text-brand-muted'}`}>
+          {formatPriceWithCurrency(originalPriceLabel)}
+        </span>
+      )}
+      <span className={light ? 'text-white' : 'text-brand-light'}>
+        {formatPriceWithCurrency(formattedPrice)}
+      </span>
+      {onSale && (
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-brand-accent font-semibold mt-0.5">
+          −{discountPercent}%
+        </span>
+      )}
+    </div>
+  );
 
   const isOutOfStock = product.variants && product.variants.every(v => v.stock === 0);
 
@@ -166,6 +205,12 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
           />
         </button>
 
+        {onSale && (
+          <div className="absolute top-4 left-4 z-30 px-2 py-1 bg-brand-accent text-white text-[10px] font-semibold uppercase tracking-[0.15em]">
+            −{discountPercent}%
+          </div>
+        )}
+
         <Link to={productUrl} className="block w-full h-full">
           {/* Image with zoom on hover */}
           <motion.img 
@@ -199,9 +244,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
               <div className="flex justify-between items-end gap-3 w-full">
                 <h3 className="font-serif text-base sm:text-lg md:text-xl leading-tight text-white/95">{product.name}</h3>
                 <div className="flex flex-col items-end shrink-0">
-                  <span className="text-xs sm:text-sm md:text-base font-light font-mono whitespace-nowrap text-white">
-                    {formatPriceWithCurrency(formattedPrice)}
-                  </span>
+                  {renderPrice(true)}
                   {isOutOfStock && (
                     <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-red-500 font-bold mt-0.5">
                       {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
@@ -226,9 +269,9 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                 <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-0.5 md:gap-4">
                   <h3 className="font-serif text-lg sm:text-xl md:text-2xl leading-tight" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>{product.name}</h3>
                   <div className="flex flex-col items-start md:items-end shrink-0">
-                    <span className="text-[11px] sm:text-base md:text-lg font-light whitespace-nowrap" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
-                      {formatPriceWithCurrency(formattedPrice)}
-                    </span>
+                    <div className="text-[11px] sm:text-base md:text-lg font-light whitespace-nowrap" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
+                      {renderPrice(true)}
+                    </div>
                     {isOutOfStock && (
                       <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-red-400 font-bold" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
                         {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
@@ -327,9 +370,9 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
             </Link>
           </div>
           <div className="flex justify-between items-end mt-2 pt-1 border-t border-brand-border/20 w-full">
-            <span className="text-xs sm:text-sm font-light font-mono text-brand-light">
-              {formatPriceWithCurrency(formattedPrice)}
-            </span>
+            <div className="text-xs sm:text-sm font-light font-mono text-brand-light">
+              {renderPrice(false)}
+            </div>
             {isOutOfStock && (
               <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-red-500 font-bold">
                 {language === 'be' ? 'Няма' : 'Нет в наличии'}
