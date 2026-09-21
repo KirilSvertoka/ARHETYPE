@@ -22,11 +22,60 @@ const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
+// Chunked-upload temp files must not be publicly served, so they live outside uploadDir.
+const chunkTempDir = path.join(uploadDir + '.tmp');
+if (!fs.existsSync(chunkTempDir)) {
+  fs.mkdirSync(chunkTempDir, { recursive: true });
+}
 
 export function sanitizeUploadFilename(originalName: string): string {
   const ext = path.extname(originalName || '').toLowerCase();
   const safeExt = /^\.[a-z0-9]{1,8}$/.test(ext) ? ext : '.jpg';
   return `${Date.now()}-${crypto.randomBytes(8).toString('hex')}${safeExt}`;
+}
+
+/** Constant-time string comparison; lengths are not secret here. */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    // Still burn a comparison to keep timing roughly uniform.
+    crypto.timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif', '.svg']);
+
+function isAllowedImageFilename(name: string): boolean {
+  const ext = path.extname(name || '').toLowerCase();
+  return IMAGE_EXTENSIONS.has(ext);
+}
+
+/** Detect image type by magic bytes; SVG is checked as text (XML root with <svg). */
+function isAllowedImageContent(filePath: string, extOverride?: string): boolean {
+  const ext = (extOverride ?? path.extname(filePath)).toLowerCase();
+  let header: Buffer;
+  try {
+    const fd = fs.openSync(filePath, 'r');
+    try {
+      header = Buffer.alloc(300);
+      const bytesRead = fs.readSync(fd, header, 0, 300, 0);
+      header = header.subarray(0, bytesRead);
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch {
+    return false;
+  }
+  if (ext === '.png') return header.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (ext === '.jpg' || ext === '.jpeg') return header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+  if (ext === '.gif') return header.subarray(0, 3).toString('ascii') === 'GIF';
+  if (ext === '.webp') return header.subarray(0, 4).toString('ascii') === 'RIFF' && header.subarray(8, 12).toString('ascii') === 'WEBP';
+  if (ext === '.avif') return header.subarray(4, 8).toString('ascii') === 'ftyp' && header.subarray(8, 12).toString('ascii').startsWith('avif');
+  if (ext === '.svg') return /<svg[\s>]/i.test(header.toString('utf8'));
+  return false;
 }
 
 const storage = multer.diskStorage({
@@ -99,8 +148,8 @@ const loginLimiter = rateLimit({
   message: 'Too many login attempts, please try again later.'
 });
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ limit: '2mb', extended: true }));
 app.use('/uploads', express.static(uploadDir));
 
 // Explicit favicon handles for robots
@@ -299,27 +348,33 @@ db.exec(`
   );
 `);
 
+/** Only SHA-256 hashes of tokens are stored (DB and memory); raw tokens never outlive the request. */
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 function persistAdminSession(token: string) {
   db.prepare(
     `INSERT OR REPLACE INTO admin_sessions (token, expires_at)
      VALUES (?, datetime('now', '+30 days'))`
-  ).run(token);
-  activeTokens.add(token);
+  ).run(hashToken(token));
+  activeTokens.add(hashToken(token));
 }
 
 function revokeAdminSession(token: string) {
-  db.prepare('DELETE FROM admin_sessions WHERE token = ?').run(token);
-  activeTokens.delete(token);
+  db.prepare('DELETE FROM admin_sessions WHERE token = ?').run(hashToken(token));
+  activeTokens.delete(hashToken(token));
 }
 
 function isAdminTokenValid(token: string): boolean {
   if (!token) return false;
-  if (activeTokens.has(token)) return true;
+  const tokenHash = hashToken(token);
+  if (activeTokens.has(tokenHash)) return true;
   const row = db.prepare(
     `SELECT token FROM admin_sessions WHERE token = ? AND expires_at > datetime('now')`
-  ).get(token) as { token: string } | undefined;
+  ).get(tokenHash) as { token: string } | undefined;
   if (row) {
-    activeTokens.add(row.token);
+    activeTokens.add(tokenHash);
     return true;
   }
   return false;
@@ -329,6 +384,7 @@ db.prepare(`DELETE FROM admin_sessions WHERE expires_at <= datetime('now')`).run
 const storedSessions = db.prepare(
   `SELECT token FROM admin_sessions WHERE expires_at > datetime('now')`
 ).all() as { token: string }[];
+// Rows already hold SHA-256 hashes of tokens.
 storedSessions.forEach((row) => activeTokens.add(row.token));
 
 const requireAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -1700,14 +1756,45 @@ app.get('/google:code.html', (req, res) => {
 app.post('/api/upload/chunk', requireAuth, express.json({ limit: '50mb' }), (req, res) => {
   try {
     const { uploadId, chunkIndex, totalChunks, chunkData, filename } = req.body;
+    if (typeof uploadId !== 'string' || !/^[a-z0-9]{10,64}$/i.test(uploadId)) {
+      return res.status(400).json({ error: 'Invalid uploadId' });
+    }
+    if (!Number.isInteger(Number(chunkIndex)) || !Number.isInteger(Number(totalChunks)) ||
+        Number(chunkIndex) < 0 || Number(totalChunks) < 1 || Number(chunkIndex) >= Number(totalChunks)) {
+      return res.status(400).json({ error: 'Invalid chunk indices' });
+    }
+    if (typeof chunkData !== 'string' || !/^[A-Za-z0-9+/=]+$/.test(chunkData)) {
+      return res.status(400).json({ error: 'Invalid chunk data' });
+    }
     const buffer = Buffer.from(chunkData, 'base64');
-    const tempPath = path.join(uploadDir, `temp-${uploadId}`);
-    
+    if (buffer.length === 0) {
+      return res.status(400).json({ error: 'Empty chunk' });
+    }
+    const tempPath = path.join(chunkTempDir, `temp-${uploadId}`);
+
+    try {
+      const currentSize = fs.existsSync(tempPath) ? fs.statSync(tempPath).size : 0;
+      if (currentSize + buffer.length > 50 * 1024 * 1024) {
+        return res.status(413).json({ error: 'Uploaded file is too large' });
+      }
+      if (Number(chunkIndex) === 0 && currentSize > 0) {
+        fs.rmSync(tempPath, { force: true }); // restart of an interrupted upload
+      }
+    } catch {
+      return res.status(500).json({ error: 'Failed to upload chunk' });
+    }
+
     fs.appendFileSync(tempPath, buffer);
-    
+
     if (Number(chunkIndex) === Number(totalChunks) - 1) {
-      const finalName = sanitizeUploadFilename(filename || 'image.jpg');
+      const finalName = sanitizeUploadFilename(
+        typeof filename === 'string' && isAllowedImageFilename(filename) ? filename : 'image.jpg'
+      );
       const finalPath = path.join(uploadDir, finalName);
+      if (!isAllowedImageContent(tempPath, path.extname(finalName))) {
+        fs.rmSync(tempPath, { force: true });
+        return res.status(400).json({ error: 'Unsupported file type' });
+      }
       fs.renameSync(tempPath, finalPath);
       res.json({ url: `/uploads/${finalName}` });
     } else {
@@ -1722,6 +1809,11 @@ app.post('/api/upload/chunk', requireAuth, express.json({ limit: '50mb' }), (req
 app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
+  }
+  const filePath = path.join(uploadDir, req.file.filename);
+  if (!isAllowedImageFilename(req.file.originalname) || !isAllowedImageContent(filePath)) {
+    fs.rmSync(filePath, { force: true });
+    return res.status(400).json({ error: 'Unsupported file type' });
   }
   res.json({ url: `/uploads/${req.file.filename}` });
 });
@@ -1816,10 +1908,18 @@ app.put('/api/settings/general', requireAuth, (req, res) => {
 
 app.post('/api/login', loginLimiter, (req, res) => {
   const { username, password } = req.body;
-  const adminUser = process.env.ADMIN_USERNAME || 'admin';
-  const adminPass = process.env.ADMIN_PASSWORD || 'password123';
+  const adminUser = process.env.ADMIN_USERNAME;
+  const adminPass = process.env.ADMIN_PASSWORD;
 
-  if (username === adminUser && password === adminPass) {
+  if (!adminUser || !adminPass) {
+    console.error('ADMIN_USERNAME/ADMIN_PASSWORD are not configured; admin login is disabled.');
+    return res.status(503).json({ error: 'Admin login is not configured' });
+  }
+
+  const userOk = safeEqual(String(username || ''), adminUser);
+  const passOk = safeEqual(String(password || ''), adminPass);
+
+  if (userOk && passOk) {
     const token = crypto.randomBytes(32).toString('hex');
     persistAdminSession(token);
     res.json({ token });
