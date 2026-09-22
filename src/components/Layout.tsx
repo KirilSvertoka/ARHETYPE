@@ -18,6 +18,7 @@ export default function Layout() {
   const { theme, toggleTheme } = useTheme();
   const [config, setConfig] = useState<HomeConfig | null>(null);
   const [settings, setSettings] = useState<GeneralSettings | null>(null);
+  const [footerPages, setFooterPages] = useState<{ id: string; title: string; title_be?: string }[]>([]);
   const { language, setLanguage, t } = useLanguage();
   const { items, setIsCartOpen, justAdded } = useCart();
   const { wishlist } = useWishlist();
@@ -88,12 +89,14 @@ export default function Layout() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [configRes, settingsRes] = await Promise.all([
+        const [configRes, settingsRes, footerPagesRes] = await Promise.all([
           fetch('/api/settings/home'),
-          fetch('/api/settings/general')
+          fetch('/api/settings/general'),
+          fetch('/api/pages-footer')
         ]);
         if (configRes.ok) setConfig(await configRes.json());
         if (settingsRes.ok) setSettings(await settingsRes.json());
+        if (footerPagesRes.ok) setFooterPages(await footerPagesRes.json());
       } catch (error) {
         console.error('Failed to load config/settings in Layout', error);
       }
@@ -538,6 +541,15 @@ export default function Layout() {
                 <li><Link to="/p/faq" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Пытанні і адказы (FAQ)' : 'Вопросы и ответы (FAQ)'}</Link></li>
                 <li><Link to="/p/kak-vybrat-nishevuyu-parfyumeriyu" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Як выбраць нішу' : 'Как выбрать нишу'}</Link></li>
                 <li><Link to="/p/raspiv-vs-flakon" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Распіў ці флакон' : 'Распив или флакон'}</Link></li>
+                {footerPages
+                  .filter(p => !['kak-vybrat-nishevuyu-parfyumeriyu', 'raspiv-vs-flakon'].includes(p.id))
+                  .map(p => (
+                    <li key={p.id}>
+                      <Link to={`/p/${p.id}`} className="text-sm text-brand-muted hover:text-brand-accent transition-colors">
+                        {language === 'be' ? (p.title_be || p.title) : p.title}
+                      </Link>
+                    </li>
+                  ))}
                 <li><Link to="/contacts" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{t('contacts')}</Link></li>
               </ul>
             </div>

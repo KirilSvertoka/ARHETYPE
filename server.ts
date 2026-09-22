@@ -580,6 +580,9 @@ const migrations = [
   "ALTER TABLE products ADD COLUMN sillage INTEGER DEFAULT 60",
   "ALTER TABLE cms_pages ADD COLUMN title_be TEXT",
   "ALTER TABLE cms_pages ADD COLUMN content_be TEXT",
+  "ALTER TABLE cms_pages ADD COLUMN show_in_footer INTEGER DEFAULT 0",
+  "ALTER TABLE cms_pages ADD COLUMN seo_title TEXT",
+  "ALTER TABLE cms_pages ADD COLUMN seo_description TEXT",
   "ALTER TABLE products ADD COLUMN slug TEXT",
   "ALTER TABLE products ADD COLUMN season TEXT DEFAULT '[]'",
   "ALTER TABLE products ADD COLUMN seo_title TEXT",
@@ -644,6 +647,13 @@ for (const migration of migrations) {
   } catch (e) {
     // Column likely already exists
   }
+}
+
+// The offer contract page was created before the footer flag existed; surface it once.
+const footerSeedDone = db.prepare(`SELECT value FROM settings WHERE key = 'cms_footer_seed_done'`).get();
+if (!footerSeedDone) {
+  db.prepare(`UPDATE cms_pages SET show_in_footer = 1 WHERE id = 'public-oferta'`).run();
+  db.prepare(`INSERT OR REPLACE INTO settings (key, value) VALUES ('cms_footer_seed_done', '1')`).run();
 }
 
 // Seed CMS pages
@@ -2450,6 +2460,17 @@ app.get('/api/pages/:id', (req, res) => {
   }
 });
 
+app.get('/api/pages-footer', (_req, res) => {
+  try {
+    const pages = db.prepare(
+      'SELECT id, title, title_be FROM cms_pages WHERE show_in_footer = 1 ORDER BY title'
+    ).all();
+    res.json(pages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch footer pages' });
+  }
+});
+
 app.get('/api/admin/cms', requireAuth, (req, res) => {
   try {
     const pages = db.prepare('SELECT * FROM cms_pages').all();
@@ -2460,15 +2481,15 @@ app.get('/api/admin/cms', requireAuth, (req, res) => {
 });
 
 app.post('/api/admin/cms', requireAuth, (req, res) => {
-  const { id, title, title_be, content, content_be } = req.body;
-  
+  const { id, title, title_be, content, content_be, show_in_footer, seoTitle, seoDescription } = req.body;
+
   if (!id || !title) {
     return res.status(400).json({ error: 'ID and title are required' });
   }
 
   try {
-    db.prepare('INSERT INTO cms_pages (id, title, title_be, content, content_be, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
-      .run(id, title, title_be || null, content || '', content_be || null);
+    db.prepare('INSERT INTO cms_pages (id, title, title_be, content, content_be, show_in_footer, seo_title, seo_description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
+      .run(id, title, title_be || null, content || '', content_be || null, show_in_footer ? 1 : 0, seoTitle || null, seoDescription || null);
     res.json({ success: true });
   } catch (error: any) {
     if (error.code === 'SQLITE_CONSTRAINT_PRIMARYKEY') {
@@ -2479,10 +2500,10 @@ app.post('/api/admin/cms', requireAuth, (req, res) => {
 });
 
 app.put('/api/admin/cms/:id', requireAuth, (req, res) => {
-  const { title, title_be, content, content_be } = req.body;
+  const { title, title_be, content, content_be, show_in_footer, seoTitle, seoDescription } = req.body;
   try {
-    db.prepare('INSERT OR REPLACE INTO cms_pages (id, title, title_be, content, content_be, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
-      .run(req.params.id, title, title_be || null, content, content_be || null);
+    db.prepare('INSERT OR REPLACE INTO cms_pages (id, title, title_be, content, content_be, show_in_footer, seo_title, seo_description, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)')
+      .run(req.params.id, title, title_be || null, content, content_be || null, show_in_footer ? 1 : 0, seoTitle || null, seoDescription || null);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update CMS page' });

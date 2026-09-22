@@ -1482,6 +1482,15 @@ export default function CMSView({ pages, homeConfig, onUpdateHome, onUpdatePage,
                   <textarea value={editingPage.seoDescription || ''} onChange={e => setEditingPage({...editingPage, seoDescription: e.target.value})} className="w-full px-3 py-2 bg-white/5 border border-brand-border rounded-lg text-sm text-brand-light" rows={2} />
                 </div>
               </div>
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={!!editingPage.show_in_footer}
+                  onChange={e => setEditingPage({...editingPage, show_in_footer: e.target.checked ? 1 : 0})}
+                  className="w-4 h-4 accent-brand-accent"
+                />
+                <span className="text-sm text-brand-light">Показывать ссылку на страницу в подвале сайта</span>
+              </label>
               <div className="flex justify-end gap-3 mt-6">
                 <button onClick={() => { setEditingPage(null); setIsCreatingPage(false); }} className="px-6 py-2 text-brand-muted hover:text-brand-light">Отмена</button>
                 <button onClick={savePage} className="px-6 py-2 bg-brand-accent text-white rounded-xl hover:bg-brand-accent-hover">

@@ -165,6 +165,7 @@ export interface CMSPage {
   content_be?: string;
   seoTitle?: string;
   seoDescription?: string;
+  show_in_footer?: number | boolean;
   updated_at: string;
   created_at?: string;
 }
