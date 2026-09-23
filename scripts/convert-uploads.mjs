@@ -89,4 +89,37 @@ for (const pg of pages) {
 }
 console.log(`CMS pages updated: ${pageUpdates}`);
 
+// Settings (home config, general settings) can reference uploads too.
+const rewriteText = (text) =>
+  text.replace(/\/uploads\/([A-Za-z0-9._-]+)/g, (m, name) => {
+    const webp = name.replace(/\.[^.]+$/, '.webp');
+    return fs.existsSync(path.join(uploadDir, webp)) ? `/uploads/${webp}` : m;
+  });
+
+const settings = db.prepare('SELECT key, value FROM settings').all();
+const updSetting = db.prepare('UPDATE settings SET value = ? WHERE key = ?');
+let settingUpdates = 0;
+for (const s of settings) {
+  if (!s.value || !s.value.includes('/uploads/')) continue;
+  const newValue = rewriteText(s.value);
+  if (newValue !== s.value) {
+    updSetting.run(newValue, s.key);
+    settingUpdates++;
+  }
+}
+console.log(`Settings updated: ${settingUpdates}`);
+
+// Server boot restores home/general config from these JSON backups in
+// uploads/, so they must be rewritten too or they would overwrite the DB.
+for (const name of ['home_config_backup.json', 'general_settings_backup.json']) {
+  const p = path.join(uploadDir, name);
+  if (!fs.existsSync(p)) continue;
+  const original = fs.readFileSync(p, 'utf8');
+  const updated = rewriteText(original);
+  if (updated !== original) {
+    fs.writeFileSync(p, updated);
+    console.log(`Backup rewritten: ${name}`);
+  }
+}
+
 db.close();
