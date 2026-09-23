@@ -17,6 +17,7 @@ import Reviews from './pages/Reviews';
 import About from './pages/About';
 import Page from './pages/Page';
 import Grodno from './pages/Grodno';
+import PaymentResult from './pages/PaymentResult';
 import Brands from './pages/Brands';
 import NotFound from './pages/NotFound';
 import Forbidden from './pages/Forbidden';
@@ -76,6 +77,7 @@ export default function App() {
                     <Route path="p/:id" element={<Page />} />
                     <Route path="reviews" element={<Reviews />} />
                     <Route path="wishlist" element={<Wishlist />} />
+                    <Route path="payment" element={<PaymentResult />} />
                     <Route path={adminPath} element={<AdminPanel />} />
                     <Route path="forbidden" element={<Forbidden />} />
                     <Route path="502" element={<ServerError />} />

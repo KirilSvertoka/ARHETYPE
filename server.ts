@@ -597,6 +597,8 @@ const migrations = [
   "ALTER TABLE orders ADD COLUMN delivery_address TEXT",
   "ALTER TABLE products ADD COLUMN accords TEXT DEFAULT '[]'",
   "ALTER TABLE orders ADD COLUMN payment_method TEXT DEFAULT 'При получении'",
+  "ALTER TABLE orders ADD COLUMN payment_status TEXT DEFAULT 'pending'",
+  "ALTER TABLE orders ADD COLUMN payment_uid TEXT",
   "ALTER TABLE orders ADD COLUMN comment TEXT",
   "ALTER TABLE product_variants ADD COLUMN variant_type TEXT DEFAULT 'decant'",
   "ALTER TABLE products ADD COLUMN created_at DATETIME",
@@ -3058,6 +3060,140 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
+// --- bePaid card payments ---
+const BEPAID_API_URL = (process.env.BEPAID_API_URL || 'https://api.bepaid.by').replace(/\/$/, '');
+const bePaidAuth = () =>
+  'Basic ' + Buffer.from(`${process.env.BEPAID_SHOP_ID}:${process.env.BEPAID_SECRET_KEY}`).toString('base64');
+const isBePaidConfigured = () => !!(process.env.BEPAID_SHOP_ID && process.env.BEPAID_SECRET_KEY);
+
+/** Secret carried in notification/success URLs so callbacks can't be forged. */
+const bePaidNotifyToken = () =>
+  crypto.createHmac('sha256', process.env.BEPAID_SECRET_KEY || '').update('bePaidNotify').digest('hex');
+
+async function markOrderPaid(orderId: number, uid: string | null) {
+  db.prepare(`UPDATE orders SET payment_status = 'paid', payment_uid = COALESCE(?, payment_uid) WHERE id = ?`)
+    .run(uid, orderId);
+}
+
+interface BePaidTransaction { uid?: string; status?: string; tracking_id?: string }
+
+async function fetchBePaidTransactionsByTracking(trackingId: string): Promise<BePaidTransaction[] | null> {
+  if (!isBePaidConfigured()) return null;
+  try {
+    const res = await fetch(`${BEPAID_API_URL}/transactions?tracking_id=${encodeURIComponent(trackingId)}`, {
+      headers: { Authorization: bePaidAuth() }
+    });
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    return Array.isArray(data?.transactions) ? data.transactions : null;
+  } catch {
+    return null;
+  }
+}
+
+app.post('/api/payments/bepaid/create', async (req, res) => {
+  if (!isBePaidConfigured()) {
+    return res.status(503).json({ error: 'Платёжный шлюз не настроен' });
+  }
+  const orderId = parseInt(String(req.body?.orderId ?? ''), 10);
+  if (!Number.isInteger(orderId) || orderId <= 0) {
+    return res.status(400).json({ error: 'Invalid orderId' });
+  }
+  try {
+    const order = db.prepare('SELECT id, total, customer_name, customer_phone FROM orders WHERE id = ?').get(orderId) as any;
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (order.payment_status === 'paid') return res.status(409).json({ error: 'Заказ уже оплачен' });
+
+    const amountCents = Math.round(parseFloat(String(order.total).replace(',', '.')) * 100);
+    if (!Number.isFinite(amountCents) || amountCents <= 0) {
+      return res.status(400).json({ error: 'Invalid order amount' });
+    }
+
+    const origin = getSiteOrigin(req);
+    const notifyToken = bePaidNotifyToken();
+    const checkout = {
+      test: process.env.BEPAID_TEST !== 'false',
+      transaction_type: 'payment',
+      attempts: 3,
+      order: {
+        amount: amountCents,
+        currency: 'BYN',
+        description: `Заказ #${order.id} — АРХЕТИП`,
+        tracking_id: String(order.id)
+      },
+      settings: {
+        success_url: `${origin}/payment?order=${order.id}`,
+        decline_url: `${origin}/payment?order=${order.id}`,
+        fail_url: `${origin}/payment?order=${order.id}`,
+        cancel_url: `${origin}/payment?order=${order.id}`,
+        notification_url: `${origin}/api/payments/bepaid/notify?key=${notifyToken}`,
+        language: 'ru'
+      },
+      customer: {
+        first_name: String(order.customer_name || '').split(' ')[0] || 'Клиент',
+        phone: String(order.customer_phone || '').replace(/[^\d+]/g, '') || undefined
+      }
+    };
+
+    const apiRes = await fetch(`${BEPAID_API_URL}/checkout/orders`, {
+      method: 'POST',
+      headers: { Authorization: bePaidAuth(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ checkout })
+    });
+    const data: any = await apiRes.json().catch(() => null);
+    const redirectUrl = data?.checkout?.redirect_url;
+    if (!apiRes.ok || !redirectUrl) {
+      console.error('bePaid checkout error:', apiRes.status, JSON.stringify(data)?.slice(0, 500));
+      return res.status(502).json({ error: 'Не удалось создать платёж. Попробуйте ещё раз.' });
+    }
+    db.prepare(`UPDATE orders SET payment_status = 'processing' WHERE id = ? AND payment_status = 'pending'`).run(orderId);
+    res.json({ redirect_url: redirectUrl });
+  } catch (error) {
+    console.error('bePaid create error:', error);
+    res.status(500).json({ error: 'Failed to create payment' });
+  }
+});
+
+app.post('/api/payments/bepaid/notify', async (req, res) => {
+  if (!isBePaidConfigured()) return res.status(503).end();
+  if (req.query.key !== bePaidNotifyToken()) return res.status(403).end();
+  try {
+    const tx: BePaidTransaction = req.body?.transaction || req.body || {};
+    const orderId = parseInt(String(tx.tracking_id ?? ''), 10);
+    if (!Number.isInteger(orderId) || orderId <= 0) return res.status(200).end();
+    if (tx.status === 'successful') {
+      await markOrderPaid(orderId, tx.uid || null);
+    } else if (['failed', 'expired', 'incomplete'].includes(tx.status || '')) {
+      db.prepare(`UPDATE orders SET payment_status = ? WHERE id = ? AND payment_status != 'paid'`)
+        .run(tx.status, orderId);
+    }
+    res.status(200).end();
+  } catch {
+    res.status(200).end(); // always 200 so the gateway doesn't retry forever
+  }
+});
+
+app.get('/api/orders/:id/payment-status', async (req, res) => {
+  const orderId = parseInt(req.params.id, 10);
+  if (!Number.isInteger(orderId) || orderId <= 0) return res.status(400).json({ error: 'Invalid orderId' });
+  try {
+    const order = db.prepare('SELECT id, payment_status FROM orders WHERE id = ?').get(orderId) as any;
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    // Webhook can lag behind the customer's redirect; reconcile directly with the gateway.
+    if (order.payment_status !== 'paid' && isBePaidConfigured()) {
+      const txs = await fetchBePaidTransactionsByTracking(String(orderId));
+      const paid = txs?.some(t => t.status === 'successful');
+      if (paid) {
+        await markOrderPaid(orderId, txs!.find(t => t.status === 'successful')!.uid || null);
+        order.payment_status = 'paid';
+      }
+    }
+    res.json({ payment_status: order.payment_status || 'pending' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch payment status' });
+  }
+});
+
 app.post('/api/callback', async (req, res) => {
   const { name, phone, message } = req.body;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -3115,6 +3251,7 @@ function isPathValid(reqPath: string): boolean {
       '/about',
       '/reviews',
       '/wishlist',
+      '/payment',
       '/forbidden',
       '/502',
       '/500'

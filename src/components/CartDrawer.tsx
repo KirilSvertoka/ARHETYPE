@@ -100,6 +100,7 @@ export default function CartDrawer() {
     switch(customerData.paymentMethod) {
       case 'cash_grodno': paymentMethodText = 'Наличными курьеру (по Гродно)'; break;
       case 'post_cash': paymentMethodText = 'Наложенный платеж'; break;
+      case 'card_online': paymentMethodText = 'Картой онлайн'; break;
       default: paymentMethodText = 'Наложенный платеж';
     }
 
@@ -137,8 +138,26 @@ export default function CartDrawer() {
       if (res.ok) {
         const orderData = await res.json();
         const orderId = orderData.orderId || Date.now().toString();
-        setIsSuccess(true);
         trackPurchase(orderId, orderPayload.items, total);
+
+        if (customerData.paymentMethod === 'card_online') {
+          // Redirect to bePaid checkout; the cart is cleared as the order is placed.
+          const payRes = await fetch('/api/payments/bepaid/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId })
+          });
+          if (payRes.ok) {
+            const payData = await payRes.json();
+            clearCart();
+            window.location.href = payData.redirect_url;
+            return;
+          }
+          const payErr = await payRes.json().catch(() => null);
+          alert(payErr?.error || 'Не удалось создать платёж. Заказ сохранён, свяжитесь с нами для оплаты.');
+        }
+
+        setIsSuccess(true);
         clearCart();
       } else {
         const data = await res.json();
@@ -452,6 +471,21 @@ export default function CartDrawer() {
                           </div>
                         </label>
                       )}
+
+                      <label className={`flex items-center p-3 border rounded-none cursor-pointer transition-colors ${customerData.paymentMethod === 'card_online' ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-hover hover:border-brand-accent/50'}`}>
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="card_online"
+                          checked={customerData.paymentMethod === 'card_online'}
+                          onChange={e => setCustomerData({...customerData, paymentMethod: e.target.value})}
+                          className="w-4 h-4 text-brand-accent bg-brand-bg border-brand-border focus:ring-brand-accent focus:ring-offset-brand-bg"
+                        />
+                        <div className="ml-3 flex flex-col">
+                          <span className="text-sm text-brand-light font-medium">Картой онлайн</span>
+                          <span className="text-xs text-brand-muted mt-0.5">Visa / Mastercard / Белкарт через bePaid</span>
+                        </div>
+                      </label>
                     </div>
                   </div>
 
