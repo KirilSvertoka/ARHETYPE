@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, ArrowRight, ArrowLeft, Check, CheckCircle2, ShoppingBag, X, Compass, Gift, Briefcase, Flame, Droplets, Crown, ChevronDown } from 'lucide-react';
+import { ArrowRight, ArrowLeft, X, ShoppingBag, Check, CheckCircle2, ChevronDown } from 'lucide-react';
 import { useLanguage } from './LanguageProvider';
 import { useCart } from './CartProvider';
 import { Product, getVariantType } from '../types';
@@ -9,26 +9,124 @@ interface ScentQuizProps {
   onOrderBoxClick?: () => void;
 }
 
+/* ---------- Matching profiles ---------- */
+
+const FAMILY_PROFILES: Record<string, { families: string[]; notes: string[]; label: { ru: string; be: string } }> = {
+  citrus_fresh: {
+    families: ['CITRUS', 'FRESH', 'AQUATIC', 'GREEN', 'AROMATIC', 'WATER', 'MARINE'],
+    notes: ['цитр', 'бергамот', 'лимон', 'грейп', 'апельсин', 'лайм', 'мята', 'аква', 'водн', 'морск', 'чай', 'шалфей', 'свеж', 'citrus', 'bergamot', 'mint', 'aquatic', 'marine'],
+    label: { ru: 'свежий цитрусовый характер', be: 'свежы цытрусавы характар' }
+  },
+  sweet_gourmand: {
+    families: ['GOURMAND', 'SWEET', 'ORIENTAL', 'VANILLA', 'AMBERY'],
+    notes: ['ванил', 'карамел', 'шоколад', 'мёд', 'мед', 'кокос', 'вишн', 'малина', 'слив', 'тонка', 'миндал', 'прянич', 'сахар', 'гурман', 'сладк', 'vanilla', 'caramel', 'sweet', 'gourmand', 'praline'],
+    label: { ru: 'гурманский сладкий профиль', be: 'гурманскі салодкі профіль' }
+  },
+  woody_spicy: {
+    families: ['WOODY', 'SPICY', 'LEATHER', 'OUD', 'WARM SPICY', 'SMOKY'],
+    notes: ['древес', 'дерев', 'прян', 'кожан', 'кожа', 'уд ', 'табак', 'тытунь', 'перец', 'кардамон', 'кедр', 'сандал', 'пачули', 'ветивер', 'ладан', 'woody', 'spicy', 'leather', 'oud'],
+    label: { ru: 'древесно-пряной профиль', be: 'драўняна-рэзкі профіль' }
+  },
+  floral_powdery: {
+    families: ['FLORAL', 'POWDERY', 'MUSK', 'WHITE FLORAL', 'SOFT FLORAL'],
+    notes: ['цветоч', 'цвет', 'пудр', 'роза', 'ружа', 'жасмин', 'ясмін', 'пион', 'мускус', 'муску', 'тубероз', 'фиалк', 'ірск', 'ирис', 'лаванд', 'floral', 'powdery', 'rose', 'jasmine', 'musk', 'iris'],
+    label: { ru: 'цветочно-пудровый профиль', be: 'кветкава-пудравы профіль' }
+  }
+};
+
+const OCCASION_KEYWORDS: Record<string, string[]> = {
+  everyday: ['офис', 'ежедневн', 'каждый день', 'универсальн', 'чист', 'легк', 'нежн', 'мускус', 'чай', 'daily', 'everyday', 'office', 'clean', 'light', 'soft'],
+  date: ['свидан', 'спаткан', 'вечер', 'вечар', 'чувствен', 'пачуцц', 'романт', 'ноч', 'амброксан', 'date', 'evening', 'sensual', 'romantic', 'night'],
+  fresh: ['свеж', 'спорт', 'водн', 'морск', 'акват', 'аква', 'прохлад', 'цитрус', 'лайм', 'лимон', 'бергамот', 'мята', 'грейп', 'fresh', 'aquatic', 'marine', 'citrus', 'mint', 'sport'],
+  status: ['статус', 'роскош', 'престиж', 'шлейф', 'глубок', 'глыбок', 'дерев', 'уд ', 'кожа', 'амбр', 'сандал', 'пачули', 'luxury', 'status', 'rich', 'oud', 'leather', 'woody', 'amber']
+};
+
+const IDEAL_SILLAGE: Record<string, number> = { subtle: 40, moderate: 65, bold: 85 };
+
+function isSetProduct(p: Product): boolean {
+  return (p.setItems && p.setItems.length > 0) ||
+    (p.tags || []).some(t => t.toLowerCase() === 'set' || t.toLowerCase() === 'набор') ||
+    p.name.toLowerCase().includes('набор') ||
+    p.name.toLowerCase().includes('сет') ||
+    p.name.toLowerCase().includes('set');
+}
+
+/** Plain-text haystack of a product's olfactory data (plus its set children). */
+function productHaystack(p: Product, all: Product[]): string {
+  const parts: (string | undefined)[] = [
+    p.name, p.brand, p.description, p.description_be,
+    ...(p.scentFamilies || []), ...(p.scentFamilies_be || []),
+    ...(p.accords || []).map(a => a.name),
+    ...(p.topNotes || []).map(n => n.name),
+    ...(p.heartNotes || []).map(n => n.name),
+    ...(p.baseNotes || []).map(n => n.name),
+    ...(p.tags || []), ...(p.tags_be || [])
+  ];
+  if (isSetProduct(p) && p.setItems) {
+    for (const item of p.setItems) {
+      const sub = all.find(x => x.id === item.id ||
+        (x.name.toLowerCase() === item.name.toLowerCase() && x.brand.toLowerCase() === item.brand.toLowerCase()));
+      if (sub) parts.push(sub.name, sub.brand, sub.description, sub.description_be,
+        ...(sub.scentFamilies || []), ...(sub.accords || []).map(a => a.name),
+        ...(sub.topNotes || []).map(n => n.name),
+        ...(sub.heartNotes || []).map(n => n.name),
+        ...(sub.baseNotes || []).map(n => n.name));
+    }
+  }
+  return parts.map(t => (t || '').toString().toLowerCase()).join(' ');
+}
+
+/** Restrained, factual explanation instead of marketing clichés. */
+function buildExplanation(p: Product, family: string, occasion: string, lang: 'ru' | 'be'): string {
+  const isBe = lang === 'be';
+  const notes = (list: typeof p.topNotes, n: number) =>
+    (list || []).slice(0, n).map(x => (isBe && x.name_be ? x.name_be : x.name).toLowerCase()).filter(Boolean);
+  const top = notes(p.topNotes, 2);
+  const base = notes(p.baseNotes, 2);
+  const accords = (p.accords || []).slice(0, 2).map(a => (isBe && a.name_be ? a.name_be : a.name).toLowerCase());
+
+  const sentences: string[] = [];
+  const profile = FAMILY_PROFILES[family]?.label[isBe ? 'be' : 'ru'];
+  if (accords.length) {
+    sentences.push(isBe ? `${p.brand} — ${accords.join(' + ')}; профіль: ${profile}.` : `${p.brand} — ${accords.join(' + ')}; профиль: ${profile}.`);
+  } else {
+    sentences.push(isBe ? `${p.brand}; профіль: ${profile}.` : `${p.brand}; профиль: ${profile}.`);
+  }
+  if (top.length) {
+    sentences.push(isBe ? `У пачатку — ${top.join(', ')}.` : `В старте — ${top.join(', ')}.`);
+  }
+  if (base.length) {
+    sentences.push(isBe ? `База трымаецца на ${base.join(', ')}.` : `База держится на ${base.join(', ')}.`);
+  }
+  const occasionPhrases: Record<string, { ru: string; be: string }> = {
+    everyday: { ru: 'Достаточно сдержан для офиса.', be: 'Дастаткова стрыманы для офісу.' },
+    date: { ru: 'Достаточно тёплый для вечера.', be: 'Дастаткова цёплы для вечара.' },
+    fresh: { ru: 'Хорошо работает днём и в жару.', be: 'Добра працуе днём і ў спёку.' },
+    status: { ru: 'Достаточно плотный для особого случая.', be: 'Дастаткова шчыльны для асаблівага выпадку.' }
+  };
+  sentences.push(occasionPhrases[occasion]?.[isBe ? 'be' : 'ru'] ?? '');
+  return sentences.filter(Boolean).join(' ');
+}
+
+/* ---------- Component ---------- */
+
 export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
   const { language, t } = useLanguage();
   const { addToCart, setIsCartOpen } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [loadingResults, setLoadingResults] = useState(false);
-  
-  // Quiz Selections
-  const [gender, setGender] = useState<string>('');
-  const [occasion, setOccasion] = useState<string>('');
-  const [family, setFamily] = useState<string>('');
-  const [intensity, setIntensity] = useState<string>('');
+
+  const [gender, setGender] = useState('');
+  const [occasion, setOccasion] = useState('');
+  const [family, setFamily] = useState('');
+  const [intensity, setIntensity] = useState('');
   const [selectedVariants, setSelectedVariants] = useState<Record<number, number>>({});
-  
-  // Matched products
+
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [results, setResults] = useState<{ product: Product; match: number; explanation: string; explanationBe: string }[]>([]);
   const [successAdded, setSuccessAdded] = useState<Record<number, boolean>>({});
 
-  // Fetch products on mount if needed
   useEffect(() => {
     if (isOpen && allProducts.length === 0) {
       fetch('/api/products')
@@ -50,344 +148,91 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
   };
 
   const handleNext = () => {
-    if (currentStep < 3) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      calculateRecommendations();
-    }
+    if (currentStep < 3) setCurrentStep(prev => prev + 1);
+    else calculateRecommendations();
   };
 
   const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
-    }
-  };
-
-  // Helper to generate bespoke copywriting explanations for matched products
-  const generateBespokeExplanation = (
-    product: Product, 
-    selectedFamily: string, 
-    selectedOccasion: string, 
-    lang: 'ru' | 'be',
-    idx: number
-  ): string => {
-    const isBe = lang === 'be';
-    
-    // Check if it is a set product
-    const isSetProduct = (product.setItems && product.setItems.length > 0) || 
-                         (product.tags || []).some(t => t.toLowerCase() === 'set' || t.toLowerCase() === 'набор') || 
-                         product.name.toLowerCase().includes('набор') || 
-                         product.name.toLowerCase().includes('сет') || 
-                         product.name.toLowerCase().includes('set');
-
-    const brand = product.brand;
-    const name = product.name;
-
-    if (isSetProduct) {
-      if (isBe) {
-        let context = 'выдатна дапоўніць ваш вобраз';
-        if (selectedOccasion === 'everyday') context = 'ідэальна падыходзіць на кожны дзень і для працы';
-        else if (selectedOccasion === 'date') context = 'зачаруе і створыць рамантычную атмасферу вечарам';
-        else if (selectedOccasion === 'fresh') context = 'падорыць доўгачаканую свежасць і прыліў бадзёрасці';
-        else if (selectedOccasion === 'status') context = 'падкрэсліць вытанчаны стыль і асаблівы статус';
-
-        let famStr = 'вытанчанага набору';
-        if (selectedFamily === 'citrus_fresh') famStr = 'цудоўнай калекцыяй цытрусавых і свежых мотараў';
-        else if (selectedFamily === 'sweet_gourmand') famStr = 'раскошным салодкім гурманскім спалучэннем';
-        else if (selectedFamily === 'woody_spicy') famStr = 'высакароднымі драўняна-рэзкімі мініяцюрамі';
-        else if (selectedFamily === 'floral_powdery') famStr = 'далікатным кветкава-пудравым букетам';
-
-        return `Тэматычны сэт ${name} ад ${brand} аб'ядноўвае адборныя кампазіцыі, якія раскрываюцца ${famStr}. Гэты гатовы набор ${context}.`;
-      } else {
-        let context = 'великолепно подчеркнет ваш образ';
-        if (selectedOccasion === 'everyday') context = 'создаст безупречный и деликатный офисный стиль на каждый день';
-        else if (selectedOccasion === 'date') context = 'окружит вас притягательной, теплой атмосферой вечернего свидания';
-        else if (selectedOccasion === 'fresh') context = 'подарит ощущение живительной прохлады, чистоты и легкости';
-        else if (selectedOccasion === 'status') context = 'выгодно выделит ваш безупречный вкус и высокий статус';
-
-        let famStr = 'изысканого парфюмерного сета';
-        if (selectedFamily === 'citrus_fresh') famStr = 'потрясающим сочетанием цитрусовых и водных оттенков';
-        else if (selectedFamily === 'sweet_gourmand') famStr = 'соблазнительными сладкими гурманскими мотивами';
-        else if (selectedFamily === 'woody_spicy') famStr = 'благородными древесными и пряными аккордами';
-        else if (selectedFamily === 'floral_powdery') famStr = 'изящным пудрово-цветочным букетом';
-
-        return `Готовый сет ${name} от ${brand} объединяет культовые селективные композиции, раскрывающиеся ${famStr}. Этот аромабокс ${context}.`;
-      }
-    }
-
-    // Extract notes
-    const topNotes = (product.topNotes || []).slice(0, 2).map(n => isBe && n.name_be ? n.name_be.toLowerCase() : n.name.toLowerCase());
-    const heartNotes = (product.heartNotes || []).slice(0, 2).map(n => isBe && n.name_be ? n.name_be.toLowerCase() : n.name.toLowerCase());
-    const baseNotes = (product.baseNotes || []).slice(0, 2).map(n => isBe && n.name_be ? n.name_be.toLowerCase() : n.name.toLowerCase());
-    const accords = (product.accords || []).slice(0, 2).map(a => isBe && a.name_be ? a.name_be.toLowerCase() : a.name.toLowerCase());
-
-    // Use (product.id + idx) as a seed to ensure high variety
-    const patternId = (product.id + idx) % 4;
-
-    const notesJoined = topNotes.concat(heartNotes).concat(baseNotes).slice(0, 3);
-    const notesStr = notesJoined.length > 0 ? notesJoined.join(', ') : '';
-
-    if (isBe) {
-      let context = 'вельмі вытанчаны спадарожнік';
-      if (selectedOccasion === 'everyday') context = 'ідэальна падыходзіць на кожны дзень і для працы';
-      else if (selectedOccasion === 'date') context = 'зачаруе і створыць рамантычную атмасферу вечарам';
-      else if (selectedOccasion === 'fresh') context = 'падорыць доўгачаканую свежасць і прыліў бадзёрасці';
-      else if (selectedOccasion === 'status') context = 'падкрэсліць вытанчаны стыль і асаблівы статус';
-
-      let famStr = 'воды';
-      if (selectedFamily === 'citrus_fresh') famStr = 'віхрам цытрусавай прахалоды';
-      else if (selectedFamily === 'sweet_gourmand') famStr = 'млявым гурманскім шлейфам';
-      else if (selectedFamily === 'woody_spicy') famStr = 'шляхетнымі драўняна-рэзкімі акордамі';
-      else if (selectedFamily === 'floral_powdery') famStr = 'далікатнымі пудрава-кветкавымі нотамі';
-
-      if (patternId === 0) {
-        return `Гэты шэдэўр ад ${brand} з нотамі ${notesStr} ${context}.`;
-      } else if (patternId === 1) {
-        return `Выразны ${name} раскрываецца ${famStr}, што ${context}.`;
-      } else if (patternId === 2) {
-        const accordPart = accords.length > 0 ? ` з асноўнымі акцэнтамі ${accords.join(' і ')}` : '';
-        return `Цудоўны выбар ад ${brand}${accordPart}. Водар ${context}.`;
-      } else {
-        return `Кампазіцыя раскрываецца гучаннем ${notesStr} і ${context}.`;
-      }
-    } else {
-      let context = 'великолепно подчеркнет ваш образ';
-      if (selectedOccasion === 'everyday') context = 'создаст безупречный и деликатный офисный стиль на каждый день';
-      else if (selectedOccasion === 'date') context = 'окружит вас притягательной, теплой атмосферой вечернего свидания';
-      else if (selectedOccasion === 'fresh') context = 'подарит ощущение живительной прохлады, чистоты и легкости';
-      else if (selectedOccasion === 'status') context = 'выгодно выделит ваш безупречный вкус и высокий статус';
-
-      let famStr = 'утонченного парфюма';
-      if (selectedFamily === 'citrus_fresh') famStr = 'свежим вихрем сочных цитрусов';
-      else if (selectedFamily === 'sweet_gourmand') famStr = 'аппетитным ванильно-гурманским шлейфом';
-      else if (selectedFamily === 'woody_spicy') famStr = 'благородными древесно-пряными полутонами';
-      else if (selectedFamily === 'floral_powdery') famStr = 'нежным, обволакивающим пудровым облаком';
-
-      if (patternId === 0) {
-        return `Аромат от ${brand} с нотами ${notesStr} ${context}.`;
-      } else if (patternId === 1) {
-        return `Гармоничный ${name} раскрывается ${famStr}, который ${context}.`;
-      } else if (patternId === 2) {
-        const accordPart = accords.length > 0 ? ` с доминирующими аккордами ${accords.join(' и ')}` : '';
-        return `Изысканное творение от ${brand}${accordPart} — ${context}.`;
-      } else {
-        return `Сочетание нот ${notesStr} подчеркивает фирменный стиль бренда и ${context}.`;
-      }
-    }
+    if (currentStep > 0) setCurrentStep(prev => prev - 1);
   };
 
   const calculateRecommendations = () => {
     setLoadingResults(true);
     setCurrentStep(4);
-    
+
     setTimeout(() => {
       if (allProducts.length === 0) {
         setLoadingResults(false);
         return;
       }
 
-      // Mathematical matching algorithms
+      const profile = FAMILY_PROFILES[family];
+
       const scored = allProducts.map(product => {
-        // Construct detailed lowcase product text for searchable match
-        const isSetProduct = (product.setItems && product.setItems.length > 0) || 
-                             (product.tags || []).some(t => t.toLowerCase() === 'set' || t.toLowerCase() === 'набор') || 
-                             product.name.toLowerCase().includes('набор') || 
-                             product.name.toLowerCase().includes('сет') || 
-                             product.name.toLowerCase().includes('set');
-
-        // Retrieve sub-products information if it is a set
-        let subProductsText = '';
-        if (isSetProduct && product.setItems && product.setItems.length > 0) {
-          product.setItems.forEach(item => {
-            const matchedSub = allProducts.find(p => p.id === item.id || (p.name.toLowerCase() === item.name.toLowerCase() && p.brand.toLowerCase() === item.brand.toLowerCase()));
-            if (matchedSub) {
-              subProductsText += ' ' + [
-                matchedSub.name,
-                matchedSub.brand,
-                matchedSub.description,
-                matchedSub.description_be,
-                ...(matchedSub.scentFamilies || []),
-                ...(matchedSub.scentFamilies_be || []),
-                ...(matchedSub.accords || []).map(a => a.name),
-                ...(matchedSub.topNotes || []).map(n => n.name),
-                ...(matchedSub.heartNotes || []).map(n => n.name),
-                ...(matchedSub.baseNotes || []).map(n => n.name),
-                ...(matchedSub.tags || []),
-                ...(matchedSub.tags_be || [])
-              ].map(t => (t || '').toLowerCase()).join(' ');
-            }
-          });
-        }
-
-        const productText = [
-          product.name,
-          product.brand,
-          product.description,
-          product.description_be,
-          ...(product.scentFamilies || []),
-          ...(product.scentFamilies_be || []),
-          ...(product.accords || []).map(a => a.name),
-          ...(product.topNotes || []).map(n => n.name),
-          ...(product.heartNotes || []).map(n => n.name),
-          ...(product.baseNotes || []).map(n => n.name),
-          ...(product.tags || []),
-          ...(product.tags_be || []),
-          subProductsText
-        ].map(t => (t || '').toLowerCase()).join(' ');
-
-        const checkKeywords = (keywords: string[]) => keywords.some(kw => productText.includes(kw));
-
-        // 1. Gender Filter & Match (Max 35 points)
-        let genderScore = 0;
-        if (gender === 'female') {
-          if (product.gender === 'Female') genderScore = 35;
-          else if (product.gender === 'Unisex') genderScore = 32; // Boosted so they recommend if matching other characteristics nicely
-          else genderScore = -20; // Heavy penalty for opposite gender
-        } else if (gender === 'male') {
-          if (product.gender === 'Male') genderScore = 35;
-          else if (product.gender === 'Unisex') genderScore = 32; // Boosted so they recommend if matching other characteristics nicely
-          else genderScore = -20; // Heavy penalty
-        } else { // unisex choice
-          if (product.gender === 'Unisex') genderScore = 35;
-          else genderScore = 15;
-        }
-
-        // 2. Olfactory Family Match (Max 40 points)
-        let familyScore = 0;
-        let hasDirectFamilyMatch = false;
-
+        const hay = productHaystack(product, allProducts);
         const famUpper = (product.scentFamilies || []).map(f => f.toUpperCase());
-        const tagsUpper = (product.tags || []).map(t => t.toUpperCase());
 
-        if (family === 'citrus_fresh') {
-          const directMatch = ['CITRUS', 'FRESH', 'AQUATIC', 'GREEN', 'AROMATIC'].some(f => famUpper.includes(f) || tagsUpper.includes(f));
-          if (directMatch) {
-            familyScore = 40;
-            hasDirectFamilyMatch = true;
-          } else if (checkKeywords(['цитр', 'свеж', 'водн', 'морск', 'аква', 'акват', 'зелен', 'чай', 'бергамот', 'лимон', 'грейп', 'мята', 'минерал', 'шалфей', 'citrus', 'fresh', 'aquatic', 'marine'])) {
-            familyScore = 30;
-            hasDirectFamilyMatch = true;
-          } else {
-            familyScore = 0; // No match
-          }
-        } else if (family === 'sweet_gourmand') {
-          const directMatch = ['GOURMAND', 'SWEET', 'ORIENTAL', 'VANILLA'].some(f => famUpper.includes(f) || tagsUpper.includes(f));
-          if (directMatch) {
-            familyScore = 40;
-            hasDirectFamilyMatch = true;
-          } else if (checkKeywords(['гурман', 'сладк', 'ванил', 'карамел', 'шоколад', 'мёд', 'мед', 'кокос', 'вишн', 'малина', 'слив', 'тонка', 'миндал', 'sugar', 'gourmand', 'sweet', 'vanilla'])) {
-            familyScore = 30;
-            hasDirectFamilyMatch = true;
-          } else {
-            familyScore = 0;
-          }
-        } else if (family === 'woody_spicy') {
-          const directMatch = ['WOODY', 'SPICY', 'LEATHER', 'OUD', 'WARM SPICY'].some(f => famUpper.includes(f) || tagsUpper.includes(f));
-          if (directMatch) {
-            familyScore = 40;
-            hasDirectFamilyMatch = true;
-          } else if (checkKeywords(['древес', 'прян', 'кожан', 'дерев', 'уд', 'кожа', 'табак', 'перец', 'кардамон', 'кедр', 'сандал', 'пачули', 'ветивер', 'woody', 'spicy', 'leather', 'oud'])) {
-            familyScore = 30;
-            hasDirectFamilyMatch = true;
-          } else {
-            familyScore = 0;
-          }
-        } else if (family === 'floral_powdery') {
-          const directMatch = ['FLORAL', 'POWDERY', 'MUSK'].some(f => famUpper.includes(f) || tagsUpper.includes(f));
-          if (directMatch) {
-            familyScore = 40;
-            hasDirectFamilyMatch = true;
-          } else if (checkKeywords(['цветоч', 'пудр', 'цвет', 'роза', 'жасмин', 'пион', 'мускус', 'тубероз', 'фиалк', 'ирис', 'лаванд', 'floral', 'powdery', 'rose', 'jasmine', 'musk'])) {
-            familyScore = 30;
-            hasDirectFamilyMatch = true;
-          } else {
-            familyScore = 0;
-          }
+        /* 1. Gender — max 35 */
+        let genderScore: number;
+        if (gender === 'unisex') {
+          genderScore = product.gender === 'Unisex' ? 35 : 15;
+        } else if (product.gender === (gender === 'female' ? 'Female' : 'Male')) {
+          genderScore = 35;
+        } else if (product.gender === 'Unisex') {
+          genderScore = 31;
+        } else {
+          genderScore = -25;
         }
 
-        // 3. Occasion Match (Max 25 points)
-        let occasionScore = 0;
-        if (occasion === 'everyday') {
-          if (checkKeywords(['офис', 'ежедневн', 'каждый день', 'чист', 'легк', 'нежн', 'мускус', 'чай', 'office', 'clean', 'light', 'daily', 'everyday', 'soft'])) {
-            occasionScore = 25;
-          } else {
-            const isLightBrand = ['molecule', 'byredo', 'jo malone'].some(b => productText.includes(b));
-            occasionScore = isLightBrand ? 20 : 5;
-          }
-        } else if (occasion === 'date') {
-          if (checkKeywords(['свидан', 'вечер', 'чувствен', 'сладк', 'прян', 'амбр', 'тепл', 'романт', 'ноч', 'ванил', 'вишн', 'страст', 'карамел', 'date', 'evening', 'sensual', 'romantic', 'night', 'vanilla', 'sweet', 'amber'])) {
-            occasionScore = 25;
-          } else {
-            const isRich = product.concentration === 'Parfum' || product.concentration === 'EDP';
-            occasionScore = isRich ? 15 : 5;
-          }
-        } else if (occasion === 'fresh') {
-          if (checkKeywords(['свеж', 'спорт', 'водн', 'морск', 'акват', 'прохлад', 'аква', 'минерал', 'цитрус', 'лайм', 'лимон', 'бергамот', 'мята', 'грейп', 'fresh', 'aquatic', 'marine', 'citrus', 'mint'])) {
-            occasionScore = 25;
-          } else {
-            occasionScore = 5;
-          }
-        } else if (occasion === 'status') {
-          if (checkKeywords(['статус', 'роскош', 'особ', 'богат', 'шлейф', 'глубок', 'дерев', 'уд', 'кожа', 'амбр', 'сандал', 'пачули', 'luxury', 'fancy', 'status', 'rich', 'oud', 'leather', 'woody'])) {
-            occasionScore = 25;
-          } else {
-            const isPremium = typeof product.price === 'number' ? product.price > 300 : parseFloat(product.price as string) > 300;
-            occasionScore = isPremium ? 18 : 5;
-          }
+        /* 2. Family — max 40, graded by direct families + share of notes hit */
+        let familyScore = 0;
+        const directFamily = profile.families.some(f => famUpper.includes(f));
+        const noteHits = profile.notes.filter(kw => hay.includes(kw)).length;
+        const noteShare = Math.min(1, noteHits / 4);
+        if (directFamily) familyScore = 26 + Math.round(noteShare * 14);     // 26–40
+        else if (noteHits > 0) familyScore = 10 + Math.round(noteShare * 16); // 10–26 partial
+        const familyMissed = familyScore === 0;
+
+        /* 3. Occasion — max 25, graded by keyword coverage */
+        const occKeywords = OCCASION_KEYWORDS[occasion] || [];
+        const occHits = occKeywords.filter(kw => hay.includes(kw)).length;
+        let occasionScore = occHits >= 3 ? 25 : occHits === 2 ? 18 : occHits === 1 ? 11 : 4;
+        if (occasion === 'date' && occHits === 0) {
+          occasionScore = product.concentration === 'Parfum' || product.concentration === 'EDP' ? 11 : 4;
+        }
+        if (occasion === 'status' && occHits === 0) {
+          const price = typeof product.price === 'number' ? product.price : parseFloat(product.price as string) || 0;
+          occasionScore = price > 300 ? 13 : 4;
         }
 
-        // 4. Intensity Match (Max 15 points)
-        const sillageValue = product.sillage || 60; // 0-100 scale
-        const longevityValue = product.longevity || 70; // 0-100 scale
-        let intensityScore = 0;
-        if (intensity === 'subtle') {
-          if (sillageValue < 55) intensityScore = 15;
-          else if (sillageValue < 75) intensityScore = 10;
-          else intensityScore = 2; // high boundary penalty
-        } else if (intensity === 'moderate') {
-          if (sillageValue >= 50 && sillageValue <= 78) intensityScore = 15;
-          else intensityScore = 10;
-        } else if (intensity === 'bold') {
-          if (sillageValue > 75 || longevityValue > 75 || product.concentration === 'Parfum') intensityScore = 15;
-          else if (sillageValue > 60 || longevityValue > 60) intensityScore = 10;
-          else intensityScore = 2; // low sillage penalty
-        }
+        /* 4. Intensity — max 15, distance to the ideal sillage */
+        const sillage = product.sillage || 60;
+        const longevity = product.longevity || 70;
+        const ideal = IDEAL_SILLAGE[intensity] ?? 65;
+        const diff = Math.abs(sillage - ideal);
+        let intensityScore = diff <= 10 ? 15 : diff <= 25 ? 10 : 4;
+        if (intensity === 'bold' && (product.concentration === 'Parfum' || longevity > 80) && intensityScore < 15) intensityScore = 15;
+        if (intensity === 'subtle' && longevity < 55 && intensityScore < 15) intensityScore = 15;
 
-        // Penalty if family doesn't match at all
-        let finalMaxScore = genderScore + familyScore + occasionScore + intensityScore;
-        if (!hasDirectFamilyMatch) {
-          finalMaxScore -= 25; // penalty for wrong family preference
-        }
+        let raw = genderScore + familyScore + occasionScore + intensityScore;
+        if (familyMissed) raw -= 20; // wrong olfactory family is a real mismatch
 
-        // Match percentage calculation from 40% to 98%
-        const normalizedScore = Math.max(0, Math.min(100, (finalMaxScore / 115) * 100));
-        const microAdjustment = (product.price ? (Number(product.id) % 3) * 0.5 : 0);
-        let matchPercent = Math.min(99, Math.round(50 + (normalizedScore * 0.49) + microAdjustment));
-        if (matchPercent < 40) matchPercent = 40;
+        const normalized = Math.max(0, Math.min(1, raw / 115));
+        const matchPercent = Math.max(40, Math.min(98, Math.round(38 + normalized * 60)));
 
-        return {
-          product,
-          match: matchPercent,
-          hasDirectFamilyMatch
-        };
+        return { product, match: matchPercent, accordsWeight: (product.accords || []).reduce((s, a) => s + (a.value || 0), 0) };
       });
 
-      // Sort by score desc, take top 3
       const sortedResults = scored
-        .sort((a, b) => b.match - a.match)
+        .sort((a, b) => b.match - a.match || b.accordsWeight - a.accordsWeight)
         .slice(0, 3)
-        .map(({ product, match }, idx) => {
-          const explanation = generateBespokeExplanation(product, family, occasion, 'ru', idx);
-          const explanationBe = generateBespokeExplanation(product, family, occasion, 'be', idx);
-          return {
-            product,
-            match,
-            explanation,
-            explanationBe
-          };
-        });
+        .map(({ product, match }) => ({
+          product,
+          match,
+          explanation: buildExplanation(product, family, occasion, 'ru'),
+          explanationBe: buildExplanation(product, family, occasion, 'be')
+        }));
 
-      // Pre-select the first available variant identifier for each product
       const initialSelected: Record<number, number> = {};
       sortedResults.forEach(({ product }) => {
         if (product.variants && product.variants.length > 0 && product.variants[0].id) {
@@ -395,456 +240,322 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
         }
       });
       setSelectedVariants(initialSelected);
-
       setResults(sortedResults);
       setLoadingResults(false);
-    }, 1200);
+    }, 900);
   };
 
   const handleAddScentToCart = (prod: Product) => {
     const selectedVarId = selectedVariants[prod.id] || (prod.variants && prod.variants.length > 0 ? prod.variants[0].id : undefined);
     addToCart(prod, selectedVarId);
-    
     setSuccessAdded(prev => ({ ...prev, [prod.id]: true }));
-    setTimeout(() => {
-      setSuccessAdded(prev => ({ ...prev, [prod.id]: false }));
-    }, 2000);
+    setTimeout(() => setSuccessAdded(prev => ({ ...prev, [prod.id]: false })), 2000);
   };
 
-  // Translations dictionary for Quiz ui
   const stepTitles = [
-    {
-      ru: 'Для кого этот аромат?',
-      be: 'Для каго гэты водар?'
-    },
-    {
-      ru: 'Настроение или повод',
-      be: 'Настрой ці нагода'
-    },
-    {
-      ru: 'Ваши аккорды-фавориты',
-      be: 'Вашы акорды-фаварыты'
-    },
-    {
-      ru: 'Интенсивность и шлейф',
-      be: 'Інтэнсіўнасць і шлейф'
-    },
-    {
-      ru: 'Ваши идеальные ароматы',
-      be: 'Вашы ідэальныя водары'
-    }
+    { ru: 'Для кого аромат', be: 'Для каго водар' },
+    { ru: 'Повод', be: 'Нагода' },
+    { ru: 'Аккорды', be: 'Акорды' },
+    { ru: 'Интенсивность', be: 'Інтэнсіўнасць' },
+    { ru: 'Результат', be: 'Вынік' }
   ];
+
+  const genderOptions = [
+    { id: 'female', title: 'Для неё', titleBe: 'Для яе', desc: 'Женские композиции', descBe: 'Жаноцкія кампазіцыі' },
+    { id: 'male', title: 'Для него', titleBe: 'Для яго', desc: 'Мужские композиции', descBe: 'Мужчынскія кампазіцыі' },
+    { id: 'unisex', title: 'Унисекс', titleBe: 'Унісекс', desc: 'Без стереотипов', descBe: 'Без стэрэатыпаў' }
+  ];
+
+  const occasionOptions = [
+    { id: 'everyday', title: 'Каждый день', titleBe: 'Кожны дзень', desc: 'Офис, учёба, рутина', descBe: 'Офіс, учёба, руціна' },
+    { id: 'date', title: 'Вечер, свидание', titleBe: 'Вечар, спатканне', desc: 'Тёплые, чувственные', descBe: 'Цёплыя, пачуццёвыя' },
+    { id: 'fresh', title: 'День, спорт', titleBe: 'Дзень, спорт', desc: 'Свежие, лёгкие', descBe: 'Свежыя, лёгкія' },
+    { id: 'status', title: 'Особый случай', titleBe: 'Асаблівы выпадак', desc: 'Глубокие, плотные', descBe: 'Глыбокія, шчыльныя' }
+  ];
+
+  const familyOptions = [
+    { id: 'citrus_fresh', title: 'Свежие и цитрусовые', titleBe: 'Свежыя і цытрусавыя', desc: 'Бергамот, мята, аква', descBe: 'Бергамот, мята, аква' },
+    { id: 'sweet_gourmand', title: 'Сладкие и гурманские', titleBe: 'Салодкія і гурманскія', desc: 'Ваниль, карамель, тонка', descBe: 'Ваніль, карамель, тонка' },
+    { id: 'woody_spicy', title: 'Древесные и пряные', titleBe: 'Драўняныя і рэзкія', desc: 'Сандал, уд, табак, специи', descBe: 'Сандал, уд, тытунь, спецыі' },
+    { id: 'floral_powdery', title: 'Цветочные и пудровые', titleBe: 'Кветкавыя і пудравыя', desc: 'Роза, жасмин, мускус', descBe: 'Ружа, ясмін, мускус' }
+  ];
+
+  const intensityOptions = [
+    { id: 'subtle', title: 'Деликатный', titleBe: 'Дэлікатны', desc: 'Близко к коже', descBe: 'Блізка да скуры', level: 1 },
+    { id: 'moderate', title: 'Элегантный', titleBe: 'Элегантны', desc: 'Заметный шлейф', descBe: 'Заўважны шлейф', level: 2 },
+    { id: 'bold', title: 'Выразительный', titleBe: 'Выразны', desc: 'Максимум стойкости', descBe: 'Максімум стойкасці', level: 3 }
+  ];
+
+  /** Editorial option row: index — title — descriptor — marker. */
+  const OptionRow = ({ index, title, desc, selected, onClick }: {
+    index: number; title: string; desc: string; selected: boolean; onClick: () => void;
+  }) => (
+    <button
+      onClick={onClick}
+      className={`w-full text-left flex items-center gap-5 md:gap-7 py-5 md:py-6 border-b border-brand-border/60 cursor-pointer group transition-colors duration-200 ${
+        selected ? 'text-brand-light' : 'text-brand-muted hover:text-brand-light'
+      }`}
+    >
+      <span className={`font-mono text-[10px] tracking-widest shrink-0 w-6 ${selected ? 'text-brand-accent' : 'text-brand-muted/60'}`}>
+        {String(index + 1).padStart(2, '0')}
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className={`block font-serif text-base md:text-lg uppercase tracking-[0.08em] leading-snug ${selected ? 'text-brand-light' : ''}`}>
+          {title}
+        </span>
+        <span className="block text-[11px] font-sans font-light text-brand-muted mt-1">{desc}</span>
+      </span>
+      <span
+        className={`shrink-0 w-4 h-4 rounded-full border transition-colors duration-200 ${
+          selected ? 'border-brand-accent bg-brand-accent' : 'border-brand-border group-hover:border-brand-accent/60'
+        }`}
+      />
+    </button>
+  );
 
   return (
     <>
-      {/* Immersive Full-Screen Scent Quiz Poster (Light Theme Luxury Style) */}
-      <section className="relative w-full h-[550px] md:h-[80vh] lg:h-screen min-h-[500px] overflow-hidden bg-brand-bg border-b border-brand-border/40 flex flex-col items-center justify-center select-none animate-fade-in">
-        
-        {/* Subtle, beautiful ambient image background */}
-        <div className="absolute inset-0 z-0 opacity-15 mix-blend-multiply">
-          <img
-            src="https://images.unsplash.com/photo-1547887537-6158d64c35b3?q=80&w=1600&auto=format&fit=crop"
-            alt=""
-            className="w-full h-full object-cover select-none pointer-events-none contrast-105 grayscale"
-            referrerPolicy="no-referrer"
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-bg via-brand-bg/90 to-brand-bg/40 z-0" />
+      {/* Landing section — quiet, typographic, no decorative noise */}
+      <section className="relative w-full py-28 md:py-40 overflow-hidden bg-brand-bg border-b border-brand-border/40 select-none">
+        <div className="max-w-4xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="flex items-center gap-4 mb-10">
+              <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-brand-accent">
+                {language === 'be' ? 'Падбор' : 'Подбор'}
+              </span>
+              <span className="h-px flex-1 bg-brand-border" />
+              <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-brand-muted/60">04</span>
+            </div>
 
-        {/* Ambient warm glow of luxury */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-accent/[0.02] rounded-full blur-[140px] pointer-events-none" />
+            <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-extralight text-brand-light uppercase tracking-[0.04em] leading-[1.1] max-w-2xl">
+              {language === 'be' ? 'Тры водары пад вас' : 'Три аромата под вас'}
+            </h2>
 
-        {/* Center content container */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.9, ease: "easeOut" }}
-          className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-6 md:space-y-8 flex flex-col items-center"
-        >
-          <span className="inline-flex items-center gap-2 text-[10px] sm:text-xs uppercase font-mono tracking-[0.35em] text-brand-accent">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
-            {language === 'be' ? 'ІНТЭРАКТЫЎНЫ ПАДБОР' : 'ИНТЕРАКТИВНЫЙ ПОДБОР'}
-          </span>
-          
-          <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif text-brand-light font-extralight tracking-[0.05em] uppercase leading-[1.15] max-w-3xl">
-            {language === 'be' ? 'Знайдзіце свой парфумерны Архетып' : 'Найдите свой парфюмерный Архетип'}
-          </h2>
-          
-          <p className="text-xs sm:text-sm md:text-base text-brand-muted font-extralight tracking-[0.02em] font-sans leading-relaxed max-w-2xl px-4">
-            {language === 'be' 
-              ? 'Пройдзеце кароткі тэст з 4 пытанняў, і нашы алгарытмы з дакладнасцю вызначаць 3 ідэальных для вас водару з калекцыі.'
-              : 'Пройдите короткий тест из 4 вопросов, и наши алгоритмы с точностью определят 3 идеальных для вас аромата из коллекции.'}
-          </p>
+            <p className="mt-6 max-w-xl text-sm text-brand-muted font-sans font-light leading-relaxed">
+              {language === 'be'
+                ? 'Чатыры пытанні — і канкрэтныя рэкамендацыі з наяўнай калекцыі. Толькі супастаўленне нотаў, сямей і інтэнсіўнасці, без агульных слоў.'
+                : 'Четыре вопроса — и конкретные рекомендации из наличной коллекции. Только сопоставление нот, семейств и интенсивности, без общих слов.'}
+            </p>
 
-          <div className="pt-4 dynamic-button-wrapper">
-            <button 
+            <button
               id="start-scent-quiz-btn"
               onClick={() => { setIsOpen(true); resetQuiz(); }}
-              className="group relative px-10 py-5 bg-transparent text-brand-light border border-brand-accent/40 hover:border-brand-accent hover:text-white text-xs font-semibold uppercase tracking-[0.25em] rounded-none transition-all duration-500 overflow-hidden flex items-center gap-3.5 cursor-pointer"
+              className="group mt-10 inline-flex items-center gap-4 px-8 py-4 border border-brand-light/30 hover:border-brand-accent text-brand-light hover:text-brand-accent text-[11px] font-semibold uppercase tracking-[0.25em] transition-colors duration-300 cursor-pointer bg-transparent"
             >
-              <div className="absolute inset-0 w-0 bg-brand-accent transition-all duration-300 ease-out group-hover:w-full" />
-              <span className="relative z-10">{language === 'be' ? 'Падабраць водар' : 'Подобрать аромат'}</span>
-              <ArrowRight className="w-4 h-4 relative z-10 text-brand-accent transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white" />
+              <span>{language === 'be' ? 'Прайсці падбор' : 'Пройти подбор'}</span>
+              <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </button>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </section>
 
-      {/* QUIZ WIZARD DIALOG OVERLAY - RE-DESIGNED TO FIT PREMIUM LIGHT THEME */}
+      {/* Quiz dialog */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-brand-bg md:bg-black/80 md:backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-brand-bg md:bg-black/80">
             <div className="fixed inset-0 hidden md:block" onClick={() => setIsOpen(false)} />
-            
-            <motion.div 
+
+            <motion.div
               id="scent-quiz-modal"
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              transition={{ type: 'spring', damping: 30, stiffness: 240 }}
-              className="bg-brand-bg w-full h-[100dvh] md:h-[80vh] md:max-h-[690px] md:max-w-3xl md:border md:border-brand-border/60 flex flex-col justify-between shadow-2xl relative rounded-none z-10 overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-brand-bg w-full h-[100dvh] md:h-auto md:max-h-[86vh] md:max-w-2xl md:border md:border-brand-border flex flex-col relative z-10 overflow-hidden"
             >
-              
-              {/* Luxury Header */}
-              <div className="p-6 md:p-8 border-b border-brand-border flex justify-between items-center bg-brand-bg">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] uppercase tracking-[0.3em] text-brand-accent font-semibold leading-none block">
-                      {language === 'be' ? 'Водарны квіз' : 'Парфюмерный квиз'}
-                    </span>
+              {/* Header */}
+              <div className="px-6 md:px-10 pt-7 pb-5 border-b border-brand-border flex justify-between items-start gap-4">
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-brand-muted mb-2">
+                    {currentStep < 4
+                      ? `${String(currentStep + 1).padStart(2, '0')} / 04 — ${language === 'be' ? stepTitles[currentStep].be : stepTitles[currentStep].ru}`
+                      : (language === 'be' ? 'Вынік' : 'Результат')}
                   </div>
-                  <h3 className="font-serif text-lg sm:text-2xl font-light text-brand-light tracking-wide uppercase leading-tight">
-                    {language === 'be' ? stepTitles[currentStep].be : stepTitles[currentStep].ru}
+                  <h3 className="font-serif text-xl md:text-2xl font-light text-brand-light uppercase tracking-[0.06em] leading-tight">
+                    {currentStep < 4
+                      ? (language === 'be' ? stepTitles[currentStep].be : stepTitles[currentStep].ru)
+                      : (language === 'be' ? 'Вашы ідэальныя водары' : 'Ваши идеальные ароматы')}
                   </h3>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-brand-hover border border-transparent hover:border-brand-border transition-all duration-300 rounded-none cursor-pointer"
+                  className="p-2 -m-2 text-brand-muted hover:text-brand-light transition-colors cursor-pointer"
+                  aria-label="Close"
                 >
-                  <X className="w-5 h-5 text-brand-muted hover:text-brand-light" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Progress Indicator for steps 1-4 */}
-              {currentStep < 4 && (
-                <div className="w-full bg-brand-border h-[2px]">
-                  <motion.div 
-                    initial={{ width: '0%' }}
-                    animate={{ width: `${(currentStep / 3) * 100}%` }}
-                    className="bg-brand-accent h-[2px] transition-all duration-300"
-                  />
-                </div>
-              )}
-
-              {/* Steps Body */}
-              <div className={`overflow-y-auto flex-1 custom-scrollbar bg-brand-bg ${currentStep === 4 ? 'p-4 md:p-5' : 'p-6 md:p-8'}`}>
+              {/* Steps body */}
+              <div className="overflow-y-auto flex-1 custom-scrollbar px-6 md:px-10 py-6 md:py-8">
                 <AnimatePresence mode="wait">
-                  
-                  {/* STEP 1: GENDER */}
                   {currentStep === 0 && (
-                    <motion.div 
-                       key="step0"
-                       initial={{ opacity: 0, x: 15 }}
-                       animate={{ opacity: 1, x: 0 }}
-                       exit={{ opacity: 0, x: -15 }}
-                       className="space-y-4"
-                    >
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-2">
-                        {[
-                          { id: 'female', title: 'Для неё', desc: 'Утонченные женственные сочетания', titleBe: 'Для яе', descBe: 'Вытанчаныя жаноцкія спалучэнні', icon: Gift },
-                          { id: 'male', title: 'Для него', desc: 'Харизматичные мужские акценты', titleBe: 'Для яго', descBe: 'Харызматычныя мужчынскія акцэнты', icon: Crown },
-                          { id: 'unisex', title: 'Унисекс', desc: 'Для двоих или без стереотипов', titleBe: 'Унісекс', descBe: 'Для дваіх ці без стэрэатыпаў', icon: Compass }
-                        ].map(opt => {
-                          const IconComp = opt.icon;
-                          const selected = gender === opt.id;
-                          return (
-                            <button
-                              key={opt.id}
-                              onClick={() => { setGender(opt.id); setTimeout(handleNext, 250); }}
-                              className={`p-8 border text-center flex flex-col items-center justify-center gap-4 transition-all duration-300 relative cursor-pointer group rounded-none ${
-                                selected 
-                                  ? 'border-brand-accent bg-brand-accent/[0.03] shadow-xs' 
-                                  : 'border-brand-border hover:border-brand-accent/50 hover:bg-brand-hover/30'
-                              }`}
-                            >
-                              <div className={`p-4 rounded-none border transition-all duration-300 ${
-                                selected 
-                                  ? 'bg-brand-accent text-white border-brand-accent' 
-                                  : 'border-brand-border bg-transparent text-brand-muted group-hover:text-brand-accent group-hover:border-brand-accent/40'
-                              }`}>
-                                <IconComp className="w-5 h-5 stroke-[1.25]" />
-                              </div>
-                              <div className="space-y-1">
-                                <h4 className="font-serif text-sm sm:text-base font-light tracking-widest text-brand-light uppercase">
-                                  {language === 'be' ? opt.titleBe : opt.title}
-                                </h4>
-                                <p className="text-[10px] text-brand-muted font-sans font-light tracking-wide max-w-[160px] leading-relaxed">
-                                  {language === 'be' ? opt.descBe : opt.desc}
-                                </p>
-                              </div>
-                              {selected && (
-                                <span className="absolute top-3 right-3 bg-brand-accent text-white p-0.5 rounded-none flex items-center justify-center">
-                                  <Check className="w-3 h-3" />
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <motion.div key="step0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                      {genderOptions.map((opt, i) => (
+                        <OptionRow
+                          key={opt.id}
+                          index={i}
+                          title={language === 'be' ? opt.titleBe : opt.title}
+                          desc={language === 'be' ? opt.descBe : opt.desc}
+                          selected={gender === opt.id}
+                          onClick={() => { setGender(opt.id); setTimeout(handleNext, 200); }}
+                        />
+                      ))}
                     </motion.div>
                   )}
 
-                  {/* STEP 2: OCCASION */}
                   {currentStep === 1 && (
-                    <motion.div 
-                      key="step1"
-                      initial={{ opacity: 0, x: 15 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -15 }}
-                      className="space-y-4"
-                    >
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
-                        {[
-                          { id: 'everyday', title: 'Офис / На каждый день', desc: 'Легкие, ненавязчивые спутники дня', titleBe: 'Офіс / На кожны дзень', descBe: 'Лёгкія, непатрабавальныя спадарожнікі дня', icon: Briefcase },
-                          { id: 'date', title: 'Свидание / Вечер', desc: 'Чувственные сладковатые молекулы', titleBe: 'Спатканне / Вечар', descBe: 'Пачуццёвыя саладкавыя малекулы', icon: Flame },
-                          { id: 'fresh', title: 'Спорт / Сорбет свежести', desc: 'Энергичный заряд цитрусов и воды', titleBe: 'Спорт / Сарбет свежасці', descBe: 'Энергічны зарад цытрусаў і вады', icon: Droplets },
-                          { id: 'status', title: 'Особый случай / Status', desc: 'Глубокие кожаные и удовые ароматы', titleBe: 'Асаблівы выпадак / Status', descBe: 'Глыбокія скураныя і ўдавыя водары', icon: Crown }
-                        ].map(opt => {
-                          const IconComp = opt.icon;
-                          const selected = occasion === opt.id;
-                          return (
-                            <button
-                              key={opt.id}
-                              onClick={() => { setOccasion(opt.id); setTimeout(handleNext, 250); }}
-                              className={`p-6 border text-left flex items-start gap-4 transition-all duration-300 relative rounded-none cursor-pointer group ${
-                                selected 
-                                  ? 'border-brand-accent bg-brand-accent/[0.03]' 
-                                  : 'border-brand-border hover:border-brand-accent/50 hover:bg-brand-hover/30'
-                              }`}
-                            >
-                              <div className={`p-3 rounded-none border transition-colors duration-300 shrink-0 ${
-                                selected 
-                                  ? 'bg-brand-accent text-white border-brand-accent' 
-                                  : 'border-brand-border bg-transparent text-brand-muted group-hover:text-brand-accent group-hover:border-brand-accent/40'
-                              }`}>
-                                <IconComp className="w-4 h-4 stroke-[1.25]" />
-                              </div>
-                              <div className="space-y-1">
-                                <h4 className="font-serif text-sm font-medium text-brand-light uppercase tracking-wider">
-                                  {language === 'be' ? opt.titleBe : opt.title}
-                                </h4>
-                                <p className="text-[10px] text-brand-muted font-sans font-light tracking-wide leading-relaxed">
-                                  {language === 'be' ? opt.descBe : opt.desc}
-                                </p>
-                              </div>
-                              {selected && (
-                                <span className="absolute top-3 right-3 bg-brand-accent text-white p-0.5 rounded-none flex items-center justify-center">
-                                  <Check className="w-3 h-3" />
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <motion.div key="step1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                      {occasionOptions.map((opt, i) => (
+                        <OptionRow
+                          key={opt.id}
+                          index={i}
+                          title={language === 'be' ? opt.titleBe : opt.title}
+                          desc={language === 'be' ? opt.descBe : opt.desc}
+                          selected={occasion === opt.id}
+                          onClick={() => { setOccasion(opt.id); setTimeout(handleNext, 200); }}
+                        />
+                      ))}
                     </motion.div>
                   )}
 
-                  {/* STEP 3: FAMILY */}
                   {currentStep === 2 && (
-                    <motion.div 
-                      key="step2"
-                      initial={{ opacity: 0, x: 15 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -15 }}
-                      className="space-y-4"
-                    >
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
-                        {[
-                          { id: 'citrus_fresh', title: 'Свежие, Цитрусовые и Морские', desc: 'Бергамот, мята, аква-аккорды', titleBe: 'Свежыя, Цытрусавыя і Марскія', descBe: 'Бергамот, мята, аква-акорды' },
-                          { id: 'sweet_gourmand', title: 'Сладкие, Ванильные, Гурманские', desc: 'Ваниль, карамель, бобы тонка', titleBe: 'Салодкія, Ванільныя, Гурманскія', descBe: 'Ваніль, карамель, бобы тонка' },
-                          { id: 'woody_spicy', title: 'Древесные, Пряные и Кожаные', desc: 'Сандал, кедр, табак, специи', titleBe: 'Драўняныя, Рэзкія і Скураныя', descBe: 'Сандал, кедр, тытунь, спецыі' },
-                          { id: 'floral_powdery', title: 'Цветочные, Пудровые и Нежные', desc: 'Роза, жасмин, утонченный мускус', titleBe: 'Кветкавыя, Пудравыя і Нёжныя', descBe: 'Ружа, ясмін, вытанчаны мускус' }
-                        ].map(opt => {
-                          const selected = family === opt.id;
-                          return (
-                            <button
-                              key={opt.id}
-                              onClick={() => { setFamily(opt.id); setTimeout(handleNext, 250); }}
-                              className={`p-6 border text-left flex flex-col justify-center gap-2 transition-all duration-300 relative rounded-none cursor-pointer group ${
-                                selected 
-                                  ? 'border-brand-accent bg-brand-accent/[0.03]' 
-                                  : 'border-brand-border hover:border-brand-accent/50 hover:bg-brand-hover/30'
-                              }`}
-                            >
-                              <h4 className="font-serif text-sm font-medium text-brand-light uppercase tracking-wider">
-                                {language === 'be' ? opt.titleBe : opt.title}
-                              </h4>
-                              <p className="text-[10px] text-brand-muted font-sans font-light tracking-wide leading-relaxed">
-                                {language === 'be' ? opt.descBe : opt.desc}
-                              </p>
-                              {selected && (
-                                <span className="absolute top-3 right-3 bg-brand-accent text-white p-0.5 rounded-none flex items-center justify-center">
-                                  <Check className="w-3 h-3" />
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <motion.div key="step2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                      {familyOptions.map((opt, i) => (
+                        <OptionRow
+                          key={opt.id}
+                          index={i}
+                          title={language === 'be' ? opt.titleBe : opt.title}
+                          desc={language === 'be' ? opt.descBe : opt.desc}
+                          selected={family === opt.id}
+                          onClick={() => { setFamily(opt.id); setTimeout(handleNext, 200); }}
+                        />
+                      ))}
                     </motion.div>
                   )}
 
-                  {/* STEP 4: INTENSITY */}
                   {currentStep === 3 && (
-                    <motion.div 
-                      key="step3"
-                      initial={{ opacity: 0, x: 15 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -15 }}
-                      className="space-y-4"
-                    >
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-2">
-                        {[
-                          { id: 'subtle', title: 'Деликатный', desc: 'Шепот интимного мускуса близко к коже', titleBe: 'Дэлікатны', descBe: 'Шэпт інтымнага мускусу блізка да скуры' },
-                          { id: 'moderate', title: 'Элегантный', desc: 'Заметный, но изысканный классический шлейф', titleBe: 'Элегантны', descBe: 'Заўважны, але вытанчаны класічны шлейф' },
-                          { id: 'bold', title: 'Выразительный', desc: 'Максимальный восторг, стойкость и длинный хвост', titleBe: 'Выразны', descBe: 'Максімальнае захапленне, стойкасць і даўгі хвост' }
-                        ].map(opt => {
-                          const selected = intensity === opt.id;
-                          return (
-                            <button
-                              key={opt.id}
-                              onClick={() => setIntensity(opt.id)}
-                              className={`p-6 border text-center flex flex-col items-center justify-center gap-3.5 transition-all duration-300 relative rounded-none cursor-pointer group ${
-                                selected 
-                                  ? 'border-brand-accent bg-brand-accent/[0.03]' 
-                                  : 'border-brand-border hover:border-brand-accent/50 hover:bg-brand-hover/30'
-                              }`}
-                            >
-                              <div className="flex gap-1 items-center justify-center">
-                                {[...Array(opt.id === 'bold' ? 3 : opt.id === 'moderate' ? 2 : 1)].map((_, i) => (
-                                  <span key={i} className="text-brand-accent font-serif text-[13px] leading-none">★</span>
-                                ))}
-                              </div>
-                              <div>
-                                <h4 className="font-serif text-sm font-medium text-brand-light uppercase tracking-wider mb-1">
-                                  {language === 'be' ? opt.titleBe : opt.title}
-                                </h4>
-                                <p className="text-[10px] text-brand-muted font-sans font-light tracking-wide leading-relaxed max-w-[150px] mx-auto uppercase">
-                                  {language === 'be' ? opt.descBe : opt.desc}
-                                </p>
-                              </div>
-                              {selected && (
-                                <span className="absolute top-3 right-3 bg-brand-accent text-white p-0.5 rounded-none flex items-center justify-center">
-                                  <Check className="w-3 h-3" />
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
+                    <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                      {intensityOptions.map((opt, i) => (
+                        <button
+                          key={opt.id}
+                          onClick={() => { setIntensity(opt.id); setTimeout(handleNext, 200); }}
+                          className={`w-full text-left flex items-center gap-5 md:gap-7 py-5 md:py-6 border-b border-brand-border/60 cursor-pointer group transition-colors duration-200 ${
+                            intensity === opt.id ? 'text-brand-light' : 'text-brand-muted hover:text-brand-light'
+                          }`}
+                        >
+                          <span className={`font-mono text-[10px] tracking-widest shrink-0 w-6 ${intensity === opt.id ? 'text-brand-accent' : 'text-brand-muted/60'}`}>
+                            {String(i + 1).padStart(2, '0')}
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block font-serif text-base md:text-lg uppercase tracking-[0.08em] leading-snug">
+                              {language === 'be' ? opt.titleBe : opt.title}
+                            </span>
+                            <span className="block text-[11px] font-sans font-light text-brand-muted mt-1">
+                              {language === 'be' ? opt.descBe : opt.desc}
+                            </span>
+                          </span>
+                          <span className="shrink-0 flex items-end gap-1">
+                            {[1, 2, 3].map(n => (
+                              <span
+                                key={n}
+                                className={`w-[3px] transition-colors duration-200 ${
+                                  n <= opt.level ? (intensity === opt.id ? 'bg-brand-accent' : 'bg-brand-muted/50') : 'bg-brand-border'
+                                }`}
+                                style={{ height: `${6 + n * 4}px` }}
+                              />
+                            ))}
+                          </span>
+                        </button>
+                      ))}
                     </motion.div>
                   )}
 
-                  {/* STEP 5: RESULTS SCREEN */}
                   {currentStep === 4 && (
-                    <motion.div 
-                      key="step4"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="space-y-4 py-2"
-                    >
+                    <motion.div key="step4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
                       {loadingResults ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                          <div className="w-12 h-12 rounded-none border-2 border-brand-accent/20 border-t-brand-accent animate-spin" />
-                          <p className="text-[10px] uppercase tracking-widest text-brand-muted font-mono">
-                            {language === 'be' ? 'Аналізуем інгрэдыенты калекцыі...' : 'Анализируем ингредиенты коллекции...'}
+                        <div className="flex flex-col items-center justify-center py-24 gap-5">
+                          <div className="w-8 h-8 border border-brand-border border-t-brand-accent animate-spin" />
+                          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-brand-muted">
+                            {language === 'be' ? 'Супастаўляем ноты' : 'Сопоставляем ноты'}
                           </p>
                         </div>
                       ) : results.length === 0 ? (
-                        <div className="text-center py-12 space-y-4 bg-brand-bg">
-                          <p className="text-sm text-brand-muted">
-                            {language === 'be' ? 'Выбачайце, па вашым запыце нічога не знойдзена.' : 'Извините, по вашему запросу ничего не найдено.'}
+                        <div className="text-center py-16 space-y-4">
+                          <p className="text-sm text-brand-muted font-light">
+                            {language === 'be' ? 'Па вашым запыце нічога не знойдзена.' : 'По вашему запросу ничего не найдено.'}
                           </p>
-                          <button onClick={resetQuiz} className="text-[10px] uppercase font-bold tracking-widest text-brand-accent underline cursor-pointer">
+                          <button onClick={resetQuiz} className="font-mono text-[10px] uppercase tracking-[0.25em] text-brand-accent cursor-pointer">
                             {language === 'be' ? 'Пачаць наноў' : 'Начать заново'}
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-3.5">
+                        <div>
                           {results.map(({ product, match, explanation, explanationBe }, idx) => (
-                            <div 
-                              key={product.id}
-                              className="border border-brand-border p-3.5 md:p-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between text-left group hover:border-brand-accent/35 transition-all bg-brand-bg relative rounded-none"
-                            >
-                              {/* Left column: image and description */}
-                              <div className="flex flex-col sm:flex-row gap-4 flex-1 min-w-0 items-start">
-                                {/* Product Image with match badge overlay */}
-                                <div className="shrink-0 aspect-square w-20 h-20 sm:w-22 sm:h-22 relative overflow-hidden border border-brand-border bg-transparent shadow-xs">
-                                  <img 
-                                    src={product.imageUrl} 
-                                    alt={product.name} 
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            <div key={product.id} className={`py-6 flex flex-col gap-5 ${idx > 0 ? 'border-t border-brand-border/60' : ''}`}>
+                              <div className="flex gap-5">
+                                <div className="shrink-0 w-20 h-20 md:w-24 md:h-24 overflow-hidden border border-brand-border/60">
+                                  <img
+                                    src={product.imageUrl}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
                                     referrerPolicy="no-referrer"
                                   />
-                                  <div className="absolute top-1.5 left-1.5 bg-brand-accent text-white text-[9px] sm:text-[10px] font-sans font-bold px-2 py-0.5 tracking-wider uppercase lining-nums">
-                                    {match}% Match
-                                  </div>
                                 </div>
-
-                                {/* Texts: Brand, Name, Recommendation/Explanation */}
-                                <div className="flex-1 min-w-0 space-y-1">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span className="text-[10px] sm:text-[11px] tracking-widest text-brand-muted font-sans font-semibold uppercase">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-baseline justify-between gap-4">
+                                    <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-brand-muted">
                                       {product.brand}
                                     </span>
-                                    {/* Set check badge */}
-                                    {((product.setItems && product.setItems.length > 0) || (product.tags || []).some(t => t.toLowerCase() === 'set' || t.toLowerCase() === 'набор') || product.name.toLowerCase().includes('набор') || product.name.toLowerCase().includes('сет') || product.name.toLowerCase().includes('set')) && (
-                                      <span className="text-[8px] font-sans font-bold uppercase tracking-wider text-sky-800 bg-sky-500/5 px-2 py-0.5 border border-sky-500/15">
-                                        {language === 'be' ? 'Гатовы набор / Арамасэт' : 'Готовый набор / Аромасет'}
+                                    <span className="font-mono text-[11px] text-brand-accent shrink-0">
+                                      {match}%
+                                    </span>
+                                  </div>
+                                  <div className="mt-1.5 h-px bg-brand-border/60 relative">
+                                    <div className="absolute left-0 top-0 h-px bg-brand-accent" style={{ width: `${match}%` }} />
+                                  </div>
+                                  <h4 className="mt-2 font-serif text-lg text-brand-light leading-snug">
+                                    {product.name}
+                                  </h4>
+                                  <div className="mt-1.5 flex flex-wrap gap-2">
+                                    {isSetProduct(product) && (
+                                      <span className="text-[9px] font-mono uppercase tracking-wider text-brand-muted border border-brand-border px-1.5 py-0.5">
+                                        {language === 'be' ? 'Набор' : 'Сет'}
                                       </span>
                                     )}
                                     {gender !== 'unisex' && product.gender === 'Unisex' && (
-                                      <span className="text-[8px] font-sans font-bold uppercase tracking-wider text-amber-800 bg-amber-500/5 px-2 py-0.5 border border-amber-500/15">
-                                        {match >= 75 
-                                          ? (language === 'be' ? 'Унісекс — падыходзіць для вас' : 'Унисекс — подходит для вас')
-                                          : (language === 'be' ? 'Унісекс — выдатна падыходзіць' : 'Унисекс — отлично подходит')}
+                                      <span className="text-[9px] font-mono uppercase tracking-wider text-brand-muted border border-brand-border px-1.5 py-0.5">
+                                        Unisex
                                       </span>
                                     )}
                                   </div>
-                                  <h4 className="font-serif text-sm sm:text-base font-semibold text-brand-light leading-snug">
-                                    {product.name}
-                                  </h4>
-                                  
-                                  {/* Explanation block */}
-                                  <div className="pt-1">
-                                    <p className="text-xs sm:text-[12px] text-brand-muted font-serif leading-relaxed pl-2.5 border-l border-brand-accent/30 line-clamp-2 md:line-clamp-3">
-                                      {language === 'be' ? explanationBe : explanation}
-                                    </p>
-                                  </div>
                                 </div>
                               </div>
-                              
-                              {/* Right column: Action section */}
-                              <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-stretch md:items-end justify-between sm:justify-start md:justify-center gap-3.5 w-full md:w-auto shrink-0 border-t md:border-t-0 md:border-l pt-3.5 md:pt-0 md:pl-5 border-brand-border/40">
+
+                              <p className="text-xs text-brand-muted font-sans font-light leading-relaxed border-l border-brand-accent/40 pl-3">
+                                {language === 'be' ? explanationBe : explanation}
+                              </p>
+
+                              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                                 {product.variants && product.variants.length > 0 && (
-                                  <div className="relative w-full sm:w-48 md:w-[150px]">
-                                    <span className="absolute -top-3.5 left-0 text-[8px] font-mono text-brand-muted uppercase tracking-wider block">
-                                      {language === 'be' ? 'Аб’ём' : 'Объем'}
-                                    </span>
+                                  <div className="relative flex-1 sm:max-w-[220px]">
                                     <select
                                       value={selectedVariants[product.id] || ''}
-                                      onChange={(e) => {
-                                        const val = parseInt(e.target.value);
-                                        setSelectedVariants(prev => ({ ...prev, [product.id]: val }));
-                                      }}
-                                      className="w-full text-xs uppercase font-semibold tracking-wider pr-8 pl-3 py-2 bg-brand-bg border border-brand-border hover:border-brand-accent/50 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer rounded-none"
+                                      onChange={(e) => setSelectedVariants(prev => ({ ...prev, [product.id]: parseInt(e.target.value) }))}
+                                      className="w-full text-xs uppercase tracking-wider pr-8 pl-3 py-2.5 bg-brand-bg border border-brand-border hover:border-brand-accent/60 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer"
                                     >
                                       {product.variants.map((v) => {
                                         const typeStr = getVariantType(v, language);
                                         return (
                                           <option key={v.id} value={v.id} disabled={v.stock === 0}>
-                                            {v.size} — {typeStr} {v.stock === 0 ? `(${language === 'be' ? 'Няма' : 'Нет'})` : ''}
+                                            {v.size} — {typeStr}{v.stock === 0 ? (language === 'be' ? ' (няма)' : ' (нет)') : ''}
                                           </option>
                                         );
                                       })}
@@ -854,30 +565,27 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                     </div>
                                   </div>
                                 )}
-                                
-                                <div className="flex items-center gap-4 justify-between sm:justify-end w-full sm:w-auto">
-                                  <span className="text-sm sm:text-base font-sans font-semibold text-brand-light whitespace-nowrap sm:min-w-[65px] text-right lining-nums tabular-nums">
-                                    {(product.variants?.find(v => v.id === selectedVariants[product.id])?.price || product.price)} {t('currency')}
-                                  </span>
-                                  <button
-                                    id={`quiz-add-to-cart-${product.id}`}
-                                    onClick={() => handleAddScentToCart(product)}
-                                    disabled={product.variants?.find(v => v.id === selectedVariants[product.id])?.stock === 0}
-                                    className="bg-brand-accent text-white hover:bg-brand-accent-hover h-10 px-5 text-xs uppercase font-semibold tracking-wider transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 min-w-[125px] cursor-pointer rounded-none"
-                                  >
-                                    {successAdded[product.id] ? (
-                                      <>
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                                        <span>{language === 'be' ? 'Дададзена!' : 'Добавлено!'}</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <ShoppingBag className="w-3.5 h-3.5" />
-                                        <span>{language === 'be' ? 'У кошык' : 'В корзину'}</span>
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
+                                <span className="font-mono text-sm text-brand-light sm:ml-auto whitespace-nowrap">
+                                  {(product.variants?.find(v => v.id === selectedVariants[product.id])?.price || product.price)} {t('currency')}
+                                </span>
+                                <button
+                                  id={`quiz-add-to-cart-${product.id}`}
+                                  onClick={() => handleAddScentToCart(product)}
+                                  disabled={product.variants?.find(v => v.id === selectedVariants[product.id])?.stock === 0}
+                                  className="h-10 px-6 border border-brand-light/30 hover:border-brand-accent hover:text-brand-accent text-brand-light text-[10px] uppercase font-semibold tracking-[0.2em] transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer bg-transparent"
+                                >
+                                  {successAdded[product.id] ? (
+                                    <>
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-brand-accent" />
+                                      <span>{language === 'be' ? 'Дададзена' : 'Добавлено'}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ShoppingBag className="w-3.5 h-3.5" />
+                                      <span>{language === 'be' ? 'У кошык' : 'В корзину'}</span>
+                                    </>
+                                  )}
+                                </button>
                               </div>
                             </div>
                           ))}
@@ -885,27 +593,21 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                       )}
                     </motion.div>
                   )}
-
                 </AnimatePresence>
               </div>
 
-              {/* Wizard Footer Controls */}
-              <div className="p-5 md:p-6 border-t border-brand-border bg-brand-bg flex justify-between items-center text-xs">
+              {/* Footer controls */}
+              <div className="px-6 md:px-10 py-4 border-t border-brand-border flex justify-between items-center">
                 {currentStep < 4 ? (
                   <>
                     <button
                       onClick={handleBack}
                       disabled={currentStep === 0}
-                      className="px-5 py-3 border border-brand-border text-brand-muted hover:text-brand-light disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-[0.2em] text-[9px] rounded-none flex items-center gap-2 bg-transparent transition-all cursor-pointer"
+                      className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-brand-muted hover:text-brand-light disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer bg-transparent"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>{language === 'be' ? 'Назад' : 'Назад'}</span>
+                      {language === 'be' ? 'Назад' : 'Назад'}
                     </button>
-                    
-                    <span className="text-[10px] tracking-[0.25em] text-brand-muted font-mono font-medium uppercase text-center flex-1 sm:flex-initial">
-                      {language === 'be' ? 'Пытанне' : 'Вопрос'} {currentStep + 1} / 4
-                    </span>
-
                     <button
                       onClick={handleNext}
                       disabled={
@@ -914,31 +616,29 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                         (currentStep === 2 && !family) ||
                         (currentStep === 3 && !intensity)
                       }
-                      className="px-6 py-3 bg-brand-light text-white hover:bg-brand-accent uppercase tracking-[0.2em] text-[9px] rounded-none flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                      className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-brand-light hover:text-brand-accent disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer bg-transparent"
                     >
-                      <span>{language === 'be' ? 'Далей' : 'Далее'}</span>
+                      {language === 'be' ? 'Далей' : 'Далее'}
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </>
                 ) : (
-                  <div className="w-full flex justify-between gap-4">
+                  <>
                     <button
                       onClick={resetQuiz}
-                      className="px-5 py-3 border border-brand-border text-brand-light hover:text-brand-accent uppercase tracking-[0.2em] text-[9px] rounded-none bg-transparent transition-all cursor-pointer"
+                      className="font-mono text-[10px] uppercase tracking-[0.25em] text-brand-muted hover:text-brand-light transition-colors cursor-pointer bg-transparent"
                     >
-                      {language === 'be' ? 'Пачаць наноў' : 'Начать заново'}
+                      {language === 'be' ? 'Нанова' : 'Заново'}
                     </button>
-                    
                     <button
                       onClick={() => { setIsOpen(false); setIsCartOpen(true); }}
-                      className="px-6 py-3 bg-brand-accent text-white hover:bg-brand-accent-hover uppercase tracking-[0.2em] text-[9px] rounded-none transition-all cursor-pointer"
+                      className="font-mono text-[10px] uppercase tracking-[0.25em] text-brand-light hover:text-brand-accent transition-colors cursor-pointer bg-transparent"
                     >
-                      {language === 'be' ? 'Перайсці ў кошык' : 'Перейти в корзину'}
+                      {language === 'be' ? 'Да кошыка' : 'В корзину'}
                     </button>
-                  </div>
+                  </>
                 )}
               </div>
-
             </motion.div>
           </div>
         )}
