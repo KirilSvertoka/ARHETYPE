@@ -12,3 +12,4 @@ coverage/
 uploads/
 uploads*.tmp/
 *.tsbuildinfo
+.ssh_run.py
