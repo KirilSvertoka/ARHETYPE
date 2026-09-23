@@ -29,15 +29,10 @@ for (const name of files) {
   const dst = path.join(uploadDir, webpName);
   try {
     if (!fs.existsSync(dst)) {
-      await sharp(src).rotate().resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 82 }).toFile(dst);
+      await sharp(src).rotate().resize({ width: 2400, withoutEnlargement: true })
+        .webp({ quality: 90, smartSubsample: false }).toFile(dst);
     }
-    // Keep the original until the WebP is proven non-empty.
-    if (fs.existsSync(dst) && fs.statSync(dst).size > 0) {
-      fs.rmSync(src, { force: true });
-      converted++;
-    } else {
-      skipped++;
-    }
+    converted++;
   } catch (e) {
     console.error(`Failed: ${name}`, e.message);
     failed++;

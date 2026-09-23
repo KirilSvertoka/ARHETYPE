@@ -49,9 +49,12 @@ function safeEqual(a: string, b: string): boolean {
 
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif', '.svg']);
 
-const WEBP_MAX_WIDTH = 1600;
+const WEBP_MAX_WIDTH = 2400;
 
-/** Convert an uploaded raster to a compressed WebP (in place); returns the served filename. */
+/** Convert an uploaded raster to WebP; returns the served filename.
+ *  The original file is kept alongside as a fallback, and quality is high
+ *  (smartSubsample off) because full-screen hero photos show artifacts
+ *  at aggressive compression. */
 async function convertToWebp(filePath: string): Promise<string> {
   const ext = path.extname(filePath).toLowerCase();
   if (ext === '.svg' || ext === '.webp') return path.basename(filePath);
@@ -59,9 +62,8 @@ async function convertToWebp(filePath: string): Promise<string> {
   await sharp(filePath)
     .rotate()
     .resize({ width: WEBP_MAX_WIDTH, withoutEnlargement: true })
-    .webp({ quality: 82 })
+    .webp({ quality: 90, smartSubsample: false })
     .toFile(outPath);
-  fs.rmSync(filePath, { force: true });
   return path.basename(outPath);
 }
 
