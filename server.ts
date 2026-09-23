@@ -12,6 +12,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import Fuse from 'fuse.js';
 import compression from 'compression';
+import sharp from 'sharp';
 
 dotenv.config();
 
@@ -47,6 +48,22 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif', '.svg']);
+
+const WEBP_MAX_WIDTH = 1600;
+
+/** Convert an uploaded raster to a compressed WebP (in place); returns the served filename. */
+async function convertToWebp(filePath: string): Promise<string> {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.svg' || ext === '.webp') return path.basename(filePath);
+  const outPath = filePath.replace(/\.[^.]+$/, '') + '.webp';
+  await sharp(filePath)
+    .rotate()
+    .resize({ width: WEBP_MAX_WIDTH, withoutEnlargement: true })
+    .webp({ quality: 82 })
+    .toFile(outPath);
+  fs.rmSync(filePath, { force: true });
+  return path.basename(outPath);
+}
 
 function isAllowedImageFilename(name: string): boolean {
   const ext = path.extname(name || '').toLowerCase();
@@ -1766,7 +1783,7 @@ app.get('/google:code.html', (req, res) => {
   }
 });
 
-app.post('/api/upload/chunk', requireAuth, express.json({ limit: '50mb' }), (req, res) => {
+app.post('/api/upload/chunk', requireAuth, express.json({ limit: '50mb' }), async (req, res) => {
   try {
     const { uploadId, chunkIndex, totalChunks, chunkData, filename } = req.body;
     if (typeof uploadId !== 'string' || !/^[a-z0-9]{10,64}$/i.test(uploadId)) {
@@ -1809,7 +1826,8 @@ app.post('/api/upload/chunk', requireAuth, express.json({ limit: '50mb' }), (req
         return res.status(400).json({ error: 'Unsupported file type' });
       }
       fs.renameSync(tempPath, finalPath);
-      res.json({ url: `/uploads/${finalName}` });
+      const servedName = await convertToWebp(finalPath);
+      res.json({ url: `/uploads/${servedName}` });
     } else {
       res.json({ success: true });
     }
@@ -1819,7 +1837,7 @@ app.post('/api/upload/chunk', requireAuth, express.json({ limit: '50mb' }), (req
   }
 });
 
-app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
+app.post('/api/upload', requireAuth, upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
@@ -1828,7 +1846,8 @@ app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
     fs.rmSync(filePath, { force: true });
     return res.status(400).json({ error: 'Unsupported file type' });
   }
-  res.json({ url: `/uploads/${req.file.filename}` });
+  const servedName = await convertToWebp(filePath);
+  res.json({ url: `/uploads/${servedName}` });
 });
 
 // API Routes

@@ -4,29 +4,32 @@
  */
 
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Storefront from './pages/Storefront';
-import AdminPanel from './pages/AdminPanel';
-import ProductDetails from './pages/ProductDetails';
-import Contacts from './pages/Contacts';
-import Reviews from './pages/Reviews';
-import About from './pages/About';
-import Page from './pages/Page';
-import Grodno from './pages/Grodno';
-import PaymentResult from './pages/PaymentResult';
-import Brands from './pages/Brands';
-import NotFound from './pages/NotFound';
-import Forbidden from './pages/Forbidden';
-import ServerError from './pages/ServerError';
+
+// Below-the-fold and rarely-visited pages are code-split so the main
+// bundle (first paint) stays small. AdminPanel pulls recharts (~400 KB).
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const ProductDetails = lazy(() => import('./pages/ProductDetails'));
+const Contacts = lazy(() => import('./pages/Contacts'));
+const Reviews = lazy(() => import('./pages/Reviews'));
+const About = lazy(() => import('./pages/About'));
+const Page = lazy(() => import('./pages/Page'));
+const Grodno = lazy(() => import('./pages/Grodno'));
+const Brands = lazy(() => import('./pages/Brands'));
+const PaymentResult = lazy(() => import('./pages/PaymentResult'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const Forbidden = lazy(() => import('./pages/Forbidden'));
+const ServerError = lazy(() => import('./pages/ServerError'));
 import { ThemeProvider } from './components/ThemeProvider';
 import { LanguageProvider } from './components/LanguageProvider';
 import { CartProvider } from './components/CartProvider';
 import { WishlistProvider } from './components/WishlistProvider';
-import Wishlist from './pages/Wishlist';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -64,6 +67,11 @@ export default function App() {
               <BrowserRouter>
                 <ScrollToTop />
                 <ClearSeoPrerender />
+                <Suspense fallback={
+                  <div className="min-h-screen flex items-center justify-center">
+                    <div className="w-8 h-8 border-2 border-brand-border border-t-brand-accent rounded-full animate-spin" />
+                  </div>
+                }>
                 <Routes>
                   <Route path="/" element={<Layout />}>
                     <Route index element={<Home />} />
@@ -85,6 +93,7 @@ export default function App() {
                     <Route path="*" element={<NotFound />} />
                   </Route>
                 </Routes>
+                </Suspense>
               </BrowserRouter>
             </CartProvider>
           </WishlistProvider>
