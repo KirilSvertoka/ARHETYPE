@@ -3072,8 +3072,26 @@ const bePaidNotifyToken = () =>
   crypto.createHmac('sha256', process.env.BEPAID_SECRET_KEY || '').update('bePaidNotify').digest('hex');
 
 function markOrderPaid(orderId: number, uid: string | null) {
-  db.prepare(`UPDATE orders SET payment_status = 'paid', payment_uid = COALESCE(?, payment_uid) WHERE id = ?`)
+  const changes = db.prepare(`UPDATE orders SET payment_status = 'paid', payment_uid = COALESCE(?, payment_uid) WHERE id = ? AND payment_status != 'paid'`)
     .run(uid, orderId);
+  if (changes.changes > 0) {
+    notifyTelegram(`💰 *Заказ #${orderId} оплачен картой онлайн* (bePaid)\nСумма и состав — в панели управления.`);
+  }
+}
+
+async function notifyTelegram(text: string) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!botToken || !chatId) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' })
+    });
+  } catch (e) {
+    console.error('Telegram notify failed:', e);
+  }
 }
 
 interface BePaidCheckoutStatus {

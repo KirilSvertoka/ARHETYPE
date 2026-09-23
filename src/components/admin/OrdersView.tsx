@@ -23,6 +23,17 @@ export default function OrdersView({ orders, token, onUpdate, loading, paginatio
     } catch (err) { console.error(err); }
   };
 
+  const paymentLabel = (ps?: string) => {
+    switch ((ps || '').toLowerCase()) {
+      case 'paid': return { text: '✅ Оплачен', cls: 'bg-emerald-500/20 text-emerald-400' };
+      case 'processing': return { text: '⏳ Ждёт оплату', cls: 'bg-amber-500/20 text-amber-400' };
+      case 'pending': return { text: 'При получении', cls: 'bg-white/10 text-brand-muted' };
+      default: return { text: ps ? `⚠ ${ps}` : 'При получении', cls: 'bg-red-500/20 text-red-400' };
+    }
+  };
+
+  const pay = (o: any) => paymentLabel(o.payment_status ?? o.paymentStatus);
+
   if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-brand-border border-t-brand-light rounded-full animate-spin"></div></div>;
 
   return (
@@ -66,7 +77,7 @@ export default function OrdersView({ orders, token, onUpdate, loading, paginatio
               </div>
 
               <div className="flex items-center justify-between gap-3 pt-1">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-brand-muted">Статус:</span>
+                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium ${pay(order).cls}`}>{pay(order).text}</span>
                 <select 
                   value={order.status}
                   onChange={(e) => updateStatus(order.id, e.target.value as any)}
@@ -92,6 +103,7 @@ export default function OrdersView({ orders, token, onUpdate, loading, paginatio
               <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-muted">ID заказа</th>
               <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-muted">Клиент</th>
               <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-muted">Сумма</th>
+              <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-muted">Оплата</th>
               <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-muted">Статус</th>
               <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-brand-muted text-right">Действия</th>
             </tr>
@@ -105,6 +117,9 @@ export default function OrdersView({ orders, token, onUpdate, loading, paginatio
                   <div className="text-xs text-brand-muted">{order.customerEmail}</div>
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-brand-light">{order.total} BYN</td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${pay(order).cls}`}>{pay(order).text}</span>
+                </td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     order.status === 'Delivered' ? 'bg-emerald-500/20 text-emerald-400' :
