@@ -445,20 +445,24 @@ export default function Home() {
                 to={brandPath(activeBrand?.name || '')}
                 className={`absolute top-0 left-0 h-full z-20 group/app-brand-main block overflow-hidden cursor-pointer transition-all duration-700 ease-out ${mainWidthClass}`}
               >
-                {/* Active brand background image with crossfade */}
+                {/* Active brand background image with crossfade (opacity-only: scaling a
+                    full-viewport image layer forces expensive repaints and stutters) */}
                 <div className="absolute inset-0 z-0">
-                  <AnimatePresence mode="popLayout">
+                  <AnimatePresence>
                     <motion.div
                       key={activeBrandIdx}
-                      initial={{ opacity: 0, scale: 1.02 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.98 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
                       transition={{ duration: 0.7, ease: "easeOut" }}
+                      style={{ willChange: 'opacity' }}
                       className="absolute inset-0 w-full h-full"
                     >
                       <img
                         src={activeBrand?.image}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-[1.2s] ease-out group-hover/app-brand-main:scale-105"
                         referrerPolicy="no-referrer"
                       />
@@ -490,8 +494,9 @@ export default function Home() {
                 </div>
               </Link>
 
-              {/* Right side desktop vertical solid-color stripes container */}
-              <div className={`hidden md:flex absolute top-0 right-0 h-full z-30 flex-row border-l border-white/5 select-none bg-zinc-950/95 backdrop-blur-md transition-all duration-700 ease-out ${sidebarWidthClass}`}>
+              {/* Right side desktop vertical solid-color stripes container
+                  (no backdrop-blur: it recomputes every frame during flex transitions) */}
+              <div className={`hidden md:flex absolute top-0 right-0 h-full z-30 flex-row border-l border-white/5 select-none bg-zinc-950/95 transition-all duration-700 ease-out ${sidebarWidthClass}`}>
                 {activeBrands.map((brand, bIdx) => {
                   const isActive = bIdx === activeBrandIdx;
                   return (
@@ -515,7 +520,7 @@ export default function Home() {
                           clearTimeout(hoverTimeoutRef.current);
                         }
                       }}
-                      className={`relative h-full flex-1 border-r border-white/5 cursor-pointer overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] select-none group/strip ${
+                      className={`relative h-full flex-1 border-r border-white/5 cursor-pointer overflow-hidden transition-[flex-grow,background-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] select-none group/strip ${
                         isActive ? 'flex-[1.5] bg-zinc-900' : 'hover:flex-[1.25] hover:bg-zinc-900/60 bg-zinc-950'
                       }`}
                     >

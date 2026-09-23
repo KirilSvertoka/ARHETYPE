@@ -13,3 +13,4 @@ uploads/
 uploads*.tmp/
 *.tsbuildinfo
 .ssh_run.py
+.c*.jpg
