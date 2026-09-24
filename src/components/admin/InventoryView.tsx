@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Product } from '../../types';
-import { Search, Plus, Edit2, Trash2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, RefreshCw, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import ProductForm from './ProductForm';
 
 interface InventoryViewProps {
@@ -44,9 +44,24 @@ export default function InventoryView({ products, loading, token, onUpdate, onAu
   const handleDelete = async (id: number) => {
     if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
     try {
-      const res = await fetch(`/api/products/${id}`, { 
+      const res = await fetch(`/api/products/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) onUpdate();
+      else if (res.status === 401) onAuthError();
+    } catch (err) { console.error(err); }
+  };
+
+  const isHidden = (p: Product) => !!(p.hidden);
+
+  const handleToggleVisibility = async (product: Product) => {
+    const nextHidden = !isHidden(product);
+    try {
+      const res = await fetch(`/api/products/${product.id}/visibility`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ hidden: nextHidden })
       });
       if (res.ok) onUpdate();
       else if (res.status === 401) onAuthError();
@@ -132,8 +147,19 @@ export default function InventoryView({ products, loading, token, onUpdate, onAu
                     </span>
 
                     <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => setEditingProduct(product)} 
+                      <button
+                        onClick={() => handleToggleVisibility(product)}
+                        className={`p-2.5 rounded-xl border transition-colors ${
+                          isHidden(product)
+                            ? 'text-amber-400 bg-amber-500/10 border-amber-500/25 hover:bg-amber-500 hover:text-white'
+                            : 'text-brand-muted hover:text-white bg-white/5 border-brand-border/60 hover:bg-white/10'
+                        }`}
+                        title={isHidden(product) ? 'Вернуть в магазин' : 'Скрыть из магазина'}
+                      >
+                        {isHidden(product) ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => setEditingProduct(product)}
                         className="p-2.5 text-brand-muted hover:text-white bg-white/5 rounded-xl border border-brand-border/60 transition-colors"
                         title="Редактировать"
                       >
@@ -173,11 +199,14 @@ export default function InventoryView({ products, loading, token, onUpdate, onAu
                 <tr><td colSpan={5} className="px-6 py-12 text-center text-brand-muted">Товары не найдены.</td></tr>
               ) : (
                 paginatedProducts.map(product => (
-                  <tr key={product.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={product.id} className={`transition-colors ${isHidden(product) ? 'opacity-50 hover:bg-white/5' : 'hover:bg-white/5'}`}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <img src={product.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover bg-white/10" referrerPolicy="no-referrer" />
-                        <div className="font-medium text-brand-light">{product.name}</div>
+                        <div className="font-medium text-brand-light flex items-center gap-2">
+                          {product.name}
+                          {isHidden(product) && <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded">Скрыт</span>}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-brand-muted">{product.brand}</td>
@@ -193,6 +222,17 @@ export default function InventoryView({ products, loading, token, onUpdate, onAu
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleToggleVisibility(product)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isHidden(product)
+                              ? 'text-amber-400 hover:bg-amber-500/20'
+                              : 'text-brand-muted hover:text-white hover:bg-white/10'
+                          }`}
+                          title={isHidden(product) ? 'Вернуть в магазин' : 'Скрыть из магазина'}
+                        >
+                          {isHidden(product) ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
                         <button onClick={() => setEditingProduct(product)} className="p-2 text-brand-muted hover:text-white hover:bg-white/10 rounded-lg transition-colors"><Edit2 className="w-4 h-4" /></button>
                         <button onClick={() => handleDelete(product.id)} className="p-2 text-brand-muted hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>

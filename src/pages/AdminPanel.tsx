@@ -98,7 +98,7 @@ export default function AdminPanel() {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/products');
+      const res = await fetch('/api/products?includeHidden=1', { headers: token ? { Authorization: `Bearer ${token}` } : undefined });
       if (!res.ok) throw new Error('Не удалось загрузить товары');
       const data = await res.json();
       setProducts(data);

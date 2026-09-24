@@ -78,6 +78,7 @@ export interface Product {
   tags: string[];
   tags_be?: string[];
   season?: string[];
+  hidden?: number | boolean;
   seoTitle?: string;
   seoDescription?: string;
   variants?: ProductVariant[];

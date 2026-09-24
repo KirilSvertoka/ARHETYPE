@@ -606,6 +606,7 @@ const migrations = [
   "ALTER TABLE products ADD COLUMN season TEXT DEFAULT '[]'",
   "ALTER TABLE products ADD COLUMN seo_title TEXT",
   "ALTER TABLE products ADD COLUMN seo_description TEXT",
+  "ALTER TABLE products ADD COLUMN hidden INTEGER DEFAULT 0",
   "ALTER TABLE users ADD COLUMN ltv REAL DEFAULT 0",
   "ALTER TABLE users ADD COLUMN order_count INTEGER DEFAULT 0",
   "ALTER TABLE users ADD COLUMN avg_order_value REAL DEFAULT 0",
@@ -1484,7 +1485,7 @@ app.get('/sitemap.xml', (req, res) => {
     };
 
     // Query all products with their latest modified or created dates
-    const products = db.prepare("SELECT slug, COALESCE(updated_at, created_at) as mdate FROM products WHERE slug IS NOT NULL AND slug != ''").all() as { slug: string; mdate?: string }[];
+    const products = db.prepare("SELECT slug, COALESCE(updated_at, created_at) as mdate FROM products WHERE slug IS NOT NULL AND slug != '' AND COALESCE(hidden, 0) = 0").all() as { slug: string; mdate?: string }[];
     
     // Distinct brands for brand landing pages (/brand/:slug)
     const brands = db.prepare("SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != '' ORDER BY brand ASC").all() as { brand: string }[];
@@ -1644,7 +1645,7 @@ app.get('/sitemap.xml', (req, res) => {
 app.get('/api/feeds/yandex.xml', (req, res) => {
   try {
     const domain = getSiteOrigin(req);
-    const products = db.prepare('SELECT p.*, (SELECT MIN(price) FROM product_variants WHERE product_id = p.id) as min_price FROM products p').all() as any[];
+    const products = db.prepare('SELECT p.*, (SELECT MIN(price) FROM product_variants WHERE product_id = p.id) as min_price FROM products p WHERE COALESCE(p.hidden, 0) = 0').all() as any[];
     const variants = db.prepare('SELECT * FROM product_variants').all() as any[];
     const settings = JSON.parse(db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value || '{}');
 
@@ -1855,7 +1856,7 @@ app.post('/api/upload', requireAuth, upload.single('image'), async (req, res) =>
 // API Routes
 app.get('/api/brands', (req, res) => {
   try {
-    const brands = db.prepare('SELECT DISTINCT brand FROM products ORDER BY brand ASC').all();
+    const brands = db.prepare('SELECT DISTINCT brand FROM products WHERE COALESCE(hidden, 0) = 0 ORDER BY brand ASC').all();
     res.json(brands.map((b: any) => b.brand));
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch brands' });
@@ -1864,7 +1865,7 @@ app.get('/api/brands', (req, res) => {
 
 app.get('/api/scent-families', (req, res) => {
   try {
-    const products = db.prepare('SELECT scentFamilies FROM products').all() as { scentFamilies: string }[];
+    const products = db.prepare('SELECT scentFamilies FROM products WHERE COALESCE(hidden, 0) = 0').all() as { scentFamilies: string }[];
     const allFamilies = new Set<string>();
     products.forEach(p => {
       try {
@@ -1979,7 +1980,7 @@ app.get('/api/products/:slug', (req, res) => {
   const { slug } = req.params;
   try {
     const product = db.prepare('SELECT * FROM products WHERE slug = ? OR id = ?').get(slug, slug) as any;
-    if (!product) {
+    if (!product || product.hidden) {
       return res.status(404).json({ error: 'Product not found' });
     }
     const variants = db.prepare('SELECT * FROM product_variants WHERE product_id = ?').all(product.id);
@@ -2006,7 +2007,7 @@ app.get('/api/products/:slug', (req, res) => {
 
 app.get('/api/accords', (req, res) => {
   try {
-    const products = db.prepare('SELECT accords FROM products WHERE accords IS NOT NULL').all() as any[];
+    const products = db.prepare('SELECT accords FROM products WHERE accords IS NOT NULL AND COALESCE(hidden, 0) = 0').all() as any[];
     const accordsSet = new Set<string>();
     products.forEach(p => {
       try {
@@ -2031,7 +2032,7 @@ app.get('/api/suggestions', (req, res) => {
       return res.json([]);
     }
 
-    const allProducts = db.prepare('SELECT id, name, brand FROM products').all() as any[];
+    const allProducts = db.prepare('SELECT id, name, brand FROM products WHERE COALESCE(hidden, 0) = 0').all() as any[];
     
     // Create searchable items array combining both brands and actual product names
     const searchableItems: { type: string, text: string, id?: number }[] = [];
@@ -2062,10 +2063,20 @@ app.get('/api/products', (req, res) => {
   try {
     const { search, brand, gender, families, accords, sort, category, onSale } = req.query;
 
+    // Admin can request the full list (including hidden) with a valid token.
+    let adminToken = '';
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) adminToken = authHeader.split(' ')[1];
+    else if (typeof req.query.token === 'string') adminToken = req.query.token;
+    const includeHidden = req.query.includeHidden === '1' && adminToken !== '' && isAdminTokenValid(adminToken);
+
     let query = 'SELECT DISTINCT p.* FROM products p';
     let joins = '';
     let where = ' WHERE 1=1';
     const params: any[] = [];
+    if (!includeHidden) {
+      where += ' AND COALESCE(p.hidden, 0) = 0';
+    }
 
     const saleOnly = onSale === '1' || onSale === 'true' || category === 'sale';
     if (saleOnly) {
@@ -2818,6 +2829,23 @@ app.delete('/api/products/:id', requireAuth, (req, res) => {
   }
 });
 
+app.put('/api/products/:id/visibility', requireAuth, (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'Invalid product id' });
+  }
+  const hidden = req.body?.hidden ? 1 : 0;
+  try {
+    const result = db.prepare('UPDATE products SET hidden = ? WHERE id = ?').run(hidden, id);
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    res.json({ success: true, hidden: !!hidden });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update visibility' });
+  }
+});
+
 app.put('/api/products/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
   const { name, brand, description, description_be, imageUrl, images, price, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
@@ -3343,7 +3371,7 @@ function isPathValid(reqPath: string): boolean {
     if (p.startsWith('/catalog/')) {
       const slug = p.substring('/catalog/'.length);
       if (!slug) return false;
-      const product = db.prepare('SELECT id FROM products WHERE slug = ? OR id = ?').get(slug, slug);
+      const product = db.prepare('SELECT id FROM products WHERE (slug = ? OR id = ?) AND COALESCE(hidden, 0) = 0').get(slug, slug);
       if (product) {
         return true;
       }
