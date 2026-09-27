@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from './LanguageProvider';
 import { useCart } from './CartProvider';
 import { useWishlist } from './WishlistProvider';
-import { Heart } from 'lucide-react';
+import { Heart, ShoppingBag } from 'lucide-react';
 import { brandPath } from '../utils/seo';
 import { applyDiscount, hasActiveDiscount, normalizeDiscountPercent } from '../utils/pricing';
 
@@ -20,12 +20,6 @@ interface FlyingItem {
   y: number;
 }
 
-/**
- * Gallery-label product card: the bottle is the exhibit, the text block
- * beneath behaves like a museum placard — quiet typography, hairline rule,
- * price set like a catalogue number. Hover extends the placard with the
- * volume picker instead of animating the image.
- */
 export default function ProductCard({ product, variant = 'interactive' }: ProductCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -116,50 +110,24 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
   const formattedPrice = onSale ? salePriceLabel : originalPriceLabel;
   const isOutOfStock = product.variants && product.variants.every(v => v.stock === 0);
 
-  const families = (language === 'be' && product.scentFamilies_be?.length ? product.scentFamilies_be : product.scentFamilies) || [];
-  const characterLine = families.slice(0, 2).join(', ');
-
-  /** Museum-placard price block. */
-  const Price = ({ align = 'right' }: { align?: 'left' | 'right' }) => (
-    <div className={`flex flex-col ${align === 'right' ? 'items-end' : 'items-start'} leading-none`}>
+  /** Price block: solid numerals, sale price in accent, old price struck through. */
+  const Price = ({ light = false }: { light?: boolean }) => (
+    <div className="flex items-baseline gap-2 leading-none flex-wrap justify-end">
       {onSale && (
-        <span className="text-[11px] text-brand-muted/70 line-through decoration-brand-muted/40">
+        <span className={`text-[12px] line-through ${light ? 'text-white/60' : 'text-brand-muted/60'}`}>
           {String(originalPriceLabel)} {t('currency')}
         </span>
       )}
-      <span className="font-display font-medium text-[22px] sm:text-2xl text-brand-light tracking-tight tabular-nums">
-        {String(formattedPrice)} <span className="text-sm text-brand-muted font-sans font-normal">{t('currency')}</span>
+      <span className={`font-display font-semibold text-[24px] sm:text-[26px] tracking-tight tabular-nums ${light ? 'text-white' : 'text-brand-light'}`}>
+        {String(formattedPrice)}
       </span>
+      <span className={`text-[13px] font-sans ${light ? 'text-white/80' : 'text-brand-muted'}`}>{t('currency')}</span>
       {onSale && (
-        <span className="text-[10px] font-sans text-brand-accent font-medium tracking-wide mt-0.5">
+        <span className={`text-[11px] font-sans font-bold px-1.5 py-0.5 ${light ? 'bg-white text-brand-light' : 'bg-brand-accent text-white'}`}>
           −{discountPercent}%
         </span>
       )}
     </div>
-  );
-
-  /** Brand + name + character line — the placard header. */
-  const PlacardHeader = ({ light = false }: { light?: boolean }) => (
-    <>
-      <button
-        onClick={handleBrandClick}
-        className={`text-[10px] font-sans font-medium uppercase tracking-[0.22em] transition-colors cursor-pointer text-left ${
-          light ? 'text-white/70 hover:text-white' : 'text-brand-muted hover:text-brand-accent'
-        }`}
-      >
-        {product.brand}
-      </button>
-      <Link to={productUrl} className="block group/title mt-1">
-        <h3 className={`font-display text-[21px] sm:text-[22px] leading-[1.12] font-medium transition-colors ${light ? 'text-white' : 'text-brand-light group-hover/title:text-brand-accent'}`}>
-          {product.name}
-        </h3>
-      </Link>
-      {characterLine && (
-        <p className={`font-display italic text-[14px] leading-snug mt-0.5 ${light ? 'text-white/60' : 'text-brand-muted/80'}`}>
-          {characterLine}
-        </p>
-      )}
-    </>
   );
 
   return (
@@ -184,122 +152,120 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
               className="fixed top-0 left-0 z-[9999] pointer-events-none"
             >
               <div className="w-6 h-6 bg-brand-accent rounded-full flex items-center justify-center shadow-lg">
-                <Heart className="w-3 h-3 text-white fill-white" />
+                <ShoppingBag className="w-3 h-3 text-white" />
               </div>
             </motion.div>
           );
         })}
       </AnimatePresence>
 
-      {/* Exhibit — the image. No zoom, no gradient wash; light frame like a gallery wall. */}
+      {/* Photo */}
       <div className="relative w-full aspect-[3/4] overflow-hidden bg-brand-hover">
         <button
           onClick={handleWishlistToggle}
-          className={`absolute top-3 right-3 z-30 p-2 transition-all cursor-pointer bg-transparent ${
-            isWishlisted ? 'text-brand-accent' : 'text-brand-muted/50 hover:text-brand-accent'
+          className={`absolute top-3 right-3 z-30 p-2 rounded-full transition-all cursor-pointer ${
+            isWishlisted
+              ? 'bg-brand-accent text-white'
+              : 'bg-white/85 backdrop-blur-sm text-brand-light hover:bg-brand-accent hover:text-white'
           }`}
           aria-label={isWishlisted ? 'Убрать из избранного' : 'В избранное'}
         >
-          <Heart className={`w-[18px] h-[18px] transition-all ${isWishlisted ? 'fill-brand-accent' : ''}`} />
+          <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-white' : ''}`} />
         </button>
+
+        {isOutOfStock && variant !== 'standard' && (
+          <span className="absolute top-3 left-3 z-30 bg-brand-light/90 text-white text-[10px] font-sans font-semibold uppercase tracking-[0.15em] px-2.5 py-1">
+            {language === 'be' ? 'Няма' : 'Нет в наличии'}
+          </span>
+        )}
 
         <Link to={productUrl} className="block w-full h-full">
           <img
             src={product.imageUrl}
             alt={`${product.brand} ${product.name}`}
-            className="absolute inset-0 object-cover w-full h-full"
+            className="absolute inset-0 object-cover w-full h-full transition-transform duration-[600ms] ease-out group-hover:scale-[1.04]"
             referrerPolicy="no-referrer"
             loading="lazy"
             decoding="async"
           />
 
-          {/* Overlay variant: placard printed on the photo itself */}
-          {variant !== 'standard' && variant === 'overlay' && (
-            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 pt-16 bg-gradient-to-t from-black/75 via-black/25 to-transparent flex flex-col justify-end z-10">
-              <PlacardHeader light />
-              <div className="flex items-end justify-between gap-3 mt-2">
-                <div className="text-white/90">
-                  <Price align="left" />
-                </div>
-                {isOutOfStock && (
-                  <span className="text-[10px] uppercase tracking-[0.15em] text-white/60 font-sans">
-                    {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
-                  </span>
-                )}
+          {/* Overlay variant: text printed on the photo */}
+          {variant === 'overlay' && (
+            <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 pt-16 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end z-10">
+              <button
+                onClick={handleBrandClick}
+                className="text-[10px] font-sans font-semibold uppercase tracking-[0.2em] text-white/80 hover:text-white transition-colors cursor-pointer text-left w-fit mb-1"
+              >
+                {product.brand}
+              </button>
+              <div className="flex items-end justify-between gap-3">
+                <h3 className="font-display font-medium text-lg sm:text-xl text-white leading-tight">{product.name}</h3>
+                <div className="text-white shrink-0"><Price light /></div>
               </div>
+            </div>
+          )}
+          {/* Interactive: quick-add panel rises over the photo on hover */}
+          {variant === 'interactive' && product.variants && product.variants.length > 0 && (
+            <div className="absolute inset-x-0 bottom-0 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out bg-brand-bg/95 backdrop-blur-sm border-t border-brand-border px-3 py-3">
+              <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                {(product.variants || []).map(v => {
+                  const selected = selectedVariantId === v.id;
+                  const type = getVariantType(v, language);
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={e => handleVariantSelect(e, v.id)}
+                      title={type}
+                      disabled={v.stock === 0}
+                      className={`px-2.5 py-1 text-[12px] font-sans border transition-all cursor-pointer ${
+                        selected
+                          ? 'border-brand-accent bg-brand-accent text-white font-semibold'
+                          : v.stock === 0
+                            ? 'border-brand-border text-brand-muted/40 cursor-not-allowed line-through'
+                            : 'border-brand-border text-brand-muted hover:border-brand-accent hover:text-brand-accent'
+                      }`}
+                    >
+                      {v.size}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                ref={buttonRef}
+                onClick={handleAddToCart}
+                disabled={product.variants && product.variants.length > 0 && !selectedVariantId}
+                className="mt-2.5 w-full inline-flex items-center justify-center gap-2 py-2.5 bg-brand-light text-white text-[10px] font-sans font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98]"
+              >
+                <ShoppingBag className="w-3.5 h-3.5" />
+                {t('addToCart')}
+              </button>
             </div>
           )}
         </Link>
       </div>
 
-      {/* The placard — under the exhibit for standard and interactive. */}
+      {/* Placard under the photo (standard + interactive) */}
       {variant !== 'overlay' && (
-        <div className={`flex flex-col flex-1 ${variant === 'standard' ? 'pt-3' : 'pt-3 md:pt-3'}`}>
-          <PlacardHeader />
-
-          {/* Interactive: volume picker extends from the placard on hover */}
-          {variant === 'interactive' && (
-            <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out">
-              <div className="overflow-hidden">
-                <div className="pt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  {product.variants && product.variants.length > 0 && (
-                    <div className="flex flex-col gap-2 max-h-44 overflow-y-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-                      {Object.entries(
-                        product.variants.reduce((acc, v) => {
-                          const type = getVariantType(v, language);
-                          if (!acc[type]) acc[type] = [];
-                          acc[type].push(v);
-                          return acc;
-                        }, {} as Record<string, typeof product.variants>)
-                      ).map(([type, variants]) => (
-                        <div key={type} className="flex items-baseline gap-2 flex-wrap">
-                          <span className="text-[9px] font-sans uppercase tracking-[0.18em] text-brand-muted/70 w-16 shrink-0">{type}</span>
-                          <div className="flex flex-wrap gap-x-3 gap-y-1">
-                            {variants.map(v => {
-                              const selected = selectedVariantId === v.id;
-                              return (
-                                <button
-                                  key={v.id}
-                                  onClick={e => handleVariantSelect(e, v.id)}
-                                  className={`font-display text-[15px] leading-tight transition-colors cursor-pointer relative ${
-                                    selected ? 'text-brand-accent font-semibold' : v.stock === 0 ? 'text-brand-muted/40' : 'text-brand-muted hover:text-brand-light'
-                                  }`}
-                                >
-                                  {v.size}
-                                  {selected && <span className="absolute left-0 -bottom-0.5 w-full h-px bg-brand-accent" />}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <motion.button
-                    ref={buttonRef}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleAddToCart}
-                    disabled={product.variants && product.variants.length > 0 && !selectedVariantId}
-                    className="mt-3 w-full inline-flex items-center justify-center gap-2 py-3 border border-brand-accent/60 text-brand-accent text-[10px] font-sans font-semibold uppercase tracking-[0.22em] hover:bg-brand-accent hover:text-white transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    {t('addToCart')}
-                  </motion.button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Catalogue line — price on the right, stock note on the left */}
-          <div className="mt-auto pt-2.5 pb-1 flex items-end justify-between gap-3 w-full">
-            {isOutOfStock ? (
-              <span className="text-[10px] uppercase tracking-[0.15em] text-brand-muted/60 font-sans">
-                {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
-              </span>
-            ) : (
-              <span className="text-[10px] font-sans text-brand-muted/60 tracking-wide">
-                {product.concentration || ''}
-              </span>
+        <div className="flex flex-col flex-1 pt-3.5">
+          <div className="flex items-baseline justify-between gap-3">
+            <button
+              onClick={handleBrandClick}
+              className="text-[10px] font-sans font-semibold uppercase tracking-[0.2em] text-brand-accent hover:underline underline-offset-4 transition-colors cursor-pointer text-left"
+            >
+              {product.brand}
+            </button>
+            {product.concentration && (
+              <span className="text-[10px] font-sans text-brand-muted/70 uppercase tracking-wider">{product.concentration}</span>
             )}
+          </div>
+          <Link to={productUrl} className="block mt-1">
+            <h3 className="font-display font-semibold text-[21px] sm:text-[23px] leading-[1.15] text-brand-light group-hover:text-brand-accent transition-colors">
+              {product.name}
+            </h3>
+          </Link>
+
+          {/* Price pinned to the bottom of the placard */}
+          <div className="mt-auto pt-3 pb-1 flex justify-end w-full border-t border-brand-border mt-2">
             <Price />
           </div>
         </div>
