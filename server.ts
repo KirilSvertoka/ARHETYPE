@@ -641,6 +641,36 @@ try {
   // Ignored if column doesn't exist yet
 }
 
+/** Minimal safe markdown -> HTML for the SEO prerender block (headings,
+ *  lists, bold/italic, links, paragraphs). Content is admin-authored, but
+ *  everything is HTML-escaped first so no raw markup can slip through. */
+function markdownToHtml(md: string): string {
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const inline = (s: string) => esc(s)
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text: string, href: string) =>
+      /^https?:\/\/|^\/[^/]/.test(href) ? `<a href="${href}">${text}</a>` : text)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  const lines = md.split(/\r?\n/);
+  const out: string[] = [];
+  let listOpen = false;
+  const closeList = () => { if (listOpen) { out.push('</ul>'); listOpen = false; } };
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (!line.trim()) { closeList(); continue; }
+    const h = line.match(/^(#{1,4})\s+(.*)$/);
+    if (h) { closeList(); out.push(`<h${h[1].length + 1}>${inline(h[2])}</h${h[1].length + 1}>`); continue; }
+    const li = line.match(/^\s*[-*]\s+(.*)$/);
+    if (li) { if (!listOpen) { out.push('<ul>'); listOpen = true; } out.push(`<li>${inline(li[1])}</li>`); continue; }
+    closeList();
+    out.push(`<p>${inline(line)}</p>`);
+  }
+  closeList();
+  return out.join('\n');
+}
+
 function slugify(text: string) {
   const cyrillicToLatinMap: Record<string, string> = {
     'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
@@ -1461,6 +1491,50 @@ Disallow: /*&yclid=
 
 Sitemap: ${domain}/sitemap.xml
 `);
+
+  // Point AI helpers at llms.txt (harmless for classic crawlers).
+  res.append('X-Robots-Tag', 'all');
+});
+
+/** llms.txt — the emerging standard that helps AI assistants understand a site. */
+app.get('/llms.txt', (req, res) => {
+  const domain = getSiteOrigin(req);
+  try {
+    const pages = db.prepare('SELECT id, title FROM cms_pages ORDER BY title').all() as { id: string; title: string }[];
+    const pageLines = pages
+      .filter(p => p.id !== 'faq' || true)
+      .map(p => `- [${p.title}](${domain}/p/${p.id}): справочная статья магазина АРХЕТИП`)
+      .join('\n');
+    res.type('text/plain').send(`# АРХЕТИП
+
+> АРХЕТИП — магазин нишевой (селективной) парфюмерии в Гродно, Беларусь. Продаёт только оригинальные духи: полные флаконы, отливанты и распив, наборы-аромабоксы. Доставка курьером по Гродно и Европочтой/Белпочтой по всей Беларуси, бесплатно от 150 BYN. Оплата картой онлайн (bePaid) или при получении.
+
+## Факты
+- Локация: Гродно, Беларусь; доставка по всей стране
+- Только оригинальная продукция; возврат по договору оферты
+- Форматы: флаконы, отливанты (2–10 мл), распив, тестеры, наборы
+- Оплата: картой онлайн или при получении; бесплатная доставка от 150 BYN
+
+## Основные разделы
+- [Каталог парфюмерии](${domain}/catalog): все ароматы с фильтрами по бренду, полу и семейству
+- [Бренды](${domain}/brands): список парфюмерных домов в наличии
+- [Доставка и оплата](${domain}/p/delivery): условия по Гродно и Беларуси
+- [Гарантия и возврат](${domain}/p/returns): политика возврата
+- [Духи в Гродно](${domain}/grodno): самовывоз и курьерская доставка в Гродно
+- [Контакты](${domain}/contacts): телефон, Telegram, Instagram
+- [Отзывы](${domain}/reviews): отзывы покупателей
+
+## Статьи и гайды
+${pageLines}
+
+## Машиночитаемые данные
+- [Sitemap](${domain}/sitemap.xml)
+- [Товарный фид Яндекс.Маркета](${domain}/api/feeds/yandex.xml)
+- [Товарный фид Google Merchant](${domain}/api/feeds/google.xml)
+`);
+  } catch (e) {
+    res.type('text/plain').send('# АРХЕТИП\n> Магазин нишевой парфюмерии в Гродно, Беларусь.\n');
+  }
 });
 
 app.get('/sitemap.xml', (req, res) => {
@@ -3441,6 +3515,11 @@ async function startServer() {
 
       let html = fs.readFileSync(htmlPath, 'utf-8');
 
+      // Substitute the real GTM container (or neutralize the stub so no
+      // placeholder ships to production HTML).
+      const gtmId = (process.env.GTM_ID || '').trim();
+      html = html.replace(/__GTM_ID__/g, gtmId || 'GTM-XXXXXXX');
+
       const domain = getSiteOrigin(req);
       let ldJson: any[] = [];
       const genSetStr = db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}';
@@ -3581,6 +3660,27 @@ async function startServer() {
                   "@type": "Brand",
                   "name": product.brand
                 },
+                ...(productReviews.length > 0 ? {
+                  "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": (productReviews.reduce((s: number, r: any) => s + (Number(r.rating) || 0), 0) / productReviews.length).toFixed(1),
+                    "reviewCount": productReviews.length,
+                    "bestRating": 5,
+                    "worstRating": 1
+                  },
+                  "review": productReviews.slice(0, 3).map((r: any) => ({
+                    "@type": "Review",
+                    "reviewRating": {
+                      "@type": "Rating",
+                      "ratingValue": Number(r.rating) || 5,
+                      "bestRating": 5,
+                      "worstRating": 1
+                    },
+                    "author": { "@type": "Person", "name": r.user_name || 'Покупатель' },
+                    "datePublished": (r.created_at || '').slice(0, 10),
+                    "reviewBody": String(r.comment || '').slice(0, 500)
+                  }))
+                } : {}),
                 "offers": {
                   "@type": "Offer",
                   "url": `${domain}/catalog/${slug}`,
@@ -3936,6 +4036,28 @@ async function startServer() {
                 ]
               };
               ldJson.push(pageBreadcrumb);
+
+              // AI crawlers (GPTBot, PerplexityBot) don't execute JS, so the
+              // article body must be in the HTML itself.
+              const contentLang = page.content && page.content.trim().length >= 50 ? page.content : (page.content_be || '');
+              const articleHtml = markdownToHtml(contentLang || '');
+              seoFallbackHtml = `<div id="seo-prerender" style="max-width:48rem;margin:1.5rem auto;padding:1rem;font-family:system-ui,sans-serif;color:#ccc"><h1>${escapeHtml(page.title)}</h1>${articleHtml}<p><a href="/catalog">Каталог парфюмерии</a> · <a href="/grodno">Доставка в Гродно</a> · <a href="/">На главную</a></p></div>`;
+
+              ldJson.push({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                "headline": page.title,
+                "description": customDescription,
+                "mainEntityOfPage": `${domain}/p/${id}`,
+                "datePublished": page.created_at || page.updated_at,
+                "dateModified": page.updated_at,
+                "author": { "@type": "Organization", "name": "АРХЕТИП", "url": domain },
+                "publisher": {
+                  "@type": "Organization",
+                  "name": "АРХЕТИП",
+                  "url": domain
+                }
+              });
             }
           } catch (e) {
             console.error('Failed to inject CMS page seo', e);
