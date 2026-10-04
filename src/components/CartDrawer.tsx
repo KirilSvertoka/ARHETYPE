@@ -20,15 +20,16 @@ export default function CartDrawer() {
       trackBeginCheckout(items, total);
     }
   }, [isCheckingOut, isSuccess]);
-  const [customerData, setCustomerData] = useState({ 
+  const [customerData, setCustomerData] = useState({
     lastName: '',
-    name: '', 
+    name: '',
     phone: '',
     city: '',
     deliveryMethod: 'europost',
     address: '',
     paymentMethod: 'post_cash',
-    comment: ''
+    comment: '',
+    noCall: false
   });
   const [officeSearch, setOfficeSearch] = useState('');
   const [showOfficeDropdown, setShowOfficeDropdown] = useState(false);
@@ -114,6 +115,7 @@ export default function CartDrawer() {
         delivery_method: deliveryMethodText,
         delivery_address: fullAddress,
         payment_method: paymentMethodText,
+        no_call: customerData.noCall,
         comment: customerData.comment,
         items: items.map(item => ({
           id: item.id,
@@ -177,7 +179,7 @@ export default function CartDrawer() {
     setTimeout(() => {
       setIsCheckingOut(false);
       setIsSuccess(false);
-      setCustomerData({ lastName: '', name: '', phone: '', city: '', deliveryMethod: 'europost', address: '', paymentMethod: 'upon_receipt', comment: '' });
+      setCustomerData({ lastName: '', name: '', phone: '', city: '', deliveryMethod: 'europost', address: '', paymentMethod: 'upon_receipt', comment: '', noCall: false });
     }, 300);
   };
 
@@ -492,7 +494,23 @@ export default function CartDrawer() {
                   {/* Комментарий */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold uppercase tracking-widest text-brand-light border-b border-brand-border pb-2">4. Комментарий к заказу</h3>
-                    <textarea 
+                    <label className="flex items-start gap-3 p-3 border border-brand-border bg-brand-hover/20 cursor-pointer select-none hover:border-brand-accent/40 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={customerData.noCall}
+                        onChange={e => setCustomerData({...customerData, noCall: e.target.checked})}
+                        className="mt-0.5 w-4 h-4 shrink-0 accent-brand-accent cursor-pointer"
+                      />
+                      <span className="text-xs leading-relaxed">
+                        <span className="text-brand-light font-medium">{language === 'be' ? 'Не тэлефанаваць мне' : 'Не звонить мне'}</span>
+                        <span className="block text-brand-muted mt-0.5">
+                          {language === 'be'
+                            ? 'Усе пытанні і звесткі аб заказе — смс або паведамленнем. Калі патрэбна будзе нешта удакладніць, напішам.'
+                            : 'Все вопросы и статус заказа — по СМС или в сообщении. Если нужно будет что-то уточнить, напишем.'}
+                        </span>
+                      </span>
+                    </label>
+                    <textarea
                       rows={3}
                       value={customerData.comment}
                       onChange={e => setCustomerData({...customerData, comment: e.target.value})}

@@ -3111,7 +3111,7 @@ app.get('/api/admin/export/:type', requireAuth, (req, res) => {
 });
 
 app.post('/api/orders', async (req, res) => {
-    const { customer_name, customer_phone, items, total, delivery_method, delivery_address, comment, payment_method } = req.body;
+    const { customer_name, customer_phone, items, total, delivery_method, delivery_address, comment, payment_method, no_call } = req.body;
     
     // Update popularity for products in the order
     if (items && Array.isArray(items)) {
@@ -3129,7 +3129,10 @@ app.post('/api/orders', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
-    const result = insertOrder.run(customer_name, '', customer_phone, '', total, 'New', delivery_method || '', delivery_address || '', comment || '', payment_method || 'При получении');
+    const storedComment = no_call
+      ? `[НЕ ЗВОНИТЬ — только СМС]${comment ? ' ' + comment : ''}`
+      : (comment || '');
+    const result = insertOrder.run(customer_name, '', customer_phone, '', total, 'New', delivery_method || '', delivery_address || '', storedComment, payment_method || 'При получении');
     const orderId = result.lastInsertRowid;
     
     const insertOrderItem = db.prepare(`
@@ -3163,6 +3166,7 @@ app.post('/api/orders', async (req, res) => {
       if (delivery_method) text += `🚚 *Доставка:* ${delivery_method}\n`;
       if (delivery_address) text += `📍 *Адрес:* ${delivery_address}\n`;
       if (payment_method) text += `💳 *Оплата:* ${payment_method}\n`;
+      if (no_call) text += `🔇 *НЕ ЗВОНИТЬ* — клиент просил только СМС/сообщения\n`;
       if (comment) text += `💬 *Комментарий:* ${comment}\n`;
       text += `\n📦 *Товары:*\n${itemsText}\n\n💰 *Итого:* ${total} BYN`;
       
