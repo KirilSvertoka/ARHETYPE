@@ -1492,9 +1492,6 @@ Disallow: /*&yclid=
 
 Sitemap: ${domain}/sitemap.xml
 `);
-
-  // Point AI helpers at llms.txt (harmless for classic crawlers).
-  res.append('X-Robots-Tag', 'all');
 });
 
 /** llms.txt — the emerging standard that helps AI assistants understand a site. */
