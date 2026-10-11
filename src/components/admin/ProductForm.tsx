@@ -107,11 +107,15 @@ const ImageDropzone = ({
 };
 
 export default function ProductForm({ token, initialData, onSuccess, onCancel, onAuthError }: ProductFormProps) {
+  const [nameSuggestions, setNameSuggestions] = useState<any[]>([]);
+  const [nameSuggestOpen, setNameSuggestOpen] = useState(false);
+  const nameSelectedRef = useRef(false);
   const [notesLookup, setNotesLookup] = useState('');
   const [notesResults, setNotesResults] = useState<any[]>([]);
   const [notesSearching, setNotesSearching] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const notesDebounce = useRef<number | null>(null);
+  const nameDebounce = useRef<number | null>(null);
 
 
   const searchNotes = (q: string) => {
@@ -136,6 +140,50 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
 
   const toNotes = (names: string[]): any[] => names.map(n => ({ name: n, name_be: '', value: 50, icon: 'Leaf' }));
   const toAccords = (names: string[]): any[] => names.map(n => ({ name: n, name_be: '', value: 0, icon: '' }));
+
+  const CONC_MAP: Record<string, string> = {
+    'eau de parfum': 'EDP', 'edp': 'EDP', 'parfum': 'Parfum', 'extrait de parfum': 'Parfum',
+    'eau de toilette': 'EDT', 'edt': 'EDT', 'eau de cologne': 'Cologne', 'cologne': 'Cologne', 'edc': 'Cologne'
+  };
+  // Rough starting values — the dataset has no longevity/sillage; adjust sliders if needed.
+  const LONGEVITY_BY_CONC: Record<string, number> = { Parfum: 85, EDP: 70, EDT: 55, Cologne: 45 };
+  const SILLAGE_BY_CONC: Record<string, number> = { Parfum: 80, EDP: 65, EDT: 50, Cologne: 40 };
+
+  const applyNameSuggestion = (r: any) => {
+    const concKey = String(r.concentration || '').toLowerCase().trim();
+    const conc = CONC_MAP[concKey];
+    setFormData(prev => ({
+      ...prev,
+      name: r.name,
+      topNotes: toNotes(r.top || []),
+      heartNotes: toNotes(r.middle || []),
+      baseNotes: toNotes(r.base || []),
+      accords: toAccords(r.accords || []),
+      ...(conc ? { concentration: conc as any } : {}),
+      ...(conc && LONGEVITY_BY_CONC[conc] ? { longevity: String(LONGEVITY_BY_CONC[conc]) } : {}),
+      ...(conc && SILLAGE_BY_CONC[conc] ? { sillage: String(SILLAGE_BY_CONC[conc]) } : {})
+    }));
+    nameSelectedRef.current = true;
+    setNameSuggestOpen(false);
+  };
+
+  const searchNameSuggestions = (q: string) => {
+    nameSelectedRef.current = false;
+    if (nameDebounce.current) window.clearTimeout(nameDebounce.current);
+    if (q.trim().length < 3) { setNameSuggestions([]); setNameSuggestOpen(false); return; }
+    nameDebounce.current = window.setTimeout(async () => {
+      try {
+        const brandName = (formData.brand || '').split(' ')[0];
+        const res = await fetch(`/api/admin/notes-lookup?q=${encodeURIComponent(q.trim())}&brand=${encodeURIComponent(brandName)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.status === 401) { onAuthError(); return; }
+        const data = await res.json();
+        setNameSuggestions(data.results || []);
+        setNameSuggestOpen((data.results || []).length > 0);
+      } catch (e) { console.error(e); }
+    }, 400);
+  };
 
   const applyNotesResult = (r: any) => {
     setFormData(prev => ({
@@ -570,7 +618,32 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           <div className="space-y-6 max-w-3xl">
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Название товара</label>
-            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Santal 33" />
+            <div className="relative">
+              <input type="text" value={formData.name} onChange={e => { setFormData({...formData, name: e.target.value}); searchNameSuggestions(e.target.value); }} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Santal 33" />
+              {nameSuggestOpen && nameSuggestions.length > 0 && (
+                <div className="absolute z-40 left-0 right-0 mt-1 bg-white border border-brand-border rounded-xl shadow-xl max-h-72 overflow-y-auto">
+                  <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-brand-accent font-semibold bg-brand-hover/50">
+                    Выберите аромат — ноты подтянутся автоматически
+                  </div>
+                  {nameSuggestions.map((r, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => applyNameSuggestion(r)}
+                      className="w-full text-left px-4 py-3 hover:bg-brand-hover border-b border-brand-border/40 last:border-0 cursor-pointer"
+                    >
+                      <div className="flex justify-between gap-3">
+                        <span className="text-sm font-medium text-brand-light">{r.name}</span>
+                        <span className="text-[11px] text-brand-muted shrink-0">{r.brand}{r.year ? `, ${r.year}` : ''}{r.concentration ? ` · ${r.concentration}` : ''}</span>
+                      </div>
+                      <div className="text-[11px] text-brand-muted mt-0.5 truncate">
+                        {[(r.top || []).slice(0, 3).join(', '), (r.middle || []).slice(0, 2).join(', '), (r.base || []).slice(0, 2).join(', ')].filter(Boolean).join(' → ')}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Бренд</label>
