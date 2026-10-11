@@ -2604,14 +2604,9 @@ app.get('/api/admin/notes-lookup', requireAuth, (req, res) => {
   const brand = String(req.query.brand || '').trim();
   if (q.length < 2) return res.json({ available: true, results: [] });
   try {
-    // The query may be a fragrance name or a brand name (e.g. "Dior").
-    // Brand is a ranking boost, not a filter — hard-filtering zeroes out
-    // results whenever the dataset spells the brand differently.
-    const sql = `SELECT brand, name, year, top, middle, base, accords FROM frag_notes
-       WHERE name LIKE ? OR brand LIKE ?
-       ORDER BY CASE WHEN brand LIKE ? THEN 0 ELSE 1 END, name LIMIT 12`;
-    const rows = notesDb.prepare(sql).all(`%${q}%`, `%${q}%`, `%${q}%`) as any[];
-    const results = rows.map(r => ({
+    // The query may be a fragrance name or a brand name. When a brand is
+    // supplied, its own fragrances come first; generic matches follow.
+    const mapRow = (r: any) => ({
       brand: r.brand,
       name: r.name,
       year: r.year,
@@ -2619,7 +2614,25 @@ app.get('/api/admin/notes-lookup', requireAuth, (req, res) => {
       middle: JSON.parse(r.middle || '[]'),
       base: JSON.parse(r.base || '[]'),
       accords: JSON.parse(r.accords || '[]')
-    }));
+    });
+    const results: any[] = [];
+    const seen = new Set<string>();
+    const push = (rows: any[]) => {
+      for (const r of rows) {
+        const key = r.brand + '|' + r.name;
+        if (!seen.has(key)) { seen.add(key); results.push(mapRow(r)); }
+      }
+    };
+    if (brand) {
+      push(notesDb.prepare(
+        'SELECT brand, name, year, top, middle, base, accords FROM frag_notes WHERE brand LIKE ? AND name LIKE ? ORDER BY name LIMIT 12'
+      ).all(`%${brand}%`, `%${q}%`) as any[]);
+    }
+    if (results.length < 12) {
+      push(notesDb.prepare(
+        'SELECT brand, name, year, top, middle, base, accords FROM frag_notes WHERE (name LIKE ? OR brand LIKE ?) ORDER BY name LIMIT 24'
+      ).all(`%${q}%`, `%${q}%`) as any[]);
+    }
     res.json({ available: true, results });
   } catch (error) {
     res.status(500).json({ error: 'Notes lookup failed' });
