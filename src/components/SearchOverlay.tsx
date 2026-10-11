@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, X, ArrowRight, Sparkles, Star, Heart } from 'lucide-react';
+import { Search, X, ArrowRight, Heart } from 'lucide-react';
 import { useLanguage } from './LanguageProvider';
 import { Product } from '../types';
 import { brandPath } from '../utils/seo';
@@ -164,9 +164,8 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
               
               {/* Top search action row */}
               <div className="flex justify-between items-center mb-6 sm:mb-8">
-                <span className="text-[10px] font-mono tracking-widest text-brand-muted uppercase flex items-center gap-1.5">
-                  <Sparkles className="w-3" />
-                  {language === 'be' ? 'ЭЛІТНЫ ПАКЕТ ПАШУКУ' : 'ЭЛИТНЫЙ ПОИСК АРОМАТОВ'}
+                <span className="text-[10px] font-mono tracking-widest text-brand-muted uppercase">
+                  {language === 'be' ? 'ПОШУК АРОМАТАЎ' : 'ПОИСК АРОМАТОВ'}
                 </span>
                 <button
                   type="button"
