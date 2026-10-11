@@ -542,9 +542,8 @@ export default function ProductDetails() {
             </div>
 
             {product.price_per_ml != null && product.price_per_ml > 0 && (() => {
-              const steps = (product.decant_steps && product.decant_steps.length ? product.decant_steps : [2, 5, 10, 15]).slice().sort((a: number, b: number) => a - b);
-              const stepIndex = Math.max(0, steps.indexOf(customMl));
-              const clampedMl = steps[stepIndex] ?? steps[0];
+              const maxMl = Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10;
+              const clampedMl = Math.min(Math.max(2, customMl), maxMl);
               return (
                 <div className="border border-brand-border/60 p-4 sm:p-5 space-y-4">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -559,13 +558,12 @@ export default function ProductDetails() {
                   <div className="px-1">
                     <input
                       type="range"
-                      min={0}
-                      max={steps.length - 1}
+                      min={2}
+                      max={maxMl}
                       step={1}
-                      value={stepIndex}
+                      value={clampedMl}
                       onChange={e => {
-                        const idx = Number(e.target.value);
-                        setCustomMl(steps[idx]);
+                        setCustomMl(Number(e.target.value));
                         setMode('custom');
                       }}
                       onPointerDown={() => setMode('custom')}
@@ -579,19 +577,12 @@ export default function ProductDetails() {
                       style={{ accentColor: '#660010' }}
                       aria-label={language === 'be' ? 'Аб’ём адліванта' : 'Объем отливанта'}
                     />
-                    {/* Tick labels under the slider */}
-                    <div className="flex justify-between mt-1.5">
-                      {steps.map(ml => (
-                        <span
-                          key={ml}
-                          onClick={() => { setCustomMl(ml); setMode('custom'); }}
-                          className={`text-[11px] font-sans cursor-pointer select-none transition-colors px-1 ${
-                            mode === 'custom' && clampedMl === ml ? 'text-brand-accent font-bold' : 'text-brand-muted'
-                          }`}
-                        >
-                          {ml}
-                        </span>
-                      ))}
+                    <div className="flex justify-between mt-1.5 items-center">
+                      <span className="text-[11px] font-sans text-brand-muted">2 мл</span>
+                      <span className={`font-display font-bold text-lg leading-none ${mode === 'custom' ? 'text-brand-accent' : 'text-brand-muted'}`}>
+                        {clampedMl} мл
+                      </span>
+                      <span className="text-[11px] font-sans text-brand-muted">{maxMl} мл</span>
                     </div>
                   </div>
 

@@ -609,6 +609,7 @@ const migrations = [
   "ALTER TABLE products ADD COLUMN hidden INTEGER DEFAULT 0",
   "ALTER TABLE products ADD COLUMN price_per_ml REAL",
   "ALTER TABLE products ADD COLUMN decant_steps TEXT",
+  "ALTER TABLE products ADD COLUMN decant_max_ml INTEGER DEFAULT 10",
   "ALTER TABLE users ADD COLUMN ltv REAL DEFAULT 0",
   "ALTER TABLE users ADD COLUMN order_count INTEGER DEFAULT 0",
   "ALTER TABLE users ADD COLUMN avg_order_value REAL DEFAULT 0",
@@ -2061,7 +2062,7 @@ app.get('/api/products/:slug', (req, res) => {
       ...product,
       discountPercent: Number(product.discountPercent) || 0,
       price_per_ml: product.price_per_ml != null ? Number(product.price_per_ml) : null,
-      decant_steps: (() => { try { const v = JSON.parse(product.decant_steps || '[]'); return Array.isArray(v) && v.length ? v : [2,5,10,15]; } catch { return [2,5,10,15]; } })(),
+      decant_max_ml: Number(product.decant_max_ml) > 0 ? Number(product.decant_max_ml) : 10,
       images: JSON.parse(product.images || '[]'),
       scentFamilies: JSON.parse(product.scentFamilies || '[]'),
       scentFamilies_be: JSON.parse(product.scentFamilies_be || '[]'),
@@ -2239,7 +2240,7 @@ app.get('/api/products', (req, res) => {
         ...p,
         discountPercent: Number(p.discountPercent) || 0,
         price_per_ml: p.price_per_ml != null ? Number(p.price_per_ml) : null,
-        decant_steps: (() => { try { const v = JSON.parse(p.decant_steps || '[]'); return Array.isArray(v) && v.length ? v : [2,5,10,15]; } catch { return [2,5,10,15]; } })(),
+        decant_max_ml: Number(p.decant_max_ml) > 0 ? Number(p.decant_max_ml) : 10,
         images: JSON.parse(p.images || '[]'),
         scentFamilies: JSON.parse(p.scentFamilies || '[]'),
         scentFamilies_be: JSON.parse(p.scentFamilies_be || '[]'),
@@ -2835,14 +2836,14 @@ function clampDiscountPercent(value: unknown): number {
 }
 
 app.post('/api/products', requireAuth, (req, res) => {
-  const { name, brand, description, description_be, imageUrl, images, price, price_per_ml, decant_steps, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
+  const { name, brand, description, description_be, imageUrl, images, price, price_per_ml, decant_steps, decant_max_ml, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
   const slug = slugify(`${brand}-${name}`);
   const discount = clampDiscountPercent(discountPercent);
   
   try {
     const insert = db.prepare(`
-      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, price_per_ml, decant_steps, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, set_items, created_at, updated_at)
-      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @pricePerMl, @decantSteps, @discountPercent, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage, @topNotesDuration, @topNotesDuration_be, @heartNotesDuration, @heartNotesDuration_be, @baseNotesDuration, @baseNotesDuration_be, @setItems, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, price_per_ml, decant_steps, decant_max_ml, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, set_items, created_at, updated_at)
+      VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @pricePerMl, @decantMaxMl, @discountPercent, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage, @topNotesDuration, @topNotesDuration_be, @heartNotesDuration, @heartNotesDuration_be, @baseNotesDuration, @baseNotesDuration_be, @setItems, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `);
     
     const result = insert.run({
@@ -2850,7 +2851,7 @@ app.post('/api/products', requireAuth, (req, res) => {
       images: JSON.stringify(images || []),
       price,
       pricePerMl: price_per_ml ? Number(price_per_ml) : null,
-      decantSteps: JSON.stringify(Array.isArray(decant_steps) && decant_steps.length ? decant_steps : [2,5,10,15]),
+      decantMaxMl: Number(decant_max_ml) > 0 ? Math.round(Number(decant_max_ml)) : 10,
       discountPercent: discount,
       topNotes: JSON.stringify(topNotes || []),
       heartNotes: JSON.stringify(heartNotes || []),
@@ -2927,7 +2928,7 @@ app.put('/api/products/:id/visibility', requireAuth, (req, res) => {
 
 app.put('/api/products/:id', requireAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
-  const { name, brand, description, description_be, imageUrl, images, price, price_per_ml, decant_steps, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
+  const { name, brand, description, description_be, imageUrl, images, price, price_per_ml, decant_steps, decant_max_ml, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, season, seoTitle, seoDescription, variants, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, setItems } = req.body;
   const slug = slugify(`${brand}-${name}`);
   const discount = clampDiscountPercent(discountPercent);
   
@@ -2935,7 +2936,7 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
     db.prepare(`
       UPDATE products 
       SET name = @name, brand = @brand, description = @description, description_be = @description_be, imageUrl = @imageUrl, images = @images,
-          price = @price, price_per_ml = @pricePerMl, decant_steps = @decantSteps, discountPercent = @discountPercent, topNotes = @topNotes, heartNotes = @heartNotes, baseNotes = @baseNotes, accords = @accords, gender = @gender,
+          price = @price, price_per_ml = @pricePerMl, decant_max_ml = @decantMaxMl, discountPercent = @discountPercent, topNotes = @topNotes, heartNotes = @heartNotes, baseNotes = @baseNotes, accords = @accords, gender = @gender,
           scentFamilies = @scentFamilies, scentFamilies_be = @scentFamilies_be, concentration = @concentration, stockThreshold = @stockThreshold, tags = @tags, tags_be = @tags_be, slug = @slug, season = @season, seo_title = @seoTitle, seo_description = @seoDescription, longevity = @longevity, sillage = @sillage,
           topNotesDuration = @topNotesDuration, topNotesDuration_be = @topNotesDuration_be, heartNotesDuration = @heartNotesDuration, heartNotesDuration_be = @heartNotesDuration_be, baseNotesDuration = @baseNotesDuration, baseNotesDuration_be = @baseNotesDuration_be,
           set_items = @setItems,
@@ -2945,7 +2946,7 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
       id, name, brand, description, description_be: description_be || null, imageUrl,
       images: JSON.stringify(images || []),
       price,
-      decantSteps: JSON.stringify(Array.isArray(decant_steps) && decant_steps.length ? decant_steps : [2,5,10,15]),
+      decantMaxMl: Number(decant_max_ml) > 0 ? Math.round(Number(decant_max_ml)) : 10,
       discountPercent: discount,
       topNotes: JSON.stringify(topNotes || []),
       heartNotes: JSON.stringify(heartNotes || []),
