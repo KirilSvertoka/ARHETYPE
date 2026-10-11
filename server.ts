@@ -2604,10 +2604,14 @@ app.get('/api/admin/notes-lookup', requireAuth, (req, res) => {
   const brand = String(req.query.brand || '').trim();
   if (q.length < 2) return res.json({ available: true, results: [] });
   try {
+    // The query may be a fragrance name or a brand name (e.g. "Dior").
     const sql = `SELECT brand, name, year, top, middle, base, accords FROM frag_notes
-       WHERE name LIKE ? ${brand ? 'AND brand LIKE ?' : ''}
-       ORDER BY name LIMIT 12`;
-    const rows = notesDb.prepare(sql).all(...(brand ? [`%${q}%`, `%${brand}%`] : [`%${q}%`])) as any[];
+       WHERE (name LIKE ? OR brand LIKE ?) ${brand ? 'AND brand LIKE ?' : ''}
+       ORDER BY CASE WHEN brand LIKE ? THEN 0 ELSE 1 END, name LIMIT 12`;
+    const params: any[] = [`%${q}%`, `%${q}%`];
+    if (brand) params.push(`%${brand}%`);
+    params.push(`%${q}%`);
+    const rows = notesDb.prepare(sql).all(...params) as any[];
     const results = rows.map(r => ({
       brand: r.brand,
       name: r.name,
