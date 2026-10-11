@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Product, Note, ProductVariant } from '../../types';
-import { UploadCloud, RefreshCw, Plus, Trash2, Image as ImageIcon, Tag, Layers, Search, Check, Sparkles, Box } from 'lucide-react';
+import { UploadCloud, RefreshCw, Plus, Trash2, Image as ImageIcon, Tag, Layers, Search, Check, Sparkles, Box, Package, Droplets, FileText, Megaphone, ChevronDown, ChevronRight } from 'lucide-react';
 import NoteBuilder from './NoteBuilder';
 import { translateNote } from '../../data/notesDictionary';
-import { ChevronDown } from 'lucide-react';
 
 import { uploadImageChunks, UploadAuthError } from '../../utils/uploadUtils';
 
@@ -593,42 +592,46 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       <div className="sticky top-0 z-50 bg-brand-bg/95 backdrop-blur-md border-b border-brand-border/60 pb-3 pt-3 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <h2 className="text-xl font-serif text-brand-light">{initialData ? 'Редактировать аромат' : 'Новый аромат'}</h2>
-          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto no-scrollbar">
-            <button type="button" onClick={onCancel} className="text-sm text-brand-muted hover:text-brand-light px-4 py-2 border border-brand-border rounded-xl whitespace-nowrap">Отмена</button>
-            <button 
-              type="submit" 
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <button type="button" onClick={onCancel} className="flex-1 md:flex-none text-center text-sm text-brand-muted hover:text-brand-light px-4 min-h-[44px] border border-brand-border rounded-xl whitespace-nowrap">Отмена</button>
+            <button
+              type="submit"
               disabled={submitting}
-              className="px-6 py-2 bg-brand-accent text-white rounded-xl text-sm font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-70 flex items-center gap-2 whitespace-nowrap"
+              className="flex-1 md:flex-none justify-center px-6 min-h-[44px] bg-brand-accent text-white rounded-xl text-sm font-medium hover:bg-brand-accent-hover transition-colors disabled:opacity-70 flex items-center gap-2 whitespace-nowrap"
             >
-              {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               <span>Сохранить</span>
             </button>
           </div>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
           {[
-            { id: 'basic', label: 'Основное' },
-            { id: 'media', label: 'Медиа' },
-            { id: 'variants', label: 'Варианты' },
-            { id: 'description', label: 'Описание' },
-            { id: 'scent', label: 'Аромат и Сезонность' },
-            { id: 'builder', label: 'Собрать Набор' },
-            { id: 'seo', label: 'SEO' },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors shrink-0 ${
-                activeTab === tab.id 
-                  ? 'bg-brand-accent text-white' 
-                  : 'bg-white/5 text-brand-muted hover:text-brand-light hover:bg-white/10'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+            { id: 'basic', label: 'Основное', icon: Package },
+            { id: 'scent', label: 'Аромат', icon: Droplets },
+            { id: 'media', label: 'Медиа', icon: ImageIcon },
+            { id: 'variants', label: 'Варианты', icon: Layers },
+            { id: 'description', label: 'Описание', icon: FileText },
+            { id: 'builder', label: 'Набор', icon: Box },
+            { id: 'seo', label: 'SEO', icon: Megaphone },
+          ].map(tab => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors shrink-0 min-h-[44px] ${
+                  activeTab === tab.id
+                    ? 'bg-brand-accent text-white'
+                    : 'bg-white/5 text-brand-muted hover:text-brand-light hover:bg-white/10'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -639,7 +642,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Название товара</label>
             <div className="relative">
-              <input type="text" value={formData.name} onChange={e => { setFormData({...formData, name: e.target.value}); searchNameSuggestions(e.target.value); }} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Santal 33" />
+              <input type="text" value={formData.name} onChange={e => { setFormData({...formData, name: e.target.value}); searchNameSuggestions(e.target.value); }} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Santal 33" />
               {nameSuggestOpen && nameSuggestions.length > 0 && (
                 <div className="absolute z-40 left-0 right-0 mt-1 bg-white border border-brand-border rounded-xl shadow-xl max-h-72 overflow-y-auto">
                   <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-brand-accent font-semibold bg-brand-hover/50">
@@ -667,25 +670,25 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Бренд</label>
-            <input type="text" value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Le Labo" />
+            <input type="text" value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. Le Labo" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Базовая цена (BYN)</label>
-              <input type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="320.00 или 'Уточняйте'" />
+              <input type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="320.00 или 'Уточняйте'" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Порог остатка</label>
-              <input type="number" min="0" value={formData.stockThreshold} onChange={e => setFormData({...formData, stockThreshold: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="10" />
+              <input type="number" min="0" value={formData.stockThreshold} onChange={e => setFormData({...formData, stockThreshold: e.target.value})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="10" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Цена за 1 мл (BYN)</label>
-              <input type="text" inputMode="decimal" value={formData.price_per_ml} onChange={e => setFormData({...formData, price_per_ml: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. 12.50 (для распива)" />
+              <input type="text" inputMode="decimal" value={formData.price_per_ml} onChange={e => setFormData({...formData, price_per_ml: e.target.value})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. 12.50 (для распива)" />
               <div className="mt-1.5">
                 <label className="text-[10px] uppercase font-semibold text-brand-muted block ml-0.5">Макс. объём распива (мл)</label>
-                <input type="number" min="2" max="200" value={formData.decant_max_ml} onChange={e => setFormData({...formData, decant_max_ml: e.target.value})} className="w-full px-4 py-2 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="10" />
+                <input type="number" min="2" max="200" value={formData.decant_max_ml} onChange={e => setFormData({...formData, decant_max_ml: e.target.value})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="10" />
                 <p className="text-[10px] text-brand-muted mt-1 ml-0.5">Покупатель сможет выбрать любой объём от 2 мл до этого значения.</p>
               </div>
             </div>
@@ -697,16 +700,16 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                 max="90"
                 value={formData.discountPercent}
                 onChange={e => setFormData({ ...formData, discountPercent: e.target.value })}
-                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted"
+                className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted"
                 placeholder="0"
               />
               <p className="text-[10px] text-brand-muted ml-1">0 — без скидки. Применяется ко всем ценам товара (включая варианты).</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Пол</label>
-              <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light appearance-none">
+              <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value as any})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light appearance-none">
                 <option value="Unisex" className="bg-brand-bg">Унисекс</option>
                 <option value="Male" className="bg-brand-bg">Мужской</option>
                 <option value="Female" className="bg-brand-bg">Женский</option>
@@ -714,7 +717,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Концентрация</label>
-              <select value={formData.concentration} onChange={e => setFormData({...formData, concentration: e.target.value as any})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light appearance-none">
+              <select value={formData.concentration} onChange={e => setFormData({...formData, concentration: e.target.value as any})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light appearance-none">
                 <option value="EDP" className="bg-brand-bg">Парфюмерная вода (EDP)</option>
                 <option value="EDT" className="bg-brand-bg">Туалетная вода (EDT)</option>
                 <option value="Parfum" className="bg-brand-bg">Духи (Parfum)</option>
@@ -739,7 +742,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ImageDropzone 
               label="Главное изображение"
               currentUrl={formData.imageUrl}
@@ -814,7 +817,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
               onChange={e => searchNotes(e.target.value)}
               onFocus={() => { if (notesResults.length) setNotesOpen(true); }}
               placeholder="Начните вводить название аромата, напр. Sauvage Elixir..."
-              className="w-full px-4 py-2.5 bg-transparent border border-brand-accent/40 rounded-xl focus:ring-2 focus:ring-brand-accent/30 outline-none text-brand-light placeholder:text-brand-muted/70 text-sm"
+              className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-accent/40 rounded-xl focus:ring-2 focus:ring-brand-accent/30 outline-none text-brand-light placeholder:text-brand-muted/70 text-sm"
             />
             {notesSearching && <div className="absolute right-3 top-3 w-4 h-4 border-2 border-brand-border border-t-brand-accent rounded-full animate-spin" />}
           </div>
@@ -863,20 +866,22 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
         </div>
 
         {/* Custom Scent Disclosure Times */}
-        <div className="pt-6 border-t border-brand-border space-y-4">
-          <h4 className="text-sm font-semibold uppercase tracking-wider text-brand-light">Время раскрытия и звучания нот</h4>
-          <p className="text-xs text-brand-muted leading-relaxed">
-            Вы можете переопределить стандартное время звучания для каждой ступени пирамиды. Если поля оставить пустыми, время будет задано автоматически.
+        <details className="pt-4 border-t border-brand-border group/dur">
+          <summary className="flex items-center gap-2 cursor-pointer text-sm font-semibold uppercase tracking-wider text-brand-muted hover:text-brand-light select-none list-none py-2">
+            <ChevronRight className="w-4 h-4 transition-transform group-open/dur:rotate-90" />
+            Время раскрытия нот (необязательно)
+          </summary>
+          <p className="text-xs text-brand-muted leading-relaxed pb-2">
+            Оставьте пустым — время задастся автоматически. Переопределяйте, только если знаете точные значения.
           </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Верхние ноты (RU)</label>
               <input 
                 type="text" 
                 value={formData.topNotesDuration} 
                 onChange={e => setFormData({...formData, topNotesDuration: e.target.value})} 
-                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
                 placeholder="Автоматически: Звучат первые 10–15 минут" 
               />
             </div>
@@ -886,7 +891,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                 type="text" 
                 value={formData.topNotesDuration_be} 
                 onChange={e => setFormData({...formData, topNotesDuration_be: e.target.value})} 
-                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
                 placeholder="Аўтаматычна: Гучаць першыя 10–15 хвілін" 
               />
             </div>
@@ -897,7 +902,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                 type="text" 
                 value={formData.heartNotesDuration} 
                 onChange={e => setFormData({...formData, heartNotesDuration: e.target.value})} 
-                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
                 placeholder="Автоматически: Звучат на протяжении 2–4 часов" 
               />
             </div>
@@ -907,7 +912,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                 type="text" 
                 value={formData.heartNotesDuration_be} 
                 onChange={e => setFormData({...formData, heartNotesDuration_be: e.target.value})} 
-                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
                 placeholder="Аўтаматычна: Гучаць на працягу 2–4 гадзін" 
               />
             </div>
@@ -918,7 +923,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                 type="text" 
                 value={formData.baseNotesDuration} 
                 onChange={e => setFormData({...formData, baseNotesDuration: e.target.value})} 
-                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
                 placeholder="Автоматически: Шлейф раскрывается до 10–12 часов" 
               />
             </div>
@@ -928,12 +933,12 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
                 type="text" 
                 value={formData.baseNotesDuration_be} 
                 onChange={e => setFormData({...formData, baseNotesDuration_be: e.target.value})} 
-                className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
+                className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light outline-none text-brand-light text-sm placeholder:text-brand-muted/50" 
                 placeholder="Аўтаматычна: Шлейф раскрываецца да 10–12 гадзін" 
               />
             </div>
           </div>
-        </div>
+        </details>
 
         <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-brand-border">
           <div className="space-y-1 mt-4">
@@ -1363,11 +1368,11 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       <div className={activeTab === 'seo' ? 'block' : 'hidden'}>
       {/* SEO */}
       <div className="bg-white/5 p-6 rounded-3xl border border-brand-border space-y-6">
-        <h3 className="text-lg font-serif text-brand-light">SEO Настройки</h3>
+        <h3 className="text-lg font-serif text-brand-light">SEO Настройки <span className="text-xs font-sans text-brand-muted">(необязательно — сгенерируется автоматически)</span></h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">SEO Title</label>
-            <input type="text" value={formData.seoTitle} onChange={e => setFormData({...formData, seoTitle: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted" placeholder="Заголовок для поисковиков" />
+            <input type="text" value={formData.seoTitle} onChange={e => setFormData({...formData, seoTitle: e.target.value})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl text-sm text-brand-light placeholder:text-brand-muted" placeholder="Заголовок для поисковиков" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">SEO Description</label>
