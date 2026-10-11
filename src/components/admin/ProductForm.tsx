@@ -131,11 +131,30 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
         });
         if (res.status === 401) { onAuthError(); return; }
         const data = await res.json();
-        setNotesResults(data.results || []);
+        setNotesResults(preferBrand(data.results || []));
         setNotesOpen(true);
       } catch (e) { console.error(e); }
       finally { setNotesSearching(false); }
     }, 350);
+  };
+
+  // Match dataset brands loosely: ignore accents/case, accept any word of
+  // the entered brand ("Initio Parfums Prives" == "Initio").
+  const brandMatches = (datasetBrand: string): boolean => {
+    const entered = formData.brand || '';
+    if (!entered.trim()) return true;
+    const deacc = (x: string) => x.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const nb = deacc(datasetBrand.toLowerCase()).trim();
+    const ne = deacc(entered.toLowerCase()).trim();
+    if (nb.includes(ne) || ne.includes(nb)) return true;
+    const words = ne.split(/\s+/).filter(w => w.length >= 3);
+    return words.some(w => nb.includes(w));
+  };
+
+  /** Prefer fragrances of the entered brand; fall back to all if none match. */
+  const preferBrand = (results: any[]): any[] => {
+    const branded = results.filter(r => brandMatches(r.brand));
+    return branded.length ? branded : results;
   };
 
   const toNotes = (names: string[]): any[] => names.map(n => ({ name: n, name_be: '', value: 50, icon: 'Leaf' }));
@@ -179,7 +198,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
         });
         if (res.status === 401) { onAuthError(); return; }
         const data = await res.json();
-        setNameSuggestions(data.results || []);
+        setNameSuggestions(preferBrand(data.results || []));
         setNameSuggestOpen((data.results || []).length > 0);
       } catch (e) { console.error(e); }
     }, 400);
