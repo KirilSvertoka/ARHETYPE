@@ -548,44 +548,45 @@ export default function ProductDetails() {
                     {language === 'be' ? 'Распіў — свой аб’ём' : 'Распив — свой объём'}
                   </span>
                   <span className="text-[10px] font-sans text-brand-muted">
-                    {product.price_per_ml} {t('currency')} / 1 {language === 'be' ? 'мл' : 'мл'}
+                    {product.price_per_ml} {t('currency')} / 1 мл
                   </span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min={2}
-                    max={10}
-                    step={1}
-                    value={customMl}
-                    onChange={e => { setCustomMl(Number(e.target.value)); setMode('custom'); }}
-                    className="flex-1 h-1.5 appearance-none rounded-none cursor-pointer bg-brand-border accent-[#660010]"
-                    style={{ accentColor: '#660010' }}
-                    aria-label={language === 'be' ? 'Аб’ём у мл' : 'Объем в мл'}
-                  />
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <input
-                      type="number"
-                      min={2}
-                      max={10}
-                      value={customMl}
-                      onChange={e => {
-                        const v = Number(e.target.value);
-                        if (!Number.isNaN(v)) setCustomMl(Math.min(10, Math.max(2, v)));
-                        setMode('custom');
-                      }}
-                      className="w-14 px-2 py-1.5 bg-brand-hover border border-brand-border text-center text-sm font-semibold text-brand-light focus:outline-none focus:border-brand-accent"
-                    />
-                    <span className="text-sm text-brand-muted">{language === 'be' ? 'мл' : 'мл'}</span>
-                  </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {[2, 5, 10, 15, 30].map(ml => (
+                    <button
+                      key={ml}
+                      onClick={() => { setCustomMl(ml); setMode('custom'); }}
+                      className={`py-2.5 border text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                        mode === 'custom' && customMl === ml
+                          ? 'bg-brand-accent text-white border-brand-accent'
+                          : 'border-brand-border text-brand-muted hover:border-brand-accent/60 hover:text-brand-accent'
+                      }`}
+                    >
+                      {ml} мл
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setMode('variants')}
+                    className={`py-2.5 border text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                      mode === 'variants'
+                        ? 'bg-brand-accent text-white border-brand-accent'
+                        : 'border-brand-border text-brand-muted hover:border-brand-accent/60 hover:text-brand-accent'
+                    }`}
+                  >
+                    {language === 'be' ? 'Флакон' : 'Флакон'}
+                  </button>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-1">
                   <span className="text-[11px] text-brand-muted">
-                    {language === 'be' ? 'ад 2 да 10 мл' : 'от 2 до 10 мл'}
+                    {mode === 'custom'
+                      ? (language === 'be' ? 'адливант пад ваш аб’ём' : 'отливант под ваш объём')
+                      : (language === 'be' ? 'гатовы флакон' : 'готовый флакон')}
                   </span>
-                  <span className="font-display font-semibold text-2xl text-brand-light tabular-nums">
-                    {(Math.round(product.price_per_ml * customMl * 100) / 100).toFixed(2)} <span className="text-sm font-sans text-brand-muted">{t('currency')}</span>
-                  </span>
+                  {mode === 'custom' && (
+                    <span className="font-display font-semibold text-2xl text-brand-light tabular-nums">
+                      {(Math.round(product.price_per_ml * customMl * 100) / 100).toFixed(2)} <span className="text-sm font-sans text-brand-muted">{t('currency')}</span>
+                    </span>
+                  )}
                 </div>
               </div>
             )}
