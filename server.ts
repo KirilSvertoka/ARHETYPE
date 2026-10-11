@@ -2897,7 +2897,7 @@ app.post('/api/products', requireAuth, (req, res) => {
   
   try {
     const insert = db.prepare(`
-      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, price_per_ml, decant_steps, decant_max_ml, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, set_items, created_at, updated_at)
+      INSERT INTO products (name, brand, description, description_be, imageUrl, images, price, price_per_ml, decant_max_ml, discountPercent, topNotes, heartNotes, baseNotes, accords, gender, scentFamilies, scentFamilies_be, concentration, stockThreshold, tags, tags_be, slug, season, seo_title, seo_description, longevity, sillage, topNotesDuration, topNotesDuration_be, heartNotesDuration, heartNotesDuration_be, baseNotesDuration, baseNotesDuration_be, set_items, created_at, updated_at)
       VALUES (@name, @brand, @description, @description_be, @imageUrl, @images, @price, @pricePerMl, @decantMaxMl, @discountPercent, @topNotes, @heartNotes, @baseNotes, @accords, @gender, @scentFamilies, @scentFamilies_be, @concentration, @stockThreshold, @tags, @tags_be, @slug, @season, @seoTitle, @seoDescription, @longevity, @sillage, @topNotesDuration, @topNotesDuration_be, @heartNotesDuration, @heartNotesDuration_be, @baseNotesDuration, @baseNotesDuration_be, @setItems, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `);
     
