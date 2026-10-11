@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Product, Note, ProductVariant } from '../../types';
 import { UploadCloud, RefreshCw, Plus, Trash2, Image as ImageIcon, Tag, Layers, Search, Check, Sparkles, Box } from 'lucide-react';
 import NoteBuilder from './NoteBuilder';
+import { translateNote } from '../../data/notesDictionary';
 import { ChevronDown } from 'lucide-react';
 
 import { uploadImageChunks, UploadAuthError } from '../../utils/uploadUtils';
@@ -157,8 +158,8 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     return branded.length ? branded : results;
   };
 
-  const toNotes = (names: string[]): any[] => names.map(n => ({ name: n, name_be: '', value: 50, icon: 'Leaf' }));
-  const toAccords = (names: string[]): any[] => names.map(n => ({ name: n, name_be: '', value: 0, icon: '' }));
+  const toNotes = (names: string[]): any[] => names.map(n => ({ name: translateNote(n, 'ru'), name_be: translateNote(n, 'be') === n ? '' : translateNote(n, 'be'), value: 50, icon: 'Leaf' }));
+  const toAccords = (names: string[]): any[] => names.map(n => ({ name: translateNote(n, 'ru'), name_be: '', value: 0, icon: '' }));
 
   const CONC_MAP: Record<string, string> = {
     'eau de parfum': 'EDP', 'edp': 'EDP', 'parfum': 'Parfum', 'extrait de parfum': 'Parfum',
