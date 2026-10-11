@@ -64,6 +64,8 @@ export interface Product {
   price: string | number; // Base price or starting price (before discount)
   /** Product-wide percent off (0–90). Applied to base price and all variants in the UI/cart. */
   discountPercent?: number;
+  /** Fixed price per 1 ml for the decant builder (slider) on the product page. */
+  price_per_ml?: number | null;
   topNotes: Note[];
   heartNotes: Note[];
   baseNotes: Note[];

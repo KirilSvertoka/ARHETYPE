@@ -13,6 +13,7 @@ export interface CartItem extends Product {
 interface CartContextType {
   items: CartItem[];
   addToCart: (product: Product, selectedVariantId?: number) => void;
+  addCustomMl: (product: Product, ml: number) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   isCartOpen: boolean;
@@ -68,6 +69,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setJustAdded(false), 2000);
   };
 
+  /** Decant builder position: fixed price per ml chosen with the slider. */
+  const addCustomMl = (product: Product, ml: number) => {
+    const perMl = Number(product.price_per_ml) || 0;
+    if (perMl <= 0 || ml <= 0) return;
+    const cartItemId = `${product.id}-custom-${ml}`;
+    setItems(prev => {
+      const existing = prev.find(item =>
+        item.selectedVariantId === undefined &&
+        item.selectedVariantSize === `${ml} мл` &&
+        item.variant_type === 'custom_ml');
+      if (existing) {
+        return prev.map(item => item === existing ? { ...item, quantity: item.quantity + 1 } : item);
+      }
+      const newItem: CartItem = {
+        ...product,
+        quantity: 1,
+        selectedVariantId: undefined,
+        selectedVariantSize: `${ml} мл`,
+        variant_type: 'custom_ml',
+        price: Math.round(perMl * ml * 100) / 100
+      };
+      return [...prev, newItem];
+    });
+    setIsCartOpen(true);
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 2000);
+  };
+
   const removeFromCart = (cartItemId: string) => {
     setItems(prev => prev.filter(item => {
       const itemKey = item.selectedVariantId ? `${item.id}-${item.selectedVariantId}` : `${item.id}`;
@@ -93,7 +122,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, 0);
 
   return (
-    <CartContext.Provider value={{ items, addToCart, removeFromCart, updateQuantity, isCartOpen, setIsCartOpen, total, clearCart, justAdded }}>
+    <CartContext.Provider value={{ items, addToCart, addCustomMl, removeFromCart, updateQuantity, isCartOpen, setIsCartOpen, total, clearCart, justAdded }}>
       {children}
     </CartContext.Provider>
   );

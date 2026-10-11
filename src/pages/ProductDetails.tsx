@@ -52,7 +52,9 @@ export default function ProductDetails() {
   const [activeImage, setActiveImage] = useState<string>('');
   const [settings, setSettings] = useState<GeneralSettings | null>(null);
   const [reviews, setReviews] = useState<any[]>([]);
-  const { addToCart } = useCart();
+  const { addToCart, addCustomMl } = useCart();
+  const [customMl, setCustomMl] = useState(5);
+  const [mode, setMode] = useState<'variants' | 'custom'>('variants');
   const { t, language } = useLanguage();
   const [selectedVariantId, setSelectedVariantId] = useState<number | undefined>(undefined);
   const [isFullscreenGalleryOpen, setIsFullscreenGalleryOpen] = useState(false);
@@ -117,7 +119,17 @@ export default function ProductDetails() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    
+
+    // Decant builder: custom volume position
+    if (mode === 'custom' && product.price_per_ml) {
+      addCustomMl(product, customMl);
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setFlyingItems(prev => [...prev, { id: Date.now(), x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }]);
+      }
+      return;
+    }
+
     // Start animation
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
@@ -529,6 +541,55 @@ export default function ProductDetails() {
               </div>
             </div>
 
+            {product.price_per_ml != null && product.price_per_ml > 0 && (
+              <div className="border border-brand-border/60 p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <span className="text-xs font-medium uppercase tracking-wider text-brand-muted">
+                    {language === 'be' ? 'Распіў — свой аб’ём' : 'Распив — свой объём'}
+                  </span>
+                  <span className="text-[10px] font-sans text-brand-muted">
+                    {product.price_per_ml} {t('currency')} / 1 {language === 'be' ? 'мл' : 'мл'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min={2}
+                    max={10}
+                    step={1}
+                    value={customMl}
+                    onChange={e => { setCustomMl(Number(e.target.value)); setMode('custom'); }}
+                    className="flex-1 h-1.5 appearance-none rounded-none cursor-pointer bg-brand-border accent-[#660010]"
+                    style={{ accentColor: '#660010' }}
+                    aria-label={language === 'be' ? 'Аб’ём у мл' : 'Объем в мл'}
+                  />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <input
+                      type="number"
+                      min={2}
+                      max={10}
+                      value={customMl}
+                      onChange={e => {
+                        const v = Number(e.target.value);
+                        if (!Number.isNaN(v)) setCustomMl(Math.min(10, Math.max(2, v)));
+                        setMode('custom');
+                      }}
+                      className="w-14 px-2 py-1.5 bg-brand-hover border border-brand-border text-center text-sm font-semibold text-brand-light focus:outline-none focus:border-brand-accent"
+                    />
+                    <span className="text-sm text-brand-muted">{language === 'be' ? 'мл' : 'мл'}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-brand-muted">
+                    {language === 'be' ? 'ад 2 да 10 мл' : 'от 2 до 10 мл'}
+                  </span>
+                  <span className="font-display font-semibold text-2xl text-brand-light tabular-nums">
+                    {(Math.round(product.price_per_ml * customMl * 100) / 100).toFixed(2)} <span className="text-sm font-sans text-brand-muted">{t('currency')}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+
             {product.variants && product.variants.length > 0 && (
               <div>
                 <div className="flex justify-between items-baseline mb-4 ml-1">
@@ -563,7 +624,7 @@ export default function ProductDetails() {
                           {(variants as typeof product.variants).map((variant) => (
                             <button
                               key={variant.id}
-                              onClick={() => setSelectedVariantId(variant.id)}
+                              onClick={() => { setSelectedVariantId(variant.id); setMode('variants'); }}
                               disabled={variant.stock === 0 && variant.variant_type !== 'remainder'}
                               className={`px-4 py-3 rounded-none border text-xs font-semibold uppercase tracking-wider transition-all duration-300 ${
                                 selectedVariantId === variant.id

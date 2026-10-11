@@ -114,6 +114,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     imageUrl: initialData?.imageUrl || '',
     images: initialData?.images || [],
     price: initialData?.price?.toString() || '',
+    price_per_ml: initialData?.price_per_ml != null ? String(initialData.price_per_ml) : '',
     discountPercent: String(initialData?.discountPercent ?? 0),
     gender: initialData?.gender || 'Unisex',
     concentration: initialData?.concentration || 'EDP',
@@ -425,6 +426,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     const payload = {
       ...formData,
       price: formData.price,
+      price_per_ml: formData.price_per_ml && !isNaN(parseFloat(formData.price_per_ml)) ? parseFloat(formData.price_per_ml) : null,
       discountPercent: Math.min(90, Math.max(0, parseInt(formData.discountPercent, 10) || 0)),
       stockThreshold: parseInt(formData.stockThreshold),
       topNotes: formData.topNotes,
@@ -541,6 +543,10 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Цена за 1 мл (BYN)</label>
+              <input type="text" inputMode="decimal" value={formData.price_per_ml} onChange={e => setFormData({...formData, price_per_ml: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. 12.50 (для распива)" />
+            </div>
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Скидка (%)</label>
               <input
