@@ -170,7 +170,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
   const searchNameSuggestions = (q: string) => {
     nameSelectedRef.current = false;
     if (nameDebounce.current) window.clearTimeout(nameDebounce.current);
-    if (q.trim().length < 3) { setNameSuggestions([]); setNameSuggestOpen(false); return; }
+    if (q.trim().length < 2) { setNameSuggestions([]); setNameSuggestOpen(false); return; }
     nameDebounce.current = window.setTimeout(async () => {
       try {
         const brandName = (formData.brand || '').split(' ')[0];

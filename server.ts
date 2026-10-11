@@ -2605,13 +2605,12 @@ app.get('/api/admin/notes-lookup', requireAuth, (req, res) => {
   if (q.length < 2) return res.json({ available: true, results: [] });
   try {
     // The query may be a fragrance name or a brand name (e.g. "Dior").
+    // Brand is a ranking boost, not a filter — hard-filtering zeroes out
+    // results whenever the dataset spells the brand differently.
     const sql = `SELECT brand, name, year, top, middle, base, accords FROM frag_notes
-       WHERE (name LIKE ? OR brand LIKE ?) ${brand ? 'AND brand LIKE ?' : ''}
+       WHERE name LIKE ? OR brand LIKE ?
        ORDER BY CASE WHEN brand LIKE ? THEN 0 ELSE 1 END, name LIMIT 12`;
-    const params: any[] = [`%${q}%`, `%${q}%`];
-    if (brand) params.push(`%${brand}%`);
-    params.push(`%${q}%`);
-    const rows = notesDb.prepare(sql).all(...params) as any[];
+    const rows = notesDb.prepare(sql).all(`%${q}%`, `%${q}%`, `%${q}%`) as any[];
     const results = rows.map(r => ({
       brand: r.brand,
       name: r.name,
@@ -2989,6 +2988,7 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
       id, name, brand, description, description_be: description_be || null, imageUrl,
       images: JSON.stringify(images || []),
       price,
+      pricePerMl: price_per_ml ? Number(price_per_ml) : null,
       decantMaxMl: Number(decant_max_ml) > 0 ? Math.round(Number(decant_max_ml)) : 10,
       discountPercent: discount,
       topNotes: JSON.stringify(topNotes || []),
