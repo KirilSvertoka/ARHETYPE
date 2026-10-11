@@ -15,3 +15,4 @@ uploads*.tmp/
 .ssh_run.py
 .c*.jpg
 .smoke_hide.py
+notes.db

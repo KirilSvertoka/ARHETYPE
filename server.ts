@@ -212,6 +212,19 @@ try {
   db = new Database(dbPath);
 }
 
+/** Optional reference DB with fragrance note pyramids (notes.db, built from
+ *  an open Parfumo-derived dataset). The shop works fine without it. */
+let notesDb: Database.Database | null = null;
+try {
+  const notesDbPath = process.env.NOTES_DB_PATH || path.join(__dirname, 'notes.db');
+  if (fs.existsSync(notesDbPath)) {
+    notesDb = new Database(notesDbPath, { readonly: true });
+    console.log('Notes reference DB loaded:', notesDbPath);
+  }
+} catch (err) {
+  console.error('Failed to open notes reference DB', err);
+}
+
 // Register custom normalization function for accent-insensitive comparisons
 try {
   db.function('normalize_text', (text) => {
@@ -2581,6 +2594,32 @@ app.get('/api/pages-footer', (_req, res) => {
     res.json(pages);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch footer pages' });
+  }
+});
+
+/** Search the notes reference DB by fragrance name (admin-only). */
+app.get('/api/admin/notes-lookup', requireAuth, (req, res) => {
+  if (!notesDb) return res.json({ available: false, results: [] });
+  const q = String(req.query.q || '').trim();
+  const brand = String(req.query.brand || '').trim();
+  if (q.length < 2) return res.json({ available: true, results: [] });
+  try {
+    const sql = `SELECT brand, name, year, top, middle, base, accords FROM frag_notes
+       WHERE name LIKE ? ${brand ? 'AND brand LIKE ?' : ''}
+       ORDER BY name LIMIT 12`;
+    const rows = notesDb.prepare(sql).all(...(brand ? [`%${q}%`, `%${brand}%`] : [`%${q}%`])) as any[];
+    const results = rows.map(r => ({
+      brand: r.brand,
+      name: r.name,
+      year: r.year,
+      top: JSON.parse(r.top || '[]'),
+      middle: JSON.parse(r.middle || '[]'),
+      base: JSON.parse(r.base || '[]'),
+      accords: JSON.parse(r.accords || '[]')
+    }));
+    res.json({ available: true, results });
+  } catch (error) {
+    res.status(500).json({ error: 'Notes lookup failed' });
   }
 });
 

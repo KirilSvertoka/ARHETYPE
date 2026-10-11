@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Product, Note, ProductVariant } from '../../types';
 import { UploadCloud, RefreshCw, Plus, Trash2, Image as ImageIcon, Tag, Layers, Search, Check, Sparkles, Box } from 'lucide-react';
 import NoteBuilder from './NoteBuilder';
+import { ChevronDown } from 'lucide-react';
 
 import { uploadImageChunks, UploadAuthError } from '../../utils/uploadUtils';
 
@@ -106,6 +107,47 @@ const ImageDropzone = ({
 };
 
 export default function ProductForm({ token, initialData, onSuccess, onCancel, onAuthError }: ProductFormProps) {
+  const [notesLookup, setNotesLookup] = useState('');
+  const [notesResults, setNotesResults] = useState<any[]>([]);
+  const [notesSearching, setNotesSearching] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const notesDebounce = useRef<number | null>(null);
+
+
+  const searchNotes = (q: string) => {
+    setNotesLookup(q);
+    if (notesDebounce.current) window.clearTimeout(notesDebounce.current);
+    if (q.trim().length < 2) { setNotesResults([]); setNotesOpen(false); return; }
+    notesDebounce.current = window.setTimeout(async () => {
+      setNotesSearching(true);
+      try {
+        const brandName = (formData.brand || '').split(' ')[0];
+        const res = await fetch(`/api/admin/notes-lookup?q=${encodeURIComponent(q.trim())}&brand=${encodeURIComponent(brandName)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.status === 401) { onAuthError(); return; }
+        const data = await res.json();
+        setNotesResults(data.results || []);
+        setNotesOpen(true);
+      } catch (e) { console.error(e); }
+      finally { setNotesSearching(false); }
+    }, 350);
+  };
+
+  const toNotes = (names: string[]): any[] => names.map(n => ({ name: n, name_be: '', value: 50, icon: 'Leaf' }));
+  const toAccords = (names: string[]): any[] => names.map(n => ({ name: n, name_be: '', value: 0, icon: '' }));
+
+  const applyNotesResult = (r: any) => {
+    setFormData(prev => ({
+      ...prev,
+      topNotes: toNotes(r.top || []),
+      heartNotes: toNotes(r.middle || []),
+      baseNotes: toNotes(r.base || []),
+      accords: toAccords(r.accords || [])
+    }));
+    setNotesOpen(false);
+  };
+
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     brand: initialData?.brand || '',
@@ -669,6 +711,45 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       <div className="bg-transparent p-6 rounded-3xl border border-brand-border space-y-6">
         <div className="flex items-center gap-2 mb-2">
           <h3 className="text-lg font-serif text-brand-light">Пирамида аромата</h3>
+        </div>
+        <div className="relative pb-2">
+          <label className="text-xs font-medium uppercase tracking-wider text-brand-accent ml-1 block mb-1.5">Подтянуть ноты из базы</label>
+          <div className="relative">
+            <input
+              type="text"
+              value={notesLookup}
+              onChange={e => searchNotes(e.target.value)}
+              onFocus={() => { if (notesResults.length) setNotesOpen(true); }}
+              placeholder="Начните вводить название аромата, напр. Sauvage Elixir..."
+              className="w-full px-4 py-2.5 bg-transparent border border-brand-accent/40 rounded-xl focus:ring-2 focus:ring-brand-accent/30 outline-none text-brand-light placeholder:text-brand-muted/70 text-sm"
+            />
+            {notesSearching && <div className="absolute right-3 top-3 w-4 h-4 border-2 border-brand-border border-t-brand-accent rounded-full animate-spin" />}
+          </div>
+          {notesOpen && notesResults.length > 0 && (
+            <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-brand-border rounded-xl shadow-xl max-h-72 overflow-y-auto">
+              {notesResults.map((r, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => applyNotesResult(r)}
+                  className="w-full text-left px-4 py-3 hover:bg-brand-hover border-b border-brand-border/40 last:border-0 cursor-pointer"
+                >
+                  <div className="flex justify-between gap-3">
+                    <span className="text-sm font-medium text-brand-light">{r.name}</span>
+                    <span className="text-[11px] text-brand-muted shrink-0">{r.brand}{r.year ? `, ${r.year}` : ''}</span>
+                  </div>
+                  <div className="text-[11px] text-brand-muted mt-0.5 truncate">
+                    {[(r.top || []).slice(0, 3).join(', '), (r.middle || []).slice(0, 2).join(', '), (r.base || []).slice(0, 2).join(', ')].filter(Boolean).join(' → ')}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          {notesOpen && !notesSearching && notesLookup.trim().length >= 2 && notesResults.length === 0 && (
+            <div className="absolute z-30 left-0 right-0 mt-1 bg-white border border-brand-border rounded-xl shadow-xl px-4 py-3 text-sm text-brand-muted">
+              Ничего не найдено. Введите ноты вручную ниже.
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-1 gap-6">
           <NoteBuilder 
