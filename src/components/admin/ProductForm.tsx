@@ -115,6 +115,8 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     images: initialData?.images || [],
     price: initialData?.price?.toString() || '',
     price_per_ml: initialData?.price_per_ml != null ? String(initialData.price_per_ml) : '',
+    step20: (initialData?.decant_steps || [2,5,10,15]).includes(20),
+    step30: (initialData?.decant_steps || [2,5,10,15]).includes(30),
     discountPercent: String(initialData?.discountPercent ?? 0),
     gender: initialData?.gender || 'Unisex',
     concentration: initialData?.concentration || 'EDP',
@@ -427,6 +429,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       ...formData,
       price: formData.price,
       price_per_ml: formData.price_per_ml && !isNaN(parseFloat(formData.price_per_ml)) ? parseFloat(formData.price_per_ml) : null,
+      decant_steps: [2, 5, 10, 15, ...(formData.step20 ? [20] : []), ...(formData.step30 ? [30] : [])],
       discountPercent: Math.min(90, Math.max(0, parseInt(formData.discountPercent, 10) || 0)),
       stockThreshold: parseInt(formData.stockThreshold),
       topNotes: formData.topNotes,
@@ -546,6 +549,16 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Цена за 1 мл (BYN)</label>
               <input type="text" inputMode="decimal" value={formData.price_per_ml} onChange={e => setFormData({...formData, price_per_ml: e.target.value})} className="w-full px-4 py-2.5 bg-transparent border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. 12.50 (для распива)" />
+              <div className="flex flex-col gap-1.5 mt-1.5">
+                <label className="flex items-center gap-2 text-[11px] text-brand-muted cursor-pointer">
+                  <input type="checkbox" checked={formData.step20} onChange={e => setFormData({...formData, step20: e.target.checked})} className="w-3.5 h-3.5 accent-[#660010] cursor-pointer" />
+                  Добавить шаг ползунка «20 мл»
+                </label>
+                <label className="flex items-center gap-2 text-[11px] text-brand-muted cursor-pointer">
+                  <input type="checkbox" checked={formData.step30} onChange={e => setFormData({...formData, step30: e.target.checked})} className="w-3.5 h-3.5 accent-[#660010] cursor-pointer" />
+                  Добавить шаг ползунка «30 мл»
+                </label>
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Скидка (%)</label>

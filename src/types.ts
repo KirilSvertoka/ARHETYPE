@@ -66,6 +66,8 @@ export interface Product {
   discountPercent?: number;
   /** Fixed price per 1 ml for the decant builder (slider) on the product page. */
   price_per_ml?: number | null;
+  /** Allowed decant volumes for the slider, e.g. [2,5,10,15,30]. */
+  decant_steps?: number[];
   topNotes: Note[];
   heartNotes: Note[];
   baseNotes: Note[];

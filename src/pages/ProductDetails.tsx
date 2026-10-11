@@ -541,55 +541,75 @@ export default function ProductDetails() {
               </div>
             </div>
 
-            {product.price_per_ml != null && product.price_per_ml > 0 && (
-              <div className="border border-brand-border/60 p-4 sm:p-5 space-y-4">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <span className="text-xs font-medium uppercase tracking-wider text-brand-muted">
-                    {language === 'be' ? 'Распіў — свой аб’ём' : 'Распив — свой объём'}
-                  </span>
-                  <span className="text-[10px] font-sans text-brand-muted">
-                    {product.price_per_ml} {t('currency')} / 1 мл
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {[2, 5, 10, 15, 30].map(ml => (
-                    <button
-                      key={ml}
-                      onClick={() => { setCustomMl(ml); setMode('custom'); }}
-                      className={`py-2.5 border text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                        mode === 'custom' && customMl === ml
-                          ? 'bg-brand-accent text-white border-brand-accent'
-                          : 'border-brand-border text-brand-muted hover:border-brand-accent/60 hover:text-brand-accent'
-                      }`}
-                    >
-                      {ml} мл
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setMode('variants')}
-                    className={`py-2.5 border text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                      mode === 'variants'
-                        ? 'bg-brand-accent text-white border-brand-accent'
-                        : 'border-brand-border text-brand-muted hover:border-brand-accent/60 hover:text-brand-accent'
-                    }`}
-                  >
-                    {language === 'be' ? 'Флакон' : 'Флакон'}
-                  </button>
-                </div>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-[11px] text-brand-muted">
-                    {mode === 'custom'
-                      ? (language === 'be' ? 'адливант пад ваш аб’ём' : 'отливант под ваш объём')
-                      : (language === 'be' ? 'гатовы флакон' : 'готовый флакон')}
-                  </span>
-                  {mode === 'custom' && (
-                    <span className="font-display font-semibold text-2xl text-brand-light tabular-nums">
-                      {(Math.round(product.price_per_ml * customMl * 100) / 100).toFixed(2)} <span className="text-sm font-sans text-brand-muted">{t('currency')}</span>
+            {product.price_per_ml != null && product.price_per_ml > 0 && (() => {
+              const steps = (product.decant_steps && product.decant_steps.length ? product.decant_steps : [2, 5, 10, 15]).slice().sort((a: number, b: number) => a - b);
+              const stepIndex = Math.max(0, steps.indexOf(customMl));
+              const clampedMl = steps[stepIndex] ?? steps[0];
+              return (
+                <div className="border border-brand-border/60 p-4 sm:p-5 space-y-4">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <span className="text-xs font-medium uppercase tracking-wider text-brand-muted">
+                      {language === 'be' ? 'Распіў — рухайце ползунок' : 'Распив — двигайте ползунок'}
                     </span>
-                  )}
+                    <span className="text-[10px] font-sans text-brand-muted">
+                      {product.price_per_ml} {t('currency')} / 1 мл
+                    </span>
+                  </div>
+
+                  <div className="px-1">
+                    <input
+                      type="range"
+                      min={0}
+                      max={steps.length - 1}
+                      step={1}
+                      value={stepIndex}
+                      onChange={e => {
+                        const idx = Number(e.target.value);
+                        setCustomMl(steps[idx]);
+                        setMode('custom');
+                      }}
+                      onPointerDown={() => setMode('custom')}
+                      className="w-full h-2 cursor-pointer appearance-none rounded-full bg-brand-border
+                                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:h-7
+                                 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-accent
+                                 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white
+                                 [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:cursor-grab
+                                 [&::-moz-range-thumb]:w-7 [&::-moz-range-thumb]:h-7 [&::-moz-range-thumb]:rounded-full
+                                 [&::-moz-range-thumb]:bg-brand-accent [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white"
+                      style={{ accentColor: '#660010' }}
+                      aria-label={language === 'be' ? 'Аб’ём адліванта' : 'Объем отливанта'}
+                    />
+                    {/* Tick labels under the slider */}
+                    <div className="flex justify-between mt-1.5">
+                      {steps.map(ml => (
+                        <span
+                          key={ml}
+                          onClick={() => { setCustomMl(ml); setMode('custom'); }}
+                          className={`text-[11px] font-sans cursor-pointer select-none transition-colors px-1 ${
+                            mode === 'custom' && clampedMl === ml ? 'text-brand-accent font-bold' : 'text-brand-muted'
+                          }`}
+                        >
+                          {ml}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <span className="text-[11px] text-brand-muted">
+                      {mode === 'custom'
+                        ? (language === 'be' ? `адлівант ${clampedMl} мл` : `отливант ${clampedMl} мл`)
+                        : (language === 'be' ? 'гатовы флакон' : 'готовый флакон')}
+                    </span>
+                    {mode === 'custom' && (
+                      <span className="font-display font-semibold text-2xl text-brand-light tabular-nums">
+                        {(Math.round(product.price_per_ml * clampedMl * 100) / 100).toFixed(2)} <span className="text-sm font-sans text-brand-muted">{t('currency')}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {product.variants && product.variants.length > 0 && (
               <div>
