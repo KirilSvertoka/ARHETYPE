@@ -24,7 +24,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { t, language } = useLanguage();
-  const { addToCart } = useCart();
+  const { addToCart, addCustomMl } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const navigate = useNavigate();
   const [selectedVariantId, setSelectedVariantId] = useState<number | undefined>(
@@ -33,13 +33,25 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
   const [flyingItems, setFlyingItems] = useState<FlyingItem[]>([]);
   const [isHovered, setIsHovered] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  // Decant slider inside the card: null = add selected variant, number = custom ml.
+  const [cardMl, setCardMl] = useState<number | null>(null);
 
   const productUrl = `/catalog/${product.slug || product.id}`;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
+    // Decant slider position takes priority
+    if (cardMl != null && Number(product.price_per_ml) > 0) {
+      addCustomMl(product, cardMl);
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setFlyingItems(prev => [...prev, { id: Date.now(), x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }]);
+      }
+      return;
+    }
+
     // Start animation
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
@@ -315,7 +327,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                                     {variants.map((variant) => (
                                       <button
                                         key={variant.id}
-                                        onClick={(e) => handleVariantSelect(e, variant.id)}
+                                        onClick={(e) => { setCardMl(null); handleVariantSelect(e, variant.id); }}
                                         className={`flex items-center justify-center px-3 py-1.5 rounded-none border transition-all duration-300 ${
                                           selectedVariantId === variant.id
                                             ? 'bg-white text-brand-accent border-white scale-105'
@@ -337,11 +349,43 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                             ))}
                           </div>
                         )}
+                        {Number(product.price_per_ml) > 0 && (
+                          <div className="w-full rounded-none border border-white/25 bg-black/45 px-3 py-2.5 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] uppercase tracking-widest text-white/80 font-medium">
+                                {language === 'be' ? 'Распіў' : 'Распив'}
+                              </span>
+                              <span className="text-[11px] text-white/90 font-semibold">
+                                {cardMl ?? (language === 'be' ? 'аберыце аб’ём' : 'выберите объём')}
+                                {cardMl != null && <span className="text-white/70 font-normal"> · {(Math.round(Number(product.price_per_ml) * cardMl * 100) / 100).toFixed(2)} {t('currency')}</span>}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={2}
+                              max={Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10}
+                              step={1}
+                              value={cardMl ?? 2}
+                              onChange={(e) => { e.preventDefault(); e.stopPropagation(); setCardMl(Number(e.target.value)); }}
+                              onPointerDown={(e) => e.stopPropagation()}
+                              className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-white/25
+                                         [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+                                         [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
+                                         [&::-webkit-slider-thumb]:cursor-grab
+                                         [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white"
+                              aria-label={language === 'be' ? 'Аб’ём адліванта' : 'Объем отливанта'}
+                            />
+                            <div className="flex justify-between text-[9px] text-white/50">
+                              <span>2 {language === 'be' ? 'мл' : 'мл'}</span>
+                              <span>{Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10} {language === 'be' ? 'мл' : 'мл'}</span>
+                            </div>
+                          </div>
+                        )}
                         <motion.button
                           ref={buttonRef}
                           whileTap={{ scale: 0.95 }}
                           onClick={handleAddToCart}
-                          disabled={product.variants && product.variants.length > 0 && !selectedVariantId}
+                          disabled={cardMl == null && !!product.variants && product.variants.length > 0 && !selectedVariantId}
                           className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-accent text-white rounded-none text-xs font-semibold uppercase tracking-[0.15em] hover:bg-brand-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 sm:py-2.5"
                         >
                           <ShoppingBag className="w-4 h-4" />
