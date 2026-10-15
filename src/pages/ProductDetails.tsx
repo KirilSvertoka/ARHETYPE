@@ -703,7 +703,7 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {selectedVariant?.variant_type === 'remainder' ? (
+          {selectedVariant?.variant_type === 'remainder' && mode !== 'custom' ? (
             <div className="mt-8 pt-8 border-t border-brand-border space-y-6">
               <div className="p-6 rounded-none bg-brand-hover border border-brand-border flex flex-col items-center text-center gap-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-brand-muted">
@@ -754,7 +754,7 @@ export default function ProductDetails() {
                     </>
                   );
                 })()}
-                {selectedVariantId && product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 && (
+                {mode !== 'custom' && selectedVariantId && product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 && (
                   <span className="text-xs font-bold text-red-500 uppercase tracking-[0.15em]">
                     {language === 'be' ? 'Няма ў наяўнасці' : 'Нет в наличии'}
                   </span>
@@ -786,7 +786,7 @@ export default function ProductDetails() {
                   ref={buttonRef}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleAddToCart}
-                  disabled={selectedVariantId ? product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 : false}
+                  disabled={mode === 'custom' ? false : (selectedVariantId ? product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 : false)}
                   className="flex-1 px-3 sm:px-8 h-10 sm:h-12 bg-brand-accent text-white rounded-none font-semibold uppercase tracking-[0.15em] hover:bg-brand-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 text-xs whitespace-nowrap"
                 >
                   <ShoppingBag className="w-3.5 h-3.5 sm:w-4 h-4" />
@@ -796,7 +796,7 @@ export default function ProductDetails() {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsCallbackModalOpen(true)}
-                  disabled={selectedVariantId ? product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 : false}
+                  disabled={mode === 'custom' ? false : (selectedVariantId ? product.variants?.find(v => v.id === selectedVariantId)?.stock === 0 : false)}
                   className="flex-1 px-3 sm:px-6 h-10 sm:h-12 bg-transparent text-brand-light border border-brand-border hover:bg-brand-hover hover:border-brand-light/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:gap-3 text-xs whitespace-nowrap"
                 >
                   <PhoneCall className="w-3.5 h-3.5 sm:w-4 h-4 text-brand-accent" />
