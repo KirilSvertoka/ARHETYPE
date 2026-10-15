@@ -3704,7 +3704,7 @@ async function startServer() {
               });
               if (lowestPrice === Infinity) lowestPrice = parseFloat(product.price) || 0;
 
-              let inStock = pVariants.some(v => v.stock > 0);
+              let inStock = pVariants.some(v => v.stock > 0) || (Number(product.price_per_ml) > 0);
 
               let productReviews: any[] = [];
               try {

@@ -225,6 +225,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
     price: initialData?.price?.toString() || '',
     price_per_ml: initialData?.price_per_ml != null ? String(initialData.price_per_ml) : '',
     decant_max_ml: String(initialData?.decant_max_ml ?? 10),
+    remainder_enabled: !!(initialData?.variants || []).some(v => v.variant_type === 'remainder'),
     discountPercent: String(initialData?.discountPercent ?? 0),
     gender: initialData?.gender || 'Unisex',
     concentration: initialData?.concentration || 'EDP',
@@ -499,11 +500,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       return;
     }
 
-    if (!formData.price || formData.price.toString().trim().length === 0) {
-      setActiveTab('basic');
-      alert('Пожалуйста, укажите базовую цену товара.');
-      return;
-    }
+
 
     if (!formData.stockThreshold || formData.stockThreshold.toString().trim().length === 0) {
       setActiveTab('basic');
@@ -551,11 +548,19 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
       season: formData.season.split(',').map(t => t.trim()).filter(t => t !== ''),
       seoTitle: formData.seoTitle,
       seoDescription: formData.seoDescription,
-      variants: formData.variants.map(v => ({
-        ...v,
-        price: v.price,
-        stock: typeof v.stock === 'string' ? parseInt(v.stock) : v.stock
-      })),
+      variants: (() => {
+        const list = formData.variants.filter(v => v.variant_type !== 'remainder' || formData.remainder_enabled);
+        if (formData.remainder_enabled && !list.some(v => v.variant_type === 'remainder')) {
+          list.push({
+            size: 'Остаток',
+            price: '0',
+            stock: 1,
+            sku: `remainder-${initialData?.id || Date.now()}`,
+            variant_type: 'remainder'
+          } as any);
+        }
+        return list.map(v => ({ ...v, price: v.price, stock: typeof v.stock === 'string' ? parseInt(v.stock) : v.stock }));
+      })(),
       setItems: formData.setItems || []
     };
 
@@ -674,7 +679,7 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Базовая цена (BYN)</label>
+              <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Базовая цена (BYN, необязательно)</label>
               <input type="text" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="320.00 или 'Уточняйте'" />
             </div>
             <div className="space-y-1">
@@ -686,6 +691,10 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
             <div className="space-y-1">
               <label className="text-xs font-medium uppercase tracking-wider text-brand-muted ml-1">Цена за 1 мл (BYN)</label>
               <input type="text" inputMode="decimal" value={formData.price_per_ml} onChange={e => setFormData({...formData, price_per_ml: e.target.value})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="напр. 12.50 (для распива)" />
+              <label className="flex items-center gap-2 text-[11px] text-brand-muted cursor-pointer mt-2">
+                <input type="checkbox" checked={formData.remainder_enabled} onChange={e => setFormData({...formData, remainder_enabled: e.target.checked})} className="w-3.5 h-3.5 accent-[#660010] cursor-pointer" />
+                Включить вариант «Остаток во флаконе»
+              </label>
               <div className="mt-1.5">
                 <label className="text-[10px] uppercase font-semibold text-brand-muted block ml-0.5">Макс. объём распива (мл)</label>
                 <input type="number" min="2" max="200" value={formData.decant_max_ml} onChange={e => setFormData({...formData, decant_max_ml: e.target.value})} className="w-full px-4 py-3 bg-transparent text-base sm:text-sm border border-brand-border rounded-xl focus:ring-2 focus:ring-brand-light focus:border-transparent outline-none text-brand-light placeholder:text-brand-muted" placeholder="10" />

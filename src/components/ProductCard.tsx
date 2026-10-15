@@ -141,7 +141,9 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
     </div>
   );
 
-  const isOutOfStock = product.variants && product.variants.every(v => v.stock === 0);
+  // A product with an active decant slider is purchasable even without variants.
+  const hasDecant = Number(product.price_per_ml) > 0;
+  const isOutOfStock = !hasDecant && (!product.variants || product.variants.every(v => v.stock === 0));
 
   return (
     <motion.div 

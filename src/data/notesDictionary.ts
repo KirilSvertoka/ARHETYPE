@@ -113,6 +113,25 @@ export const NOTES_RU: Record<string, string> = {
   'red berries': 'Красные ягоды', 'berries': 'Ягоды', 'wild berries': 'Лесные ягоды',
   'dried fruits': 'Сухофрукты', 'raisins': 'Изюм', 'dates': 'Финики', 'prune': 'Чернослив',
   'cognac absolute': 'Абсолют коньяка', 'beeswax': 'Пчелиный воск',  'hay': 'Сено', 'straw': 'Солома', 'tobacco blossom': 'Цвет табака', 'vanilla pod': 'Стручок ванили',
+  // frequently missed variants
+  'woods': 'Древесные ноты', 'wood': 'Древесина', 'woody accord': 'Древесный аккорд',
+  'musk accord': 'Мускусный аккорд', 'amber accord': 'Янтарный аккорд',
+  'green accord': 'Зелёный аккорд', 'spices': 'Специи', 'herbs': 'Травы',
+  'citrus notes': 'Цитрусовые ноты', 'fruity notes': 'Фруктовые ноты',
+  'red berries accord': 'Аккорд красных ягод', 'red fruits': 'Красные фрукты',
+  'tonka': 'Тонка', 'ambrox': 'Амброкс', 'iso e super': 'Iso E Super',
+  'hedione': 'Гедион', 'cashmeran velvet': 'Кашмеран', 'norlimbanol': 'Норлимбанол',
+  'timbersilk': 'Тимберсилк', 'ketone musk': 'Мускусный кетон',
+  'pear accord': 'Аккорд груши', 'litchi': 'Личи', 'lychee accord': 'Аккорд личи',
+  'mandarin zest': 'Цедра мандарина', 'lemon zest': 'Цедра лимона',
+  'calone': 'Калон', 'sea breeze accord': 'Аккорд морского бриза',
+  'powdery iris': 'Пудровый ирис', 'iris butter': 'Ирисовый абсолют',
+  'vanilla bourbon': 'Бурбонская ваниль', 'white chocolate': 'Белый шоколад',
+  'pineapple accord': 'Аккорд ананаса', 'blackcurrant': 'Чёрная смородина',
+  'black currant accord': 'Аккорд чёрной смородины', 'bergamot zest': 'Цедра бергамота',
+  'fir resin': 'Смола пихты', 'pine resin': 'Сосновая смола', 'resins': 'Смолы',
+  'tobacco accord': 'Табачный аккорд', 'coffee accord': 'Кофейный аккорд',
+  'chocolate accord': 'Шоколадный аккорд', 'rum accord': 'Ромовый аккорд',
 };
 
 /** Belarusian translations for the most common notes; missing -> empty (falls back to RU). */
@@ -140,12 +159,39 @@ export const NOTES_BE: Record<string, string> = {
   'sweet': 'Салодкі', 'spicy': 'Рэзкі', 'woody': 'Драўняны', 'fresh': 'Свежы',
   'fruity': 'Фруктовы', 'floral': 'Кветкавы', 'powdery': 'Пудравы', 'leathery': 'Скураны',
   'oriental': 'Усходні', 'green': 'Зялёны', 'gourmand': 'Гурманскі',
+
+  'woods': 'Драўняныя ноты', 'spices': 'Спецыі', 'tonka': 'Тонка',
 };
 
-/** Translate an English note name; unknown notes stay as-is. */
+/** Word-level fallback for compound names not in the dictionary. */
+const WORDS_RU: Record<string, string> = {
+  'red': 'Красное', 'pink': 'Розовый', 'black': 'Чёрный', 'white': 'Белый',
+  'green': 'Зелёное', 'blue': 'Голубое', 'golden': 'Золотое', 'wild': 'Лесное',
+  'sweet': 'Сладкое', 'sour': 'Кислое', 'fresh': 'Свежее', 'bitter': 'Горькое',
+  'apple': 'яблоко', 'pepper': 'перец', 'blossom': 'цвет', 'flower': 'цветок',
+  'flowers': 'цветы', 'leaf': 'лист', 'leaves': 'листья', 'seed': 'семена',
+  'wood': 'дерево', 'woods': 'древесина', 'tree': 'дерево', 'resin': 'смола',
+  'musk': 'мускус', 'vanilla': 'ваниль', 'sugar': 'сахар', 'salt': 'соль',
+  'sea': 'морская', 'water': 'вода', 'smoke': 'дым', 'leather': 'кожа',
+  'amber': 'янтарь', 'rose': 'роза', 'jasmine': 'жасмин', 'tea': 'чай',
+  'coffee': 'кофе', 'chocolate': 'шоколад', 'honey': 'мёд', 'mint': 'мята',
+  'cedar': 'кедр', 'sandalwood': 'сандал', 'patchouli': 'пачули', 'vetiver': 'ветивер',
+  'oud': 'уд', 'orange': 'апельсин', 'lemon': 'лимон', 'berry': 'ягода',
+  'berries': 'ягоды', 'fruit': 'фрукт', 'fruits': 'фрукты', 'cream': 'сливки',
+  'blossoms': 'цветы', 'zest': 'цедра', 'accord': 'аккорд', 'notes': 'ноты',
+  'peppermint': 'перечная мята', 'lavender': 'лаванда', 'iris': 'ирис',
+  'violet': 'фиалка', 'mimosa': 'мимоза', 'cocoa': 'какао', 'caramel': 'карамель',
+  'absolute': 'абсолют', 'essence': 'эссенция', 'oil': 'масло',
+};
+
 export function translateNote(en: string, lang: 'ru' | 'be'): string {
   const key = (en || '').trim().toLowerCase();
   if (!key) return en;
-  if (lang === 'be') return NOTES_BE[key] || NOTES_RU[key] || en;
-  return NOTES_RU[key] || en;
+  const ru = NOTES_RU[key];
+  if (ru) return lang === 'be' ? (NOTES_BE[key] || ru) : ru;
+  // Word-by-word fallback: translate known words, keep unknown as-is.
+  const words = key.replace(/-/g, ' ').split(/\s+/);
+  const translated = words.map(w => NOTES_RU[w] || WORDS_RU[w] || (lang === 'be' ? (NOTES_BE[w] || w) : w));
+  const out = translated.join(' ');
+  return out.charAt(0).toUpperCase() + out.slice(1);
 }
