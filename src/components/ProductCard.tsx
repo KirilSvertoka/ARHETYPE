@@ -350,7 +350,13 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                           </div>
                         )}
                         {Number(product.price_per_ml) > 0 && (
-                          <div className="w-full rounded-none border border-white/25 bg-black/45 px-3 py-2.5 space-y-2">
+                          <div
+                            className="w-full rounded-none border border-white/25 bg-black/45 px-3 py-2.5 space-y-2"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                          >
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] uppercase tracking-widest text-white/80 font-medium">
                                 {language === 'be' ? 'Распіў' : 'Распив'}
@@ -366,8 +372,11 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                               max={Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10}
                               step={1}
                               value={cardMl ?? 2}
-                              onChange={(e) => { e.preventDefault(); e.stopPropagation(); setCardMl(Number(e.target.value)); }}
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                              onChange={(e) => { e.stopPropagation(); setCardMl(Number(e.target.value)); }}
                               onPointerDown={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
                               className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-white/25
                                          [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
                                          [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
@@ -375,7 +384,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                                          [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white"
                               aria-label={language === 'be' ? 'Аб’ём адліванта' : 'Объем отливанта'}
                             />
-                            <div className="flex justify-between text-[9px] text-white/50">
+                            <div className="flex justify-between text-[9px] text-white/50" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                               <span>2 {language === 'be' ? 'мл' : 'мл'}</span>
                               <span>{Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10} {language === 'be' ? 'мл' : 'мл'}</span>
                             </div>
