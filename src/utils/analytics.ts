@@ -2,11 +2,20 @@
  * Standard E-commerce and Analytics events for GTM/GA4/Yandex
  */
 
+
 declare global {
   interface Window {
     dataLayer: any[];
+    fbq?: (...args: any[]) => void;
   }
 }
+
+/** Meta Pixel event forwarding — no-ops until META_PIXEL_ID is installed. */
+export const metaEvent = (event: string, data: Record<string, any> = {}) => {
+  if (typeof window !== 'undefined' && typeof window.fbq === 'function') {
+    window.fbq('track', event, data);
+  }
+};
 
 export const pushEvent = (event: string, data: any = {}) => {
   if (typeof window !== 'undefined') {
@@ -20,6 +29,14 @@ export const pushEvent = (event: string, data: any = {}) => {
 };
 
 export const trackViewItem = (product: any, variant?: any) => {
+  metaEvent('ViewContent', {
+    content_name: product.name,
+    content_category: product.brand,
+    content_ids: [product.id.toString()],
+    content_type: 'product',
+    value: Number(variant?.price || product.price) || undefined,
+    currency: 'BYN'
+  });
   pushEvent('view_item', {
     ecommerce: {
       currency: 'BYN',
@@ -38,6 +55,14 @@ export const trackViewItem = (product: any, variant?: any) => {
 };
 
 export const trackAddToCart = (product: any, variant: any, quantity: number = 1) => {
+  metaEvent('AddToCart', {
+    content_name: product.name,
+    content_category: product.brand,
+    content_ids: [product.id.toString()],
+    content_type: 'product',
+    value: Number(variant?.price || 0) * quantity || undefined,
+    currency: 'BYN'
+  });
   pushEvent('add_to_cart', {
     ecommerce: {
       currency: 'BYN',
@@ -56,6 +81,13 @@ export const trackAddToCart = (product: any, variant: any, quantity: number = 1)
 };
 
 export const trackBeginCheckout = (items: any[], total: number) => {
+  metaEvent('InitiateCheckout', {
+    content_ids: items.map(i => i.id.toString()),
+    content_type: 'product',
+    value: total || undefined,
+    currency: 'BYN',
+    num_items: items.reduce((s, i) => s + (i.quantity || 1), 0)
+  });
   pushEvent('begin_checkout', {
     ecommerce: {
       currency: 'BYN',
@@ -73,6 +105,14 @@ export const trackBeginCheckout = (items: any[], total: number) => {
 };
 
 export const trackPurchase = (orderId: string, items: any[], total: number) => {
+  metaEvent('Purchase', {
+    transaction_id: orderId,
+    content_ids: items.map(i => i.id.toString()),
+    content_type: 'product',
+    value: total || undefined,
+    currency: 'BYN',
+    num_items: items.reduce((s, i) => s + (i.quantity || 1), 0)
+  });
   pushEvent('purchase', {
     ecommerce: {
       transaction_id: orderId,

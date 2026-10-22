@@ -8,6 +8,7 @@ import { useWishlist } from './WishlistProvider';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { brandPath } from '../utils/seo';
 import { applyDiscount, hasActiveDiscount, normalizeDiscountPercent } from '../utils/pricing';
+import { trackAddToCart } from '../utils/analytics';
 
 interface ProductCardProps {
   product: Product;
@@ -64,6 +65,10 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
     }
 
     addToCart(product, selectedVariantId);
+    const variant = product.variants?.find(v => v.id === selectedVariantId);
+    if (variant) {
+      trackAddToCart(product, variant, 1);
+    }
   };
 
   const handleVariantSelect = (e: React.MouseEvent, variantId: number) => {
