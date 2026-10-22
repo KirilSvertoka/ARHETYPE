@@ -545,7 +545,7 @@ export default function ProductDetails() {
               const maxMl = Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10;
               const clampedMl = Math.min(Math.max(2, customMl), maxMl);
               return (
-                <div className="border border-brand-border/60 p-4 sm:p-5 space-y-4">
+                <div className="relative z-20 border border-brand-border/60 bg-brand-bg p-4 sm:p-5 space-y-4">
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <span className="text-xs font-medium uppercase tracking-wider text-brand-muted">
                       {language === 'be' ? 'Распіў — рухайце ползунок' : 'Распив — двигайте ползунок'}
