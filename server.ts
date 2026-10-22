@@ -3587,6 +3587,16 @@ async function startServer() {
       const gtmId = (process.env.GTM_ID || '').trim();
       html = html.replace(/__GTM_ID__/g, gtmId || 'GTM-XXXXXXX');
 
+      // Meta Pixel: inject the real id, or strip the noscript fallback so
+      // no placeholder request fires.
+      const metaPixelId = (process.env.META_PIXEL_ID || '').trim();
+      if (/^\d{15,16}$/.test(metaPixelId)) {
+        html = html.replace(/__META_PIXEL_ID__/g, metaPixelId);
+      } else {
+        html = html.replace(/__META_PIXEL_ID__/g, '0');
+        html = html.replace(/<!-- META_PIXEL_NOSCRIPT_START -->[\s\S]*?<!-- META_PIXEL_NOSCRIPT_END -->/g, '');
+      }
+
       const domain = getSiteOrigin(req);
       let ldJson: any[] = [];
       const genSetStr = db.prepare('SELECT value FROM settings WHERE key = ?').get('general_settings')?.value as string || '{}';
