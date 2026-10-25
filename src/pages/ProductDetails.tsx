@@ -589,14 +589,9 @@ export default function ProductDetails() {
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <span className="text-[11px] text-brand-muted">
                       {mode === 'custom'
-                        ? (language === 'be' ? `адлівант ${clampedMl} мл` : `отливант ${clampedMl} мл`)
+                        ? (language === 'be' ? `адлівант ${clampedMl} мл — цана зверху` : `отливант ${clampedMl} мл — цена сверху`)
                         : (language === 'be' ? 'гатовы флакон' : 'готовый флакон')}
                     </span>
-                    {mode === 'custom' && (
-                      <span className="font-display font-semibold text-2xl text-brand-light tabular-nums">
-                        {(Math.round(product.price_per_ml * clampedMl * 100) / 100).toFixed(2)} <span className="text-sm font-sans text-brand-muted">{t('currency')}</span>
-                      </span>
-                    )}
                   </div>
                 </div>
               );
@@ -727,6 +722,17 @@ export default function ProductDetails() {
             <div className="mt-8 pt-8 border-t border-brand-border">
               <div className="flex items-baseline flex-wrap gap-x-3 gap-y-1 mb-6">
                 {(() => {
+                  // Single reactive price: decant slider OR selected variant.
+                  if (mode === 'custom' && product.price_per_ml) {
+                    const maxMl = Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10;
+                    const ml = Math.min(Math.max(2, customMl), maxMl);
+                    const decantPrice = (Math.round(Number(product.price_per_ml) * ml * 100) / 100).toFixed(2);
+                    return (
+                      <span className="text-3xl font-serif lining-nums text-brand-light">
+                        {decantPrice} <span className="text-base font-sans text-brand-muted">{t('currency')}</span>
+                      </span>
+                    );
+                  }
                   const rawPrice = selectedVariantId
                     ? product.variants?.find(v => v.id === selectedVariantId)?.price
                     : product.price;
