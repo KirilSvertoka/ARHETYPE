@@ -205,11 +205,18 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
             onPointerDown={(e) => e.stopPropagation()}
           >
             <div className="px-4 py-3.5 space-y-3 max-h-[70%] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <p className="text-[11px] leading-snug text-brand-muted line-clamp-1">
-                {(product.topNotes || []).length > 0
-                  ? (language === 'be' ? 'Ноты: ' : 'Ноты: ') + (product.topNotes || []).slice(0, 3).map(n => (language === 'be' && n.name_be) ? n.name_be : n.name).join(' · ')
-                  : (language === 'be' && product.description_be ? product.description_be : product.description)}
-              </p>
+              {(product.topNotes || []).length > 0 ? (
+                <p className="text-[11px] leading-snug line-clamp-1">
+                  <span className="font-sans uppercase tracking-wider text-brand-muted/80">Ноты: </span>
+                  <span className="font-serif italic text-[13px] text-brand-light">
+                    {(product.topNotes || []).slice(0, 3).map(n => (language === 'be' && n.name_be) ? n.name_be : n.name).join(' · ')}
+                  </span>
+                </p>
+              ) : (
+                <p className="text-[11px] leading-snug text-brand-muted line-clamp-1">
+                  {language === 'be' && product.description_be ? product.description_be : product.description}
+                </p>
+              )}
 
               {hasDecant && (
                 <div className="space-y-1.5" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
@@ -321,17 +328,31 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
           </div>
 
           <div className="mt-2 flex items-baseline justify-between gap-2 flex-wrap">
-            {onSale && (
-              <span className="text-[11px] font-sans text-brand-muted/70 line-through">
-                {fromPrice} {t('currency')}
-              </span>
-            )}
-            <span className={`font-sans font-semibold text-[15px] tabular-nums ml-auto ${onSale ? 'text-brand-accent' : 'text-brand-light'}`}>
-              {isPerMlOnly ? priceShown : (onSale ? `${salePrice} ` : `${priceShown} `)}
-              {!isPerMlOnly && <span className="text-brand-muted font-medium">{t('currency')}</span>}
-            </span>
-            {onSale && (
-              <span className="text-[10px] font-sans font-bold text-brand-accent">−{discountPercent}%</span>
+            {cardMl != null && hasDecant ? (
+              <>
+                <span className="text-[11px] font-sans text-brand-muted">
+                  {cardMl} мл × {Number(product.price_per_ml)} {t('currency')}/мл
+                </span>
+                <span className="font-sans font-semibold text-[15px] tabular-nums text-brand-accent">
+                  {(Math.round(Number(product.price_per_ml) * cardMl * 100) / 100).toFixed(2)}
+                  <span className="text-brand-muted font-medium"> {t('currency')}</span>
+                </span>
+              </>
+            ) : (
+              <>
+                {onSale && (
+                  <span className="text-[11px] font-sans text-brand-muted/70 line-through">
+                    {fromPrice} {t('currency')}
+                  </span>
+                )}
+                <span className={`font-sans font-semibold text-[15px] tabular-nums ml-auto ${onSale ? 'text-brand-accent' : 'text-brand-light'}`}>
+                  {isPerMlOnly ? priceShown : `${priceShown} `}
+                  {!isPerMlOnly && <span className="text-brand-muted font-medium">{t('currency')}</span>}
+                </span>
+                {onSale && (
+                  <span className="text-[10px] font-sans font-bold text-brand-accent">−{discountPercent}%</span>
+                )}
+              </>
             )}
           </div>
 
