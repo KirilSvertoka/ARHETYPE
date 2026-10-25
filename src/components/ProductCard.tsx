@@ -123,7 +123,9 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
     ? (minPrice(raw => parseFloat(String(applyDiscount(raw, discountPercent)))) ?? null)
     : (() => { const r = applyDiscount(product.price, discountPercent); return /\d/.test(String(r)) ? String(r) : null; })();
 
-  const priceShown = (selectedPrice ?? (onSale ? salePrice : fromPrice)) || '0';
+  const isPerMlOnly = hasDecant && (!product.variants || product.variants.length === 0 || fromPrice === '0.00');
+  let priceShown = (selectedPrice ?? (onSale ? salePrice : fromPrice)) || '0';
+  if (isPerMlOnly) priceShown = `${Number(product.price_per_ml)} BYN/мл`;
   const isOutOfStock = hasDecant
     ? false
     : (!product.variants || product.variants.every(v => v.stock === 0));
@@ -133,7 +135,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
       ref={ref}
       onMouseEnter={() => setSheetOpen(true)}
       onMouseLeave={() => setSheetOpen(false)}
-      className="block w-full h-full group relative flex flex-col bg-brand-bg"
+      className="block w-full h-full group relative flex flex-col bg-brand-bg border border-brand-border/60 hover:border-brand-accent/30 transition-colors"
     >
       <AnimatePresence>
         {flyingItems.map(item => {
@@ -158,7 +160,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
       </AnimatePresence>
 
       {/* The photo — clean, hairline mat, no washes */}
-      <div className="relative w-full aspect-[3/4] overflow-hidden bg-brand-hover border border-brand-border/60">
+      <div className="relative w-full aspect-[3/4] overflow-hidden bg-brand-hover">
         <button
           onClick={handleWishlistToggle}
           className={`absolute top-3 right-3 z-30 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-200 cursor-pointer ${
@@ -204,7 +206,9 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
           >
             <div className="px-4 py-3.5 space-y-3 max-h-[70%] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <p className="text-[11px] leading-snug text-brand-muted line-clamp-1">
-                {language === 'be' && product.description_be ? product.description_be : product.description}
+                {(product.topNotes || []).length > 0
+                  ? (language === 'be' ? 'Ноты: ' : 'Ноты: ') + (product.topNotes || []).slice(0, 3).map(n => (language === 'be' && n.name_be) ? n.name_be : n.name).join(' · ')
+                  : (language === 'be' && product.description_be ? product.description_be : product.description)}
               </p>
 
               {hasDecant && (
@@ -323,8 +327,8 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
               </span>
             )}
             <span className={`font-sans font-semibold text-[15px] tabular-nums ml-auto ${onSale ? 'text-brand-accent' : 'text-brand-light'}`}>
-              {onSale ? `${salePrice} ` : `${priceShown} `}
-              <span className="text-brand-muted font-medium">{t('currency')}</span>
+              {isPerMlOnly ? priceShown : (onSale ? `${salePrice} ` : `${priceShown} `)}
+              {!isPerMlOnly && <span className="text-brand-muted font-medium">{t('currency')}</span>}
             </span>
             {onSale && (
               <span className="text-[10px] font-sans font-bold text-brand-accent">−{discountPercent}%</span>
