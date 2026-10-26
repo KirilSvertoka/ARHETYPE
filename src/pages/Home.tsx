@@ -158,7 +158,7 @@ export default function Home() {
   if (loading || !config) {
     return (
       <div className="flex justify-center items-center h-[80vh]">
-        <div className="animate-pulse rounded-full bg-brand-border h-12 w-12"></div>
+        <div className=" rounded-full bg-brand-border h-12 w-12"></div>
       </div>
     );
   }
@@ -499,10 +499,10 @@ export default function Home() {
                       transition={{ duration: 0.4 }}
                       className="space-y-2 md:space-y-3"
                     >
-                      <h3 className="font-serif text-3xl md:text-5xl tracking-[0.06em] uppercase text-white font-extralight leading-none">
+                      <h3 className="font-serif text-3xl md:text-5xl tracking-[0.06em] uppercase text-white font-light leading-none">
                         {language === 'be' && activeBrand?.name_be ? activeBrand?.name_be : activeBrand?.name}
                       </h3>
-                      <p className="text-xs md:text-sm font-extralight text-white/50 tracking-[0.03em] font-sans leading-relaxed max-w-xs md:max-w-md">
+                      <p className="text-xs md:text-sm font-light text-white/50 tracking-[0.03em] font-sans leading-relaxed max-w-xs md:max-w-md">
                         {language === 'be' && activeBrand?.desc_be ? activeBrand?.desc_be : activeBrand?.desc}
                       </p>
                     </motion.div>
@@ -554,7 +554,7 @@ export default function Home() {
                             transform: 'rotate(180deg)'
                           }}
                         >
-                          <span className={`text-[9px] tracking-[0.2em] uppercase font-mono transition-colors duration-300 ${
+                          <span className={`text-[9px] tracking-[0.2em] uppercase font-sans font-semibold transition-colors duration-300 ${
                             isActive ? 'text-brand-accent font-medium' : 'text-white/40 group-hover/strip:text-white/70'
                           }`}>
                             {language === 'be' && brand.name_be ? brand.name_be : brand.name}
@@ -579,7 +579,7 @@ export default function Home() {
 
               {/* Mobile bottom solid picker selector */}
               <div className="md:hidden absolute bottom-6 left-0 w-full z-30 px-4">
-                <p className="text-[8px] tracking-[0.15em] text-white/35 uppercase mb-2 text-center font-mono">
+                <p className="text-[8px] tracking-[0.15em] text-white/35 uppercase mb-2 text-center font-sans font-semibold">
                   {language === 'be' ? 'Абярыце парфумерны дом' : 'Выберите парфюмерный дом'}
                 </p>
                 <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none px-0.5">
@@ -624,14 +624,14 @@ export default function Home() {
           <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-16 w-full">
             <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-20 gap-8">
               <div className="max-w-2xl space-y-4">
-                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-[0.35em] text-brand-accent">
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-sans font-semibold tracking-[0.35em] text-brand-accent">
                   <span className="w-1 h-1 rounded-full bg-brand-accent" />
                   {t('onSale')}
                 </span>
-                <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif text-brand-light font-extralight tracking-[0.05em] uppercase leading-none">
+                <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif text-brand-light tracking-[0.05em] uppercase leading-none">
                   {t('saleProducts')}
                 </h2>
-                <p className="text-xs sm:text-sm text-brand-muted font-extralight tracking-[0.02em] leading-relaxed max-w-xl">
+                <p className="text-xs sm:text-sm text-brand-muted font-light tracking-[0.02em] leading-relaxed max-w-xl">
                   {language === 'be'
                     ? 'Абраныя ароматы з дзейнай зніжкай — пакуль акцыя актыўная.'
                     : 'Избранные ароматы с действующей скидкой — пока акция активна.'}
@@ -655,7 +655,7 @@ export default function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.8, delay: pIdx * 0.1 }}
-                  className="rounded-none overflow-hidden border border-brand-border/50 hover:border-brand-accent/20 transition-colors"
+                  className="rounded-none overflow-hidden hover:border-brand-accent/20 transition-colors"
                 >
                   <ProductCard product={product} />
                 </motion.div>
@@ -675,14 +675,14 @@ export default function Home() {
           <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-16 w-full">
             <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-20 gap-8">
               <div className="max-w-2xl space-y-4">
-                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-[0.35em] text-brand-accent animate-pulse">
+                <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-sans font-semibold tracking-[0.35em] text-brand-accent ">
                   <span className="w-1 h-1 rounded-full bg-brand-accent" />
                   {language === 'be' ? 'НОВЫЯ ДАДАТКІ' : 'НОВЫЕ ПОСТУПЛЕНИЯ'}
                 </span>
-                <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif text-brand-light font-extralight tracking-[0.05em] uppercase leading-none">
+                <h2 className="text-3xl sm:text-5xl md:text-6xl font-serif text-brand-light tracking-[0.05em] uppercase leading-none">
                   {language === 'be' ? 'Свежыя паступленні' : 'Свежие поступления'}
                 </h2>
-                <p className="text-xs sm:text-sm text-brand-muted font-extralight tracking-[0.02em] leading-relaxed max-w-xl">
+                <p className="text-xs sm:text-sm text-brand-muted font-light tracking-[0.02em] leading-relaxed max-w-xl">
                   {language === 'be' 
                     ? 'Эксклюзіўныя водарныя шэдэўры, адабраныя нашымі экспертамі для вашых незабыўных момантаў.' 
                     : 'Эксклюзивные селективные творения, отобранные нашими экспертами для ваших незабываемых образов.'}
@@ -706,7 +706,7 @@ export default function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ duration: 0.8, delay: pIdx * 0.1 }}
-                  className="rounded-none overflow-hidden border border-brand-border/50 hover:border-brand-accent/20 transition-colors"
+                  className="rounded-none overflow-hidden hover:border-brand-accent/20 transition-colors"
                 >
                   <ProductCard product={product} />
                 </motion.div>

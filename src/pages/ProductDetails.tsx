@@ -126,7 +126,17 @@ export default function ProductDetails() {
 
     // Decant builder: custom volume position
     if (mode === 'custom' && product.price_per_ml) {
-      addCustomMl(product, customMl);
+      const maxMl = Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10;
+      const ml = Math.min(Math.max(2, customMl), maxMl);
+      for (let i = 0; i < quantity; i++) {
+        addCustomMl(product, ml);
+      }
+      trackAddToCart(product, {
+        id: -ml,
+        sku: `${product.slug}-${ml}ml`,
+        size: `${ml} мл`,
+        price: Math.round(Number(product.price_per_ml) * ml * 100) / 100
+      }, quantity);
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect();
         setFlyingItems(prev => [...prev, { id: Date.now(), x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }]);
@@ -181,9 +191,17 @@ export default function ProductDetails() {
       .then(data => {
         setProduct(data);
         setActiveImage(data.imageUrl);
+        setReviews([]);
+        setQuantity(1);
+        setShowSizeGuide(false);
         if (data.variants && data.variants.length > 0) {
           setSelectedVariantId(data.variants[0].id);
+        } else {
+          setSelectedVariantId(undefined);
         }
+        // Reset per-product UI state (route has no key, component persists)
+        setMode(Number(data.price_per_ml) > 0 ? 'custom' : 'variants');
+        setCustomMl(5);
         setLoading(false);
         
         // Log view
@@ -741,8 +759,10 @@ export default function ProductDetails() {
                     ? product.variants?.find(v => v.id === selectedVariantId)?.price
                     : product.price;
                   const discountPercent = normalizeDiscountPercent(product.discountPercent);
-                  const onSale = hasActiveDiscount(discountPercent);
-                  const original = typeof rawPrice === 'number' ? rawPrice.toFixed(2) : rawPrice;
+                  const priceNum = typeof rawPrice === 'number' ? rawPrice : parseFloat(String(rawPrice ?? ''));
+                  const hasRealPrice = Number.isFinite(priceNum) && priceNum > 0;
+                  const onSale = hasActiveDiscount(discountPercent) && hasRealPrice;
+                  const original = typeof rawPrice === 'number' ? rawPrice.toFixed(2) : (rawPrice ?? '');
                   const sale = applyDiscount(rawPrice, discountPercent);
                   const fmt = (v: string | number | undefined) =>
                     /\d/.test(String(v)) ? `${v} ${t('currency')}` : v;
@@ -754,7 +774,7 @@ export default function ProductDetails() {
                         </span>
                       )}
                       <span className="text-3xl font-serif lining-nums text-brand-light">
-                        {fmt(onSale ? sale : original)}
+                        {!hasRealPrice && !onSale ? 'Уточняйте' : fmt(onSale ? sale : original)}
                       </span>
                       {onSale && (
                         <span className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-accent">

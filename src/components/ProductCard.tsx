@@ -156,7 +156,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
               onAnimationComplete={() => setFlyingItems(prev => prev.filter(i => i.id !== item.id))}
               className="fixed top-0 left-0 z-[9999] pointer-events-none"
             >
-              <div className="w-6 h-6 bg-brand-accent rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-6 h-6 bg-brand-accent rounded-full flex items-center justify-center">
                 <ShoppingBag className="w-3 h-3 text-white" />
               </div>
             </motion.div>
@@ -179,7 +179,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
         </button>
 
         {onSale && (
-          <span className="absolute top-3 left-3 z-30 bg-brand-accent text-white text-[10px] font-sans font-semibold tracking-[0.08em] px-2 py-1">
+          <span className="absolute top-3 left-3 z-30 bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.1em] px-2 py-1">
             −{discountPercent}%
           </span>
         )}

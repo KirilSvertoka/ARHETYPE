@@ -8,9 +8,6 @@
   --font-display: "Cormorant Garamond", serif;
   --font-brand: "Marcellus", serif;
   --font-name: "Archivo", sans-serif;
-  --font-oranienbaum: "Playfair Display", serif;
-  --font-arsenica: "Playfair Display", serif;
-  --font-adventor: "Montserrat", sans-serif;
   --color-brand-bg: #FCFBFA;
   --color-brand-light: #111111;
   --color-brand-muted: #575757;
@@ -23,7 +20,7 @@
 body {
   background-color: var(--color-brand-bg);
   color: var(--color-brand-light);
-  font-family: var(--font-sans), sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* Hide spin-buttons in Chrome, Safari, Edge, Opera */
@@ -46,13 +43,13 @@ input[type=number] {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(17, 17, 17, 0.15);
   border-radius: 10px;
 }
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(17, 17, 17, 0.35);
 }
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: rgba(17, 17, 17, 0.15) transparent;
 }

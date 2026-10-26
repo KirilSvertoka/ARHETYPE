@@ -76,6 +76,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const cartItemId = `${product.id}-custom-${ml}`;
     setItems(prev => {
       const existing = prev.find(item =>
+        item.id === product.id &&
         item.selectedVariantId === undefined &&
         item.selectedVariantSize === `${ml} мл` &&
         item.variant_type === 'custom_ml');
