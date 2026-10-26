@@ -1402,6 +1402,26 @@ export default function ProductForm({ token, initialData, onSuccess, onCancel, o
           <button type="button" onClick={addVariant} className="text-sm font-medium text-brand-light flex items-center gap-1 hover:underline">
             <Plus className="w-4 h-4" /> Добавить вариант
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (formData.variants.some(v => v.variant_type === 'remainder')) return;
+              setFormData({
+                ...formData,
+                remainder_enabled: true,
+                variants: [...formData.variants, {
+                  size: 'Остаток',
+                  price: '0',
+                  stock: 1,
+                  sku: `remainder-${initialData?.id || Date.now()}`,
+                  variant_type: 'remainder'
+                } as any]
+              });
+            }}
+            className="text-sm font-medium text-brand-accent flex items-center gap-1 hover:underline cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Остаток во флаконе
+          </button>
         </div>
 
         <div className="space-y-4">

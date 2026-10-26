@@ -55,6 +55,10 @@ export default function ProductDetails() {
   const { addToCart, addCustomMl } = useCart();
   const [customMl, setCustomMl] = useState(5);
   const [mode, setMode] = useState<'variants' | 'custom'>('variants');
+  // Products with a decant price open in decant mode by default (задача 1: распив сразу)
+  useEffect(() => {
+    if (product && Number(product.price_per_ml) > 0) setMode('custom');
+  }, [product?.id, product?.price_per_ml]);
   const { t, language } = useLanguage();
   const [selectedVariantId, setSelectedVariantId] = useState<number | undefined>(undefined);
   const [isFullscreenGalleryOpen, setIsFullscreenGalleryOpen] = useState(false);
@@ -579,7 +583,7 @@ export default function ProductDetails() {
                     />
                     <div className="flex justify-between mt-1.5 items-center">
                       <span className="text-[11px] font-sans text-brand-muted">2 мл</span>
-                      <span className={`font-display font-bold text-lg leading-none ${mode === 'custom' ? 'text-brand-accent' : 'text-brand-muted'}`}>
+                      <span className={`font-sans font-semibold text-2xl leading-none tabular-nums ${mode === 'custom' ? 'text-brand-accent' : 'text-brand-muted'}`}>
                         {clampedMl} мл
                       </span>
                       <span className="text-[11px] font-sans text-brand-muted">{maxMl} мл</span>
@@ -822,7 +826,7 @@ export default function ProductDetails() {
                 <p className="text-[10px] text-brand-muted leading-relaxed">
                   {language === 'be' 
                     ? 'Бяспечная ўпакоўка, якасныя атамайзеры. Дастаўка па Гродне і па ўсёй РБ.' 
-                    : 'Безопасная упаковка, надежные стеклянные атомайзеры для отливантов. Доставка по Гродно — сегодня. РБ — 5 дней.'}
+                    : 'Безопасная упаковка, надежные стеклянные атомайзеры для отливантов. Доставка по Гродно — на следующий день. По Беларуси — 3–5 дней.'}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-3 text-[10px] uppercase tracking-wider">
                   <Link to="/p/delivery" className="text-brand-accent hover:underline">

@@ -125,7 +125,12 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
 
   const isPerMlOnly = hasDecant && (!product.variants || product.variants.length === 0 || fromPrice === '0.00');
   let priceShown = (selectedPrice ?? (onSale ? salePrice : fromPrice)) || '0';
-  if (isPerMlOnly) priceShown = `${Number(product.price_per_ml)} BYN/мл`;
+  // Never show a zero price: decant products fall back to their per-ml rate.
+  if (priceShown === '0' || priceShown === '0.00' || priceShown === '0.0') {
+    priceShown = hasDecant ? `${Number(product.price_per_ml)} BYN/мл` : 'Уточняйте';
+  } else if (isPerMlOnly) {
+    priceShown = `${Number(product.price_per_ml)} BYN/мл`;
+  }
   const isOutOfStock = hasDecant
     ? false
     : (!product.variants || product.variants.every(v => v.stock === 0));
@@ -298,36 +303,35 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
 
       {/* The placard */}
       {variant !== 'overlay' && (
-        <div className="flex flex-col flex-1 pt-3 pb-1 px-0.5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <button
-                onClick={handleBrandClick}
-                className="text-[10px] font-sans font-semibold uppercase tracking-[0.2em] text-brand-muted hover:text-brand-accent transition-colors cursor-pointer text-left"
-              >
-                {product.brand}
-              </button>
-              <Link to={productUrl} className="block mt-0.5">
-                <h3 className="font-serif text-[17px] leading-snug text-brand-light group-hover:text-brand-accent transition-colors">
-                  {product.name}
-                </h3>
-              </Link>
-            </div>
-            {/* touch toggle for the quick-buy sheet (no hover on phones) */}
-            {variant !== 'standard' && (
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSheetOpen(o => !o); }}
-                className={`sm:hidden shrink-0 w-8 h-8 rounded-full flex items-center justify-center border transition-colors cursor-pointer ${
-                  sheetOpen ? 'border-brand-accent text-brand-accent' : 'border-brand-border text-brand-muted'
-                }`}
-                aria-label={sheetOpen ? 'Скрыть' : 'Купить'}
-              >
-                {sheetOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              </button>
-            )}
+        <div className="flex flex-col flex-1 pt-3 pb-1 px-0.5 text-center">
+          <div className="relative">
+            <button
+              onClick={handleBrandClick}
+              className="font-brand text-[13px] tracking-[0.08em] text-brand-muted hover:text-brand-accent transition-colors cursor-pointer text-center w-full"
+            >
+              {product.brand}
+            </button>
+            <Link to={productUrl} className="block mt-1">
+              <h3 className="font-name font-semibold text-[19px] sm:text-[21px] leading-tight text-brand-light group-hover:text-brand-accent transition-colors">
+                {product.name}
+              </h3>
+            </Link>
           </div>
 
-          <div className="mt-2 flex items-baseline justify-between gap-2 flex-wrap">
+          {/* touch toggle for the quick-buy sheet (no hover on phones) */}
+          {variant !== 'standard' && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSheetOpen(o => !o); }}
+              className={`sm:hidden mx-auto mt-2 w-9 h-9 rounded-full flex items-center justify-center border transition-colors cursor-pointer ${
+                sheetOpen ? 'border-brand-accent text-brand-accent' : 'border-brand-border text-brand-muted'
+              }`}
+              aria-label={sheetOpen ? 'Скрыть' : 'Купить'}
+            >
+              {sheetOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            </button>
+          )}
+
+          <div className="mt-2.5 flex items-baseline justify-center gap-2 flex-wrap">
             {cardMl != null && hasDecant ? (
               <>
                 <span className="text-[11px] font-sans text-brand-muted">
@@ -338,21 +342,21 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                   <span className="text-brand-muted font-medium"> {t('currency')}</span>
                 </span>
               </>
-            ) : (
+            ) : onSale ? (
               <>
-                {onSale && (
-                  <span className="text-[11px] font-sans text-brand-muted/70 line-through">
-                    {fromPrice} {t('currency')}
-                  </span>
-                )}
-                <span className={`font-sans font-semibold text-[15px] tabular-nums ml-auto ${onSale ? 'text-brand-accent' : 'text-brand-light'}`}>
-                  {isPerMlOnly ? priceShown : `${priceShown} `}
-                  {!isPerMlOnly && <span className="text-brand-muted font-medium">{t('currency')}</span>}
+                <span className="text-[11px] font-sans text-brand-muted/70 line-through">
+                  {fromPrice} {t('currency')}
                 </span>
-                {onSale && (
-                  <span className="text-[10px] font-sans font-bold text-brand-accent">−{discountPercent}%</span>
-                )}
+                <span className="font-sans font-semibold text-[15px] tabular-nums text-brand-accent">
+                  {salePrice} <span className="text-brand-muted font-medium">{t('currency')}</span>
+                </span>
+                <span className="text-[10px] font-sans font-bold text-brand-accent">−{discountPercent}%</span>
               </>
+            ) : (
+              <span className="font-sans font-semibold text-[15px] tabular-nums text-brand-light">
+                {isPerMlOnly ? priceShown : `${priceShown} `}
+                <span className="text-brand-muted font-medium">{t('currency')}</span>
+              </span>
             )}
           </div>
 

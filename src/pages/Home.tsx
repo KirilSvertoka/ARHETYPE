@@ -82,8 +82,24 @@ export default function Home() {
 
         setConfig({ ...configData, genData });
         
-        // Use the first 8 products as New Arrivals (pre-sorted by newest)
-        setNewArrivals(productsData.slice(0, 8));
+        // New Arrivals: group same-brand fragrances together (Mancera next to
+        // Mancera), brand order follows the newest product of that brand.
+        const brandFirstIndex = new Map<string, number>();
+        productsData.forEach((p, i) => {
+          const b = (p.brand || '').trim().toLowerCase();
+          if (!brandFirstIndex.has(b)) brandFirstIndex.set(b, i);
+        });
+        const grouped = productsData
+          .map((p, i) => ({ p, i }))
+          .sort((a, b) => {
+            const ba = (a.p.brand || '').trim().toLowerCase();
+            const bb = (b.p.brand || '').trim().toLowerCase();
+            const fa = brandFirstIndex.get(ba) ?? a.i;
+            const fb = brandFirstIndex.get(bb) ?? b.i;
+            return fa - fb || a.i - b.i;
+          })
+          .map(x => x.p);
+        setNewArrivals(grouped.slice(0, 8));
         setSaleProducts(saleData.slice(0, 8));
         setLoading(false);
       } catch (err) {
