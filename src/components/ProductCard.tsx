@@ -352,10 +352,13 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                 </span>
                 <span className="text-[10px] font-sans font-bold text-brand-accent">−{discountPercent}%</span>
               </>
+            ) : isPerMlOnly ? (
+              <span className="font-sans font-semibold text-[15px] tabular-nums text-brand-light">
+                {priceShown}
+              </span>
             ) : (
               <span className="font-sans font-semibold text-[15px] tabular-nums text-brand-light">
-                {isPerMlOnly ? priceShown : `${priceShown} `}
-                <span className="text-brand-muted font-medium">{t('currency')}</span>
+                {priceShown} <span className="text-brand-muted font-medium">{t('currency')}</span>
               </span>
             )}
           </div>
