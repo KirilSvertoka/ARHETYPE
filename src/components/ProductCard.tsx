@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from './LanguageProvider';
 import { useCart } from './CartProvider';
 import { useWishlist } from './WishlistProvider';
-import { Heart, Plus, Minus, ShoppingBag, Check } from 'lucide-react';
+import { Heart, Plus, ShoppingBag, Check } from 'lucide-react';
 import { brandPath } from '../utils/seo';
 import { applyDiscount, hasActiveDiscount, normalizeDiscountPercent } from '../utils/pricing';
 
@@ -318,20 +318,15 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
             </Link>
           </div>
 
-          {/* touch toggle for the quick-buy sheet (no hover on phones) */}
-          {variant !== 'standard' && (
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSheetOpen(o => !o); }}
-              className={`sm:hidden mx-auto mt-2 w-9 h-9 rounded-full flex items-center justify-center border transition-colors cursor-pointer ${
-                sheetOpen ? 'border-brand-accent text-brand-accent' : 'border-brand-border text-brand-muted'
-              }`}
-              aria-label={sheetOpen ? 'Скрыть' : 'Купить'}
-            >
-              {sheetOpen ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            </button>
-          )}
-
-          <div className="mt-2.5 flex items-baseline justify-center gap-2 flex-wrap">
+          <div
+            className={`mt-2.5 flex items-baseline justify-center gap-2 flex-wrap ${variant !== 'standard' ? 'cursor-pointer' : ''}`}
+            onClick={(e) => {
+              if (variant === 'standard') return;
+              e.preventDefault();
+              e.stopPropagation();
+              setSheetOpen(o => !o);
+            }}
+          >
             {cardMl != null && hasDecant ? (
               <>
                 <span className="text-[11px] font-sans text-brand-muted">
