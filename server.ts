@@ -2288,6 +2288,12 @@ app.get('/api/products', (req, res) => {
           case 'price-desc': return getPrice(b) - getPrice(a);
           case 'popularity': return (b.popularity || 0) - (a.popularity || 0);
           case 'newest': return b.id - a.id;
+          // Группировка по брендам: бренды по свежести, внутри бренда — по новизне
+          case 'brand': {
+            const brandFirst = new Map<string, number>();
+            result.forEach((x, i) => { const b = (x.brand || '').trim().toLowerCase(); if (!brandFirst.has(b)) brandFirst.set(b, i); });
+            return (brandFirst.get((a.brand || '').trim().toLowerCase()) ?? 0) - (brandFirst.get((b.brand || '').trim().toLowerCase()) ?? 0) || b.id - a.id;
+          }
           default: return 0;
         }
       });

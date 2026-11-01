@@ -33,7 +33,7 @@ export default function Storefront() {
     return params.get('onSale') === '1' || params.get('category') === 'sale';
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<string>(() => new URLSearchParams(location.search).get('sort') || 'name-asc');
+  const [sortBy, setSortBy] = useState<string>(() => new URLSearchParams(location.search).get('sort') || 'brand');
   const [mobileGridCols, setMobileGridCols] = useState<1 | 2>(1);
   const [isScrolled, setIsScrolled] = useState(false);
   const [suggestions, setSuggestions] = useState<{type: string, text: string, id?: number}[]>([]);
@@ -67,7 +67,7 @@ export default function Storefront() {
     const params = new URLSearchParams();
     if (filters.gender && filters.gender !== 'All') params.set('gender', filters.gender);
     if (filters.category && filters.category !== 'All') params.set('category', filters.category);
-    if (filters.sort && filters.sort !== 'name-asc') params.set('sort', filters.sort);
+    if (filters.sort && filters.sort !== 'brand') params.set('sort', filters.sort);
     if (filters.search) params.set('search', filters.search);
     if (filters.families && filters.families.length > 0) params.set('families', filters.families.join(','));
     if (filters.accords && filters.accords.length > 0) params.set('accords', filters.accords.join(','));
@@ -129,7 +129,7 @@ export default function Storefront() {
     setActiveCategory(categoryParam === 'sale' ? 'All' : (categoryParam || 'All'));
     setSaleOnly(onSaleParam === '1' || categoryParam === 'sale');
     setActiveGenderTab(((genderParam as 'All' | 'Male' | 'Female' | 'Unisex') || 'All'));
-    setSortBy(sortParam || 'name-asc');
+    setSortBy(sortParam || 'brand');
     setSearchQuery(searchParam);
     setDebouncedSearchQuery(searchParam);
 
@@ -301,7 +301,7 @@ export default function Storefront() {
     navigate('/catalog');
   };
 
-  const activeFiltersCount = (activeGenderTab !== 'All' ? 1 : 0) + selectedFamilies.length + selectedAccords.length + (activeBrand !== 'All' ? 1 : 0) + (sortBy !== 'name-asc' ? 1 : 0) + (activeCategory !== 'All' ? 1 : 0) + (saleOnly ? 1 : 0) + (searchQuery ? 1 : 0);
+  const activeFiltersCount = (activeGenderTab !== 'All' ? 1 : 0) + selectedFamilies.length + selectedAccords.length + (activeBrand !== 'All' ? 1 : 0) + (sortBy !== 'brand' ? 1 : 0) + (activeCategory !== 'All' ? 1 : 0) + (saleOnly ? 1 : 0) + (searchQuery ? 1 : 0);
 
   const scrollToCallback = () => {
     const element = document.getElementById('callback-section');
@@ -738,6 +738,7 @@ export default function Storefront() {
                   </h3>
                   <div className="grid grid-cols-2 gap-2">
                     {[
+                      { id: 'brand', label: language === 'be' ? 'Па брендах' : 'По брендам' },
                       { id: 'name-asc', label: t('sortNameAsc') },
                       { id: 'name-desc', label: t('sortNameDesc') },
                       { id: 'price-asc', label: t('sortPriceAsc') },

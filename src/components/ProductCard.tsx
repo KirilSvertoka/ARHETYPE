@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Product, getVariantType } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -44,6 +44,15 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
   const [flyingItems, setFlyingItems] = useState<FlyingItem[]>([]);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [cardMl, setCardMl] = useState<number | null>(null);
+  const [remainderPicked, setRemainderPicked] = useState(false);
+  const [managerTg, setManagerTg] = useState<string>('');
+  useEffect(() => {
+    if (!remainderPicked || managerTg) return;
+    fetch('/api/settings/general')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setManagerTg((d && d.telegram) || ''))
+      .catch(() => {});
+  }, [remainderPicked, managerTg]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [added, setAdded] = useState(false);
 
@@ -75,6 +84,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
     e.stopPropagation();
     setSelectedVariantId(variantId);
     setCardMl(null);
+    setRemainderPicked(false);
     setHasInteracted(true);
   };
 
@@ -239,7 +249,7 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                     max={Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10}
                     step={1}
                     value={cardMl ?? 2}
-                    onChange={(e) => { e.stopPropagation(); setCardMl(Number(e.target.value)); }}
+                    onChange={(e) => { e.stopPropagation(); setCardMl(Number(e.target.value)); setRemainderPicked(false); }}
                     onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
@@ -269,14 +279,24 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                       {(vs as typeof product.variants).map(v => (
                         <button
                           key={v.id}
-                          onClick={(e) => handleVariantSelect(e, v.id)}
-                          disabled={v.stock === 0}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelectedVariantId(v.id);
+                            setCardMl(null);
+                            if (v.variant_type === 'remainder') setRemainderPicked(true);
+                            else setRemainderPicked(false);
+                          }}
                           className={`px-2 py-0.5 text-[11px] font-sans border transition-all cursor-pointer ${
-                            selectedVariantId === v.id && cardMl == null
-                              ? 'border-brand-accent bg-brand-accent text-white font-semibold'
-                              : v.stock === 0
-                                ? 'border-brand-border text-brand-muted/40 line-through cursor-not-allowed'
-                                : 'border-brand-border text-brand-light hover:border-brand-accent'
+                            v.variant_type === 'remainder'
+                              ? selectedVariantId === v.id
+                                ? 'border-brand-accent bg-brand-accent text-white font-semibold'
+                                : 'border-brand-accent text-brand-accent border-dashed hover:bg-brand-accent/10'
+                              : selectedVariantId === v.id && cardMl == null
+                                ? 'border-brand-accent bg-brand-accent text-white font-semibold'
+                                : v.stock === 0
+                                  ? 'border-brand-border text-brand-muted/40 line-through cursor-not-allowed'
+                                  : 'border-brand-border text-brand-light hover:border-brand-accent'
                           }`}
                         >
                           {v.size}
@@ -287,15 +307,27 @@ export default function ProductCard({ product, variant = 'interactive' }: Produc
                 </div>
               )}
 
-              <button
-                ref={buttonRef}
-                onClick={handleAddToCart}
-                disabled={cardMl == null && !!product.variants && product.variants.length > 0 && !selectedVariantId}
-                className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {added ? <Check className="w-3.5 h-3.5" /> : <ShoppingBag className="w-3.5 h-3.5" />}
-                {added ? (language === 'be' ? 'Дададзена' : 'Добавлено') : t('addToCart')}
-              </button>
+              {remainderPicked ? (
+                <a
+                  href={managerTg || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-colors cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {language === 'be' ? 'Напісаць мэнэджэру' : 'Написать менеджеру'}
+                </a>
+              ) : (
+                <button
+                  ref={buttonRef}
+                  onClick={handleAddToCart}
+                  disabled={cardMl == null && !!product.variants && product.variants.length > 0 && !selectedVariantId}
+                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.2em] hover:bg-brand-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {added ? <Check className="w-3.5 h-3.5" /> : <ShoppingBag className="w-3.5 h-3.5" />}
+                  {added ? (language === 'be' ? 'Дададзена' : 'Добавлено') : t('addToCart')}
+                </button>
+              )}
             </div>
           </div>
         )}
