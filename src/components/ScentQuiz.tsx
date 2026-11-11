@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, X, ShoppingBag, Check, CheckCircle2, ChevronDown } from 'lucide-react';
 import { useLanguage } from './LanguageProvider';
 import { useCart } from './CartProvider';
@@ -112,7 +113,7 @@ function buildExplanation(p: Product, family: string, occasion: string, lang: 'r
 
 export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
   const { language, t } = useLanguage();
-  const { addToCart, setIsCartOpen } = useCart();
+  const { addToCart, addCustomMl, setIsCartOpen } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [loadingResults, setLoadingResults] = useState(false);
@@ -122,6 +123,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
   const [family, setFamily] = useState('');
   const [intensity, setIntensity] = useState('');
   const [selectedVariants, setSelectedVariants] = useState<Record<number, number>>({});
+  const [resultMl, setResultMl] = useState<Record<number, number | null>>({});
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [results, setResults] = useState<{ product: Product; match: number; explanation: string; explanationBe: string }[]>([]);
@@ -234,20 +236,28 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
         }));
 
       const initialSelected: Record<number, number> = {};
+      const initialMl: Record<number, number | null> = {};
       sortedResults.forEach(({ product }) => {
-        if (product.variants && product.variants.length > 0 && product.variants[0].id) {
-          initialSelected[product.id] = product.variants[0].id;
-        }
+        const sellable = (product.variants || []).find(v => v.stock > 0 && v.variant_type !== 'remainder');
+        if (sellable) initialSelected[product.id] = sellable.id;
+        else if (Number(product.price_per_ml) > 0) initialMl[product.id] = 5;
       });
       setSelectedVariants(initialSelected);
+      setResultMl(initialMl);
       setResults(sortedResults);
       setLoadingResults(false);
     }, 900);
   };
 
   const handleAddScentToCart = (prod: Product) => {
-    const selectedVarId = selectedVariants[prod.id] || (prod.variants && prod.variants.length > 0 ? prod.variants[0].id : undefined);
-    addToCart(prod, selectedVarId);
+    if (Number(prod.price_per_ml) > 0) {
+      const ml = resultMl[prod.id];
+      if (!ml) return;
+      addCustomMl(prod, ml);
+    } else {
+      const selectedVarId = selectedVariants[prod.id] || (prod.variants && prod.variants.length > 0 ? prod.variants[0].id : undefined);
+      addToCart(prod, selectedVarId);
+    }
     setSuccessAdded(prev => ({ ...prev, [prod.id]: true }));
     setTimeout(() => setSuccessAdded(prev => ({ ...prev, [prod.id]: false })), 2000);
   };
@@ -499,7 +509,13 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                           {results.map(({ product, match, explanation, explanationBe }, idx) => (
                             <div key={product.id} className={`py-6 flex flex-col gap-5 ${idx > 0 ? 'border-t border-brand-border/60' : ''}`}>
                               <div className="flex gap-5">
-                                <div className="shrink-0 w-20 h-20 md:w-24 md:h-24 overflow-hidden border border-brand-border/60">
+                                <a
+                                  href={`/catalog/${product.slug || product.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="shrink-0 w-20 h-20 md:w-24 md:h-24 overflow-hidden border border-brand-border/60 hover:border-brand-accent transition-colors"
+                                  title={language === 'be' ? 'Адкрыць на старонцы товара' : 'Открыть на странице товара'}
+                                >
                                   <img
                                     src={product.imageUrl}
                                     alt={product.name}
@@ -508,7 +524,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                     decoding="async"
                                     referrerPolicy="no-referrer"
                                   />
-                                </div>
+                                </a>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-baseline justify-between gap-4">
                                     <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-brand-muted">
@@ -521,9 +537,16 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                   <div className="mt-1.5 h-px bg-brand-border/60 relative">
                                     <div className="absolute left-0 top-0 h-px bg-brand-accent" style={{ width: `${match}%` }} />
                                   </div>
-                                  <h4 className="mt-2 font-serif text-lg text-brand-light leading-snug">
-                                    {product.name}
-                                  </h4>
+                                  <a
+                                    href={`/catalog/${product.slug || product.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block mt-2 group/name"
+                                  >
+                                    <h4 className="font-serif text-lg text-brand-light leading-snug group-hover/name:text-brand-accent transition-colors">
+                                      {product.name} <span className="inline-block text-[11px] font-sans text-brand-muted/70 group-hover/name:text-brand-accent align-middle">↗</span>
+                                    </h4>
+                                  </a>
                                   <div className="mt-1.5 flex flex-wrap gap-2">
                                     {isSetProduct(product) && (
                                       <span className="text-[9px] font-mono uppercase tracking-wider text-brand-muted border border-brand-border px-1.5 py-0.5">
@@ -544,7 +567,34 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                               </p>
 
                               <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-                                {product.variants && product.variants.length > 0 && (
+                                {Number(product.price_per_ml) > 0 && (
+                                  <div className="flex-1 sm:max-w-[240px] space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[9px] font-sans uppercase tracking-[0.18em] text-brand-muted">
+                                        {language === 'be' ? 'Распіў' : 'Распив'} · {product.price_per_ml} {t('currency')}/мл
+                                      </span>
+                                      <span className={`text-[11px] font-sans font-semibold ${resultMl[product.id] ? 'text-brand-accent' : 'text-brand-muted'}`}>
+                                        {resultMl[product.id] ? `${resultMl[product.id]} мл` : (language === 'be' ? 'аберыце аб’ём' : 'выберите объём')}
+                                      </span>
+                                    </div>
+                                    <input
+                                      type="range"
+                                      min={2}
+                                      max={Number(product.decant_max_ml) > 2 ? Math.round(Number(product.decant_max_ml)) : 10}
+                                      step={1}
+                                      value={resultMl[product.id] ?? 5}
+                                      onChange={(e) => setResultMl(prev => ({ ...prev, [product.id]: Number(e.target.value) }))}
+                                      className="w-full h-1.5 cursor-pointer appearance-none rounded-full bg-brand-border
+                                                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+                                                 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-accent
+                                                 [&::-webkit-slider-thumb]:cursor-grab
+                                                 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-brand-accent"
+                                      aria-label={language === 'be' ? 'Аб’ём адліванта' : 'Объем отливанта'}
+                                    />
+                                  </div>
+                                )}
+
+                                {!Number(product.price_per_ml) && product.variants && product.variants.length > 0 && (
                                   <div className="relative flex-1 sm:max-w-[220px]">
                                     <select
                                       value={selectedVariants[product.id] || ''}
@@ -565,27 +615,68 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                     </div>
                                   </div>
                                 )}
-                                <span className="font-mono text-sm text-brand-light sm:ml-auto whitespace-nowrap">
-                                  {(product.variants?.find(v => v.id === selectedVariants[product.id])?.price || product.price)} {t('currency')}
-                                </span>
-                                <button
-                                  id={`quiz-add-to-cart-${product.id}`}
-                                  onClick={() => handleAddScentToCart(product)}
-                                  disabled={product.variants?.find(v => v.id === selectedVariants[product.id])?.stock === 0}
-                                  className="h-10 px-6 border border-brand-light/30 hover:border-brand-accent hover:text-brand-accent text-brand-light text-[10px] uppercase font-semibold tracking-[0.2em] transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer bg-transparent"
-                                >
-                                  {successAdded[product.id] ? (
-                                    <>
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-brand-accent" />
-                                      <span>{language === 'be' ? 'Дададзена' : 'Добавлено'}</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ShoppingBag className="w-3.5 h-3.5" />
-                                      <span>{language === 'be' ? 'У кошык' : 'В корзину'}</span>
-                                    </>
-                                  )}
-                                </button>
+
+                                {(() => {
+                                  const ml = resultMl[product.id];
+                                  const decantMode = Number(product.price_per_ml) > 0 && ml != null;
+                                  const selectedVar = product.variants?.find(v => v.id === selectedVariants[product.id]);
+                                  const price = decantMode
+                                    ? (Math.round(Number(product.price_per_ml) * ml * 100) / 100).toFixed(2)
+                                    : (selectedVar ? String(selectedVar.price) : (Number(product.price_per_ml) > 0 ? `${product.price_per_ml} BYN/мл` : `${product.price}`));
+                                  return (
+                                    <span className="font-mono text-sm text-brand-light sm:ml-auto whitespace-nowrap">
+                                      {price} {t('currency')}
+                                    </span>
+                                  );
+                                })()}
+
+                                {(() => {
+                                  const isDecantProduct = Number(product.price_per_ml) > 0;
+                                  const ml = resultMl[product.id];
+                                  const selVar = product.variants?.find(v => v.id === selectedVariants[product.id]);
+                                  const sellable = (product.variants || []).filter(v => v.variant_type !== 'remainder' && v.stock > 0);
+                                  const managerOnly = !isDecantProduct && sellable.length === 0;
+                                  const disabled = isDecantProduct
+                                    ? !ml
+                                    : managerOnly
+                                      ? true
+                                      : (selVar ? selVar.stock === 0 : !!(product.variants && product.variants.length > 0));
+                                  const label = managerOnly
+                                    ? (language === 'be' ? 'Напісаць мэнэджэру' : 'Написать менеджеру')
+                                    : (language === 'be' ? 'У кошык' : 'В корзину');
+                                  if (managerOnly) {
+                                    return (
+                                      <a
+                                        href={`/catalog/${product.slug || product.id}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="h-10 px-6 inline-flex items-center justify-center border border-brand-light/30 hover:border-brand-accent hover:text-brand-accent text-brand-light text-[10px] uppercase font-semibold tracking-[0.2em] transition-colors shrink-0 cursor-pointer"
+                                      >
+                                        {label}
+                                      </a>
+                                    );
+                                  }
+                                  return (
+                                    <button
+                                      id={`quiz-add-to-cart-${product.id}`}
+                                      onClick={() => handleAddScentToCart(product)}
+                                      disabled={disabled}
+                                      className="h-10 px-6 border border-brand-light/30 hover:border-brand-accent hover:text-brand-accent text-brand-light text-[10px] uppercase font-semibold tracking-[0.2em] transition-colors duration-200 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 cursor-pointer bg-transparent"
+                                    >
+                                      {successAdded[product.id] ? (
+                                        <>
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-brand-accent" />
+                                          <span>{language === 'be' ? 'Дададзена' : 'Добавлено'}</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <ShoppingBag className="w-3.5 h-3.5" />
+                                          <span>{label}</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  );
+                                })()}
                               </div>
                             </div>
                           ))}
