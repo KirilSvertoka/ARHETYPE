@@ -17,6 +17,32 @@ export const metaEvent = (event: string, data: Record<string, any> = {}) => {
   }
 };
 
+
+/** First-party telemetry: feeds the admin Telemetry view. Silent no-op on failure. */
+export const sendTelemetry = (payload: Record<string, any>) => {
+  if (typeof window === 'undefined') return;
+  let vid = localStorage.getItem('tv_id');
+  if (!vid) {
+    vid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2);
+    localStorage.setItem('tv_id', vid);
+  }
+  let sid = sessionStorage.getItem('tv_sid');
+  if (!sid) {
+    sid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2);
+    sessionStorage.setItem('tv_sid', sid);
+  }
+  fetch('/api/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vid, sid, ref: document.referrer, ...payload }),
+    keepalive: true
+  }).catch(() => {});
+};
+
+export const trackPageView = (path: string) => {
+  sendTelemetry({ type: 'view', path });
+};
+
 export const pushEvent = (event: string, data: any = {}) => {
   if (typeof window !== 'undefined') {
     window.dataLayer = window.dataLayer || [];
@@ -135,4 +161,5 @@ export const trackGoal = (goalName: string, label?: string) => {
     goal_name: goalName,
     goal_label: label
   });
+  sendTelemetry({ type: 'click', path: window.location.pathname, name: goalName, label: label || '' });
 };

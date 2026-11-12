@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import ErrorBoundary from './components/ErrorBoundary';
+import { trackPageView } from './utils/analytics';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Storefront from './pages/Storefront';
@@ -30,6 +31,14 @@ import { ThemeProvider } from './components/ThemeProvider';
 import { LanguageProvider } from './components/LanguageProvider';
 import { CartProvider } from './components/CartProvider';
 import { WishlistProvider } from './components/WishlistProvider';
+
+function RouteTelemetry() {
+  const location = useLocation();
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
+  return null;
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -66,6 +75,7 @@ export default function App() {
             <CartProvider>
               <BrowserRouter>
                 <ScrollToTop />
+                <RouteTelemetry />
                 <ClearSeoPrerender />
                 <Suspense fallback={
                   <div className="min-h-screen flex items-center justify-center">

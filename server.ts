@@ -373,6 +373,29 @@ db.exec(`
     sort_order INTEGER DEFAULT 0
   );
 
+  CREATE TABLE IF NOT EXISTS site_visits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts DATETIME DEFAULT CURRENT_TIMESTAMP,
+    type TEXT NOT NULL,
+    path TEXT,
+    name TEXT,
+    label TEXT,
+    vid TEXT,
+    sid TEXT,
+    ip TEXT,
+    country TEXT,
+    city TEXT,
+    ua TEXT,
+    ref TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_sv_ts ON site_visits(ts);
+  CREATE INDEX IF NOT EXISTS idx_sv_type_ts ON site_visits(type, ts);
+  CREATE TABLE IF NOT EXISTS ip_geo (
+    ip TEXT PRIMARY KEY,
+    country TEXT,
+    city TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
   CREATE TABLE IF NOT EXISTS admin_sessions (
     token TEXT PRIMARY KEY,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -3048,6 +3071,79 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
   } catch (error) {
     console.error('Failed to update product:', error);
     res.status(500).json({ error: 'Failed to update product' });
+  }
+});
+
+// ---- First-party telemetry ----
+function trackGeoEnrich(ip: string) {
+  if (!ip || /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1|localhost)/.test(ip)) return;
+  const cached = db.prepare('SELECT country, city FROM ip_geo WHERE ip = ?').get(ip) as any;
+  if (cached) return;
+  fetch(`http://ip-api.com/json/${ip}?lang=ru&fields=status,country,city`)
+    .then(r => r.json())
+    .then((g: any) => {
+      if (g && g.status === 'success') {
+        db.prepare('INSERT OR REPLACE INTO ip_geo (ip, country, city, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)')
+          .run(ip, String(g.country || '').slice(0, 60), String(g.city || '').slice(0, 60));
+        db.prepare("UPDATE site_visits SET country = ?, city = ? WHERE ip = ? AND (country IS NULL OR country = '')")
+          .run(String(g.country || '').slice(0, 60), String(g.city || '').slice(0, 60), ip);
+      } else {
+        db.prepare('INSERT OR REPLACE INTO ip_geo (ip, country, city, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)')
+          .run(ip, '', '');
+      }
+    })
+    .catch(() => {});
+}
+
+app.post('/api/track', (req, res) => {
+  try {
+    const b = req.body || {};
+    const type = b.type === 'click' ? 'click' : 'view';
+    const ua = String(req.headers['user-agent'] || '');
+    // Bots pollute human-readable stats — skip them entirely
+    if (/bot|crawl|spider|curl|wget|python|headless|preview|metrika|yandex|google/i.test(ua) && type === 'view') return res.json({ ok: true });
+    const ipRaw = String(req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress || '').split(',')[0].trim().replace('::ffff:', '');
+    const info = db.prepare(
+      'INSERT INTO site_visits (type, path, name, label, vid, sid, ip, ua, ref) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(
+      type,
+      String(b.path || '/').slice(0, 300),
+      String(b.name || '').slice(0, 100),
+      String(b.label || '').slice(0, 200),
+      String(b.vid || '').slice(0, 60),
+      String(b.sid || '').slice(0, 60),
+      ipRaw,
+      ua.slice(0, 200),
+      String(b.ref || '').slice(0, 300)
+    );
+    trackGeoEnrich(ipRaw);
+    res.json({ ok: true });
+  } catch (e) {
+    res.json({ ok: true });
+  }
+});
+
+app.get('/api/admin/telemetry', requireAuth, (req, res) => {
+  try {
+    if (!notesDb) { /* notes db optional, telemetry table lives in main db */ }
+    const period = String(req.query.period || '7d');
+    const since = period === 'today' ? "date('now', 'start of day')" : `datetime('now', '-${period === '7d' ? '7' : '30'} days')`;
+    const num = (q: string) => (db.prepare(q).get() as any).c;
+    const visits = num(`SELECT COUNT(*) as c FROM site_visits WHERE type = 'view' AND ts >= ${since}`);
+    const uniques = num(`SELECT COUNT(DISTINCT COALESCE(NULLIF(vid,''), ip)) as c FROM site_visits WHERE type = 'view' AND ts >= ${since}`);
+    const clicks = num(`SELECT COUNT(*) as c FROM site_visits WHERE type = 'click' AND ts >= ${since}`);
+    const productViews = num(`SELECT COUNT(*) as c FROM site_visits WHERE type = 'view' AND path LIKE '/catalog/%' AND path != '/catalog' AND ts >= ${since}`);
+    const pages = db.prepare(`SELECT path, COUNT(*) as c FROM site_visits WHERE type = 'view' AND ts >= ${since} GROUP BY path ORDER BY c DESC LIMIT 10`).all();
+    const regions = db.prepare(`SELECT COALESCE(NULLIF(city, ''), 'Не определён') as city, COALESCE(NULLIF(country, ''), '') as country, COUNT(*) as c FROM site_visits WHERE ts >= ${since} GROUP BY city, country ORDER BY c DESC LIMIT 10`).all();
+    const events = db.prepare(`SELECT COALESCE(NULLIF(name, ''), 'клик') as name, COUNT(*) as c FROM site_visits WHERE type = 'click' AND ts >= ${since} GROUP BY name ORDER BY c DESC LIMIT 10`).all();
+    const recent = db.prepare(`SELECT datetime(ts, '+3 hours') as ts_h, COALESCE(NULLIF(city,''), '—') as city, type, path, name FROM site_visits WHERE ts >= ${since} ORDER BY ts DESC LIMIT 12`).all().map((r: any) => ({
+      ts_h: r.ts_h,
+      city: r.city,
+      label: r.type === 'click' ? `Клик: ${r.name || r.path}` : (r.path === '/' ? 'Главная' : r.path)
+    }));
+    res.json({ visits, uniques, clicks, productViews, pages, regions, events, recent });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to load telemetry' });
   }
 });
 
