@@ -539,10 +539,8 @@ export default function Layout() {
                 <li><Link to="/p/delivery" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Дастаўка і аплата' : 'Доставка и оплата'}</Link></li>
                 <li><Link to="/p/returns" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Гарантыя і вяртанне' : 'Гарантия и возврат'}</Link></li>
                 <li><Link to="/p/faq" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Пытанні і адказы (FAQ)' : 'Вопросы и ответы (FAQ)'}</Link></li>
-                <li><Link to="/p/kak-vybrat-nishevuyu-parfyumeriyu" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Як выбраць нішу' : 'Как выбрать нишу'}</Link></li>
-                <li><Link to="/p/raspiv-vs-flakon" className="text-sm text-brand-muted hover:text-brand-accent transition-colors">{language === 'be' ? 'Распіў ці флакон' : 'Распив или флакон'}</Link></li>
                 {footerPages
-                  .filter(p => !['kak-vybrat-nishevuyu-parfyumeriyu', 'raspiv-vs-flakon'].includes(p.id))
+                  
                   .map(p => (
                     <li key={p.id}>
                       <Link to={`/p/${p.id}`} className="text-sm text-brand-muted hover:text-brand-accent transition-colors">

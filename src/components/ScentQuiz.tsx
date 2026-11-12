@@ -601,7 +601,7 @@ export default function ScentQuiz({ onOrderBoxClick }: ScentQuizProps) {
                                       onChange={(e) => setSelectedVariants(prev => ({ ...prev, [product.id]: parseInt(e.target.value) }))}
                                       className="w-full text-xs uppercase tracking-wider pr-8 pl-3 py-2.5 bg-brand-bg border border-brand-border hover:border-brand-accent/60 text-brand-light focus:outline-none focus:border-brand-accent appearance-none cursor-pointer"
                                     >
-                                      {product.variants.map((v) => {
+                                      {product.variants.filter(v => v.variant_type !== 'remainder').map((v) => {
                                         const typeStr = getVariantType(v, language);
                                         return (
                                           <option key={v.id} value={v.id} disabled={v.stock === 0}>
